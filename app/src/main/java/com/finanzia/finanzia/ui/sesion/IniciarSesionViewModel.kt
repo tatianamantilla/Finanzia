@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.finanzia.finanzia.datos.AuthRepository
+import com.finanzia.finanzia.validacion.ErrorRegistro
+import com.finanzia.finanzia.validacion.ValidacionRegistro
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -34,8 +36,14 @@ class IniciarSesionViewModel(private val auth: AuthRepository) : ViewModel() {
 
     fun entrar(alEntrar: () -> Unit) {
         if (enviando) return
-        if (correo.isBlank() || contrasena.isEmpty()) {
-            canalMensajes.trySend(MENSAJE_CAMPOS_VACIOS)
+        val error = when {
+            correo.isBlank() -> MENSAJE_CORREO_VACIO
+            !ValidacionRegistro.esCorreoValido(correo) -> MENSAJE_CORREO_INVALIDO
+            contrasena.isEmpty() -> MENSAJE_CONTRASENA_VACIA
+            else -> null
+        }
+        if (error != null) {
+            canalMensajes.trySend(error)
             return
         }
         enviando = true
@@ -48,7 +56,10 @@ class IniciarSesionViewModel(private val auth: AuthRepository) : ViewModel() {
     }
 
     companion object {
-        const val MENSAJE_CAMPOS_VACIOS = "Ingresa tu correo y tu contraseña"
+        // Los mismos textos que usa Crear cuenta (ErrorRegistro).
+        val MENSAJE_CORREO_VACIO = ErrorRegistro.CORREO_VACIO.mensaje
+        val MENSAJE_CORREO_INVALIDO = ErrorRegistro.CORREO_INVALIDO.mensaje
+        const val MENSAJE_CONTRASENA_VACIA = "Ingresa tu contraseña"
         const val MENSAJE_ERROR = "No se pudo iniciar sesión. Inténtalo de nuevo."
     }
 }

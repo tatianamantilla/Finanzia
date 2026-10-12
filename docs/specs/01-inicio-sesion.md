@@ -74,7 +74,9 @@ Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo ag
 - La app sigue abriendo en Crear cuenta; a Inicio de sesión se llega con el enlace "Iniciar sesión" (pendiente 1).
 - "Acceso autorizado" se muestra siempre después de iniciar sesión (pendiente 2).
 - Saldo, porcentaje e insight son los datos de muestra del diseño (pendiente 3).
-- Mensajes del Snackbar: "Ingresa tu correo y tu contraseña" (campos vacíos) y "Correo o contraseña incorrectos".
+- Mensajes del Snackbar, uno por cada problema: "Ingresa tu correo electrónico", "El correo no tiene un formato válido",
+  "Este correo no está registrado", "Ingresa tu contraseña" y "La contraseña es incorrecta".
+  En la fase 2, Supabase Auth no dice si falló el correo o la contraseña: habrá que revisar este punto.
 - "¿Olvidaste tu contraseña?" lleva a una pantalla provisional hasta que se construya el módulo 02.
 - El ojo del saldo se ve, pero no tiene acción (la spec no la define).
 - Para probar en el emulador existe un usuario simulado: `paula@ejemplo.com` / `Finanzia2026`.

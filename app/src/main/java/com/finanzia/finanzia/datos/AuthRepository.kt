@@ -15,7 +15,9 @@ interface AuthRepository {
 
 class CorreoYaRegistradoException : Exception("Este correo ya está registrado")
 
-class CredencialesIncorrectasException : Exception("Correo o contraseña incorrectos")
+class CorreoNoRegistradoException : Exception("Este correo no está registrado")
+
+class ContrasenaIncorrectaException : Exception("La contraseña es incorrecta")
 
 /**
  * Versión simulada: guarda los usuarios en memoria y se pierden al cerrar la app.
@@ -42,8 +44,9 @@ class FakeAuthRepository : AuthRepository {
 
     override suspend fun iniciarSesion(correo: String, contrasena: String): Result<Usuario> {
         val registro = usuarios[correo.trim().lowercase()]
-        if (registro == null || registro.huellaContrasena != huella(contrasena)) {
-            return Result.failure(CredencialesIncorrectasException())
+            ?: return Result.failure(CorreoNoRegistradoException())
+        if (registro.huellaContrasena != huella(contrasena)) {
+            return Result.failure(ContrasenaIncorrectaException())
         }
         usuarioActual = registro.usuario
         return Result.success(registro.usuario)

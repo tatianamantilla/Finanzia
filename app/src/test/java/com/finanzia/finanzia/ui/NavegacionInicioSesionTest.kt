@@ -66,25 +66,40 @@ class NavegacionInicioSesionTest {
     // --- Pantalla 1 · Inicio de sesión ---
 
     @Test
-    fun conCamposVaciosMuestraQueFalta() {
+    fun sinCorreoPideElCorreo() {
         clic("Entrar")
-        seVe("Ingresa tu correo y tu contraseña")
+        seVe("Ingresa tu correo electrónico")
         seVe("¡Qué bueno verte!")
         assertNull(auth.usuarioActual)
     }
 
     @Test
-    fun conContrasenaIncorrectaNoEntra() {
-        entrarCon("paula@ejemplo.com", "otraClave1")
-        seVe("Correo o contraseña incorrectos")
-        seVe("¡Qué bueno verte!")
+    fun sinContrasenaPideLaContrasena() {
+        escribir(Etiquetas.CAMPO_CORREO, "paula@ejemplo.com")
+        clic("Entrar")
+        seVe("Ingresa tu contraseña")
         assertNull(auth.usuarioActual)
     }
 
     @Test
-    fun conCorreoNoRegistradoNoEntra() {
+    fun conCorreoMalEscritoDiceQueElCorreoEstaMal() {
+        entrarCon("paula@", "Finanzia2026")
+        seVe("El correo no tiene un formato válido")
+        assertNull(auth.usuarioActual)
+    }
+
+    @Test
+    fun conCorreoNoRegistradoDiceQueElCorreoEstaMal() {
         entrarCon("nadie@ejemplo.com", "Finanzia2026")
-        seVe("Correo o contraseña incorrectos")
+        seVe("Este correo no está registrado")
+        assertNull(auth.usuarioActual)
+    }
+
+    @Test
+    fun conContrasenaIncorrectaDiceQueLaContrasenaEstaMal() {
+        entrarCon("paula@ejemplo.com", "otraClave1")
+        seVe("La contraseña es incorrecta")
+        seVe("¡Qué bueno verte!")
         assertNull(auth.usuarioActual)
     }
 
