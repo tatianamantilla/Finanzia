@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,11 +62,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
+import com.finanzia.finanzia.ui.PreviewsFinanzia
 import androidx.compose.ui.unit.dp
 import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
+import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.estilo
 import kotlinx.coroutines.flow.collectLatest
@@ -95,33 +97,20 @@ fun CrearCuentaScreen(
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(viewModel) {
         // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
-        // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
         viewModel.mensajes.collectLatest { snackbar.showSnackbar(it) }
     }
 
     PantallaBase(fondo = Modifier.drawBehind { fondoCrearCuenta() }, snackbar = snackbar) {
-        BoxWithConstraints(
-            Modifier
-                .safeDrawingPadding()
-                .imePadding(),
-        ) {
-            val altoMinimo = maxHeight
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Column(
-                    modifier = Modifier
-                        .heightIn(min = altoMinimo)
-                        .padding(horizontal = 28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+        ContenidoDesplazable(margenHorizontal = 28.dp, llenarAlto = true, alineacion = Alignment.CenterHorizontally) {
                     Spacer(Modifier.height(12.dp))
                     LogoFinanzia()
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "TU ASISTENTE FINANCIERO CON IA",
-                        style = estilo(13, FontWeight.Bold, VerdeTexto, espaciado = 0.6),
+                        style = estilo(13, FontWeight.Bold, VerdeTexto, espaciado = 0.6, alineacion = TextAlign.Center),
                     )
                     Spacer(Modifier.height(30.dp))
-                    Text("¡Empieza tu viaje! 🚀", style = estilo(22, FontWeight.Bold))
+                    Text("¡Empieza tu viaje! 🚀", style = estilo(22, FontWeight.Bold, alineacion = TextAlign.Center))
                     Spacer(Modifier.height(8.dp))
                     Text(
                         "Toma el control inteligente de tu dinero en minutos.",
@@ -144,8 +133,6 @@ fun CrearCuentaScreen(
 
                     PieIniciarSesion(onIniciarSesion)
                     Spacer(Modifier.height(32.dp))
-                }
-            }
         }
     }
 }
@@ -296,11 +283,11 @@ private fun CampoFormulario(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp)
+                    .heightIn(min = 54.dp)
                     .clip(forma)
                     .background(Blanco)
                     .border(1.dp, BordeCampo, forma)
-                    .padding(start = 18.dp, end = 14.dp),
+                    .padding(start = 18.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(icono, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(22.dp))
@@ -320,11 +307,13 @@ private fun CampoFormulario(
 @Composable
 private fun IndicadoresContrasena(viewModel: CrearCuentaViewModel) {
     val reglas = viewModel.reglas
-    Row(
+    // FlowRow: en una fila como el diseño; con letra grande o pantalla angosta pasa a otra línea.
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Indicador("8+ carac.", reglas.tieneLongitud)
         Indicador("1 número", reglas.tieneNumero)
@@ -387,7 +376,10 @@ private fun CasillaTerminos(marcada: Boolean, onCambio: (Boolean) -> Unit) {
 
 @Composable
 private fun PieIniciarSesion(onIniciarSesion: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(
+        horizontalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
         Text("¿Ya tienes una cuenta? ", style = estilo(15, color = GrisTexto))
         Text(
             "Iniciar sesión",
@@ -400,7 +392,7 @@ private fun PieIniciarSesion(onIniciarSesion: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true, widthDp = 411, heightDp = 960)
+@PreviewsFinanzia
 @Composable
 private fun CrearCuentaPreview() {
     FinanziaTheme {

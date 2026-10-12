@@ -81,6 +81,12 @@ Los tests corren en la computadora, sin emulador (los de pantallas usan Robolect
 
 En Android Studio: clic derecho sobre `app/src/test` → *Run 'Tests in…'*.
 
+## Pantallas adaptables
+
+- Todas las pantallas usan `ContenidoDesplazable` (`ui/componentes/Componentes.kt`): se desplazan cuando el contenido no cabe, respetan las barras del sistema y el teclado, y en tabletas centran el contenido con un ancho máximo de 480 dp.
+- Con letra del sistema muy grande, algunas filas pasan a una distribución compacta (`esCompacto`) para no partir palabras. Con letra normal, cada pantalla se ve como su imagen de `docs/design`.
+- Cada pantalla tiene Previews en cuatro variantes (`@PreviewsFinanzia`): teléfono pequeño, normal, tableta y letra grande.
+
 ## Metodología de trabajo
 
 El proyecto sigue **Spec Driven Development**: primero se escribe qué debe hacer cada módulo y luego se implementa a partir de esa especificación.

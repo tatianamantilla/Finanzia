@@ -4,8 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,7 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
+import com.finanzia.finanzia.ui.PreviewsFinanzia
 import androidx.compose.ui.unit.dp
 import com.finanzia.finanzia.datos.CategoriaGasto
 import com.finanzia.finanzia.datos.FakeOnboardingRepository
@@ -62,12 +65,14 @@ import com.finanzia.finanzia.datos.FrecuenciaIngreso
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.componentes.BotonAtras
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
+import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.CuadroIcono
 import com.finanzia.finanzia.ui.componentes.EnlaceGris
 import com.finanzia.finanzia.ui.componentes.MilesVisualTransformation
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.Pastilla
 import com.finanzia.finanzia.ui.componentes.TarjetaOpcion
+import com.finanzia.finanzia.ui.componentes.esCompacto
 import com.finanzia.finanzia.ui.componentes.estilo
 import kotlinx.coroutines.flow.collectLatest
 import com.finanzia.finanzia.ui.theme.AzulIntenso
@@ -128,7 +133,7 @@ fun PrimerIngresoScreen(
         colorIcono = VerdeMarca,
         fondoIcono = Color(0xFFDDF6EA),
         titulo = "Registra tu primer ingreso",
-        tamanoTitulo = 26,
+        tamanoTitulo = 28,
         descripcion = "Indica la frecuencia con la que recibes dinero y el monto aproximado para proyectar tus metas.",
         onAtras = onAtras,
         onOmitir = onTerminar,
@@ -150,19 +155,20 @@ fun PrimerIngresoScreen(
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .height(54.dp)
+                            .heightIn(min = 54.dp)
                             .border(2.dp, VerdeCampo, RoundedCornerShape(2.dp))
-                            .padding(horizontal = 18.dp),
+                            .padding(horizontal = 18.dp, vertical = 6.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) { campo() }
                 }
             }
         }
         Spacer(Modifier.height(24.dp))
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             Text("TIPO / FRECUENCIA DE INGRESO", style = estilo(14, FontWeight.Bold, GrisEtiqueta, espaciado = 0.6))
             Text("Selecciona uno", style = estilo(13, FontWeight.Bold, VerdeTexto))
@@ -244,10 +250,11 @@ fun PrimerGastoScreen(
             }
         }
         Spacer(Modifier.height(24.dp))
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             Text("CATEGORÍA DE GASTO", style = estilo(14, FontWeight.SemiBold, GrisEtiqueta, espaciado = 0.8))
             // TODO: "Administrar categorías" se ve pero no tiene acción ("Decisiones pendientes" 5).
@@ -305,21 +312,15 @@ private fun EstructuraPaso2(
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(mensajes) {
         // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
-        // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
         mensajes.mensajes.collectLatest { snackbar.showSnackbar(it) }
     }
     PantallaBase(fondo = Modifier.background(FondoPantalla), snackbar = snackbar) {
-        Column(
-            modifier = Modifier
-                .safeDrawingPadding()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp),
-        ) {
+        ContenidoDesplazable(margenHorizontal = 18.dp) {
             Spacer(Modifier.height(12.dp))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 BotonAtras(onAtras, Modifier.align(Alignment.CenterStart))
-                pastilla()
+                // El margen deja la pastilla centrada sin que nunca tape el botón atrás.
+                Box(Modifier.padding(horizontal = 54.dp)) { pastilla() }
             }
             Spacer(Modifier.height(22.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -412,8 +413,11 @@ private fun <T> CuadriculaOpciones(
     colorSeleccion: Color,
     fondoSeleccion: Color,
 ) {
-    Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        opciones.chunked(2).forEach { fila ->
+    BoxWithConstraints {
+        // Dos columnas como el diseño; una sola si con la letra actual no caben sin partir palabras.
+        val columnas = if (esCompacto(maxWidth, minimo = 260.dp)) 1 else 2
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        opciones.chunked(columnas).forEach { fila ->
             Row(
                 modifier = Modifier.height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -436,6 +440,7 @@ private fun <T> CuadriculaOpciones(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -453,13 +458,13 @@ private fun RecuadroConsejo(texto: AnnotatedString, fondo: Brush, borde: Color, 
     }
 }
 
-@Preview(showBackground = true, widthDp = 411, heightDp = 1000)
+@PreviewsFinanzia
 @Composable
 private fun PrimerIngresoPreview() {
     FinanziaTheme { PrimerIngresoScreen(PrimerIngresoViewModel(FakeOnboardingRepository()), onAtras = {}, onTerminar = {}) }
 }
 
-@Preview(showBackground = true, widthDp = 411, heightDp = 1000)
+@PreviewsFinanzia
 @Composable
 private fun PrimerGastoPreview() {
     FinanziaTheme { PrimerGastoScreen(PrimerGastoViewModel(FakeOnboardingRepository()), onAtras = {}, onTerminar = {}) }

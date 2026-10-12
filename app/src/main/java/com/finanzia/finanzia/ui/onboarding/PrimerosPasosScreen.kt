@@ -41,8 +41,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import com.finanzia.finanzia.ui.PreviewsFinanzia
 import androidx.compose.ui.unit.dp
+import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.CuadroIcono
 import com.finanzia.finanzia.ui.componentes.EnlaceGris
 import com.finanzia.finanzia.ui.componentes.PantallaBase
@@ -82,13 +83,7 @@ fun PrimerosPasosScreen(
         )
     }
     PantallaBase(fondo = fondo) {
-        Column(
-            modifier = Modifier
-                .safeDrawingPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 26.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        ContenidoDesplazable(margenHorizontal = 26.dp, alineacion = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(12.dp))
             PastillaPaso()
             Spacer(Modifier.height(26.dp))
@@ -251,7 +246,7 @@ private fun BotonGasto(onClick: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true, widthDp = 411, heightDp = 900)
+@PreviewsFinanzia
 @Composable
 private fun PrimerosPasosPreview() {
     FinanziaTheme { PrimerosPasosScreen(onPrimerIngreso = {}, onPrimerGasto = {}, onIrAlDashboard = {}) }

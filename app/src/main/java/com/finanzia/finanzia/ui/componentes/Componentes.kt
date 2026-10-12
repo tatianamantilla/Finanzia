@@ -6,6 +6,16 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +46,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -76,7 +87,68 @@ fun estilo(
     textAlign = alineacion,
 )
 
-/** Contenedor de cada pantalla: fondo, márgenes del sistema y lugar para el Snackbar. */
+/** Ancho máximo del contenido: en tabletas y plegables se centra en vez de estirarse. */
+val AnchoMaximoContenido = 480.dp
+
+/** Pantallas más altas que esto (tabletas) centran el contenido en vertical. */
+val AltoMaximoContenido = 960.dp
+
+/**
+ * Columna desplazable que usan todas las pantallas:
+ * - respeta la barra de estado, la de navegación, los recortes y el teclado (edge-to-edge);
+ * - se desplaza cuando el contenido no cabe (teléfono pequeño, pantalla dividida, letra grande);
+ * - en pantallas anchas limita el ancho a [AnchoMaximoContenido] y lo centra.
+ *
+ * Con [llenarAlto] el contenido ocupa al menos el alto visible, para que los `Modifier.weight`
+ * repartan el espacio libre como en el diseño (Pantalla 1).
+ */
+@Composable
+fun ContenidoDesplazable(
+    margenHorizontal: Dp,
+    modifier: Modifier = Modifier,
+    llenarAlto: Boolean = false,
+    alineacion: Alignment.Horizontal = Alignment.Start,
+    contenido: @Composable ColumnScope.() -> Unit,
+) {
+    BoxWithConstraints(
+        modifier
+            .fillMaxSize()
+            .safeDrawingPadding(),
+    ) {
+        val altoVisible = maxHeight
+        val esPantallaAlta = altoVisible > AltoMaximoContenido
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = altoVisible),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = if (esPantallaAlta) Arrangement.Center else Arrangement.Top,
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = AnchoMaximoContenido)
+                    .fillMaxWidth()
+                    .then(if (llenarAlto) Modifier.heightIn(min = minOf(altoVisible, AltoMaximoContenido)) else Modifier)
+                    .padding(horizontal = margenHorizontal),
+                horizontalAlignment = alineacion,
+                content = contenido,
+            )
+        }
+    }
+}
+
+/**
+ * `true` cuando el espacio disponible, medido con la letra actual del sistema, equivale a menos
+ * de [minimo] con letra normal. Sirve para pasar a una distribución compacta solo cuando hace falta
+ * (letra muy grande o pantalla muy angosta) y no partir palabras. Con letra normal en un teléfono
+ * común siempre es `false`, así que el diseño no cambia.
+ */
+@Composable
+fun esCompacto(anchoDisponible: Dp, minimo: Dp): Boolean =
+    anchoDisponible / LocalDensity.current.fontScale < minimo
+
+/** Contenedor de cada pantalla: fondo de borde a borde y lugar para el Snackbar. */
 @Composable
 fun PantallaBase(
     fondo: Modifier,
@@ -92,15 +164,20 @@ fun PantallaBase(
         if (snackbar != null) {
             SnackbarHost(
                 hostState = snackbar,
+                // Por encima del teclado y de la barra de navegación.
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(16.dp),
             )
         }
     }
 }
 
-/** Botón principal: texto blanco en negrita con flecha "→". */
+/**
+ * Botón principal: texto blanco en negrita con flecha "→".
+ * [alto] es la altura mínima: con letra grande el botón crece y el texto pasa a otra línea.
+ */
 @Composable
 fun BotonPrincipal(
     texto: String,
@@ -115,15 +192,20 @@ fun BotonPrincipal(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(alto)
+            .heightIn(min = alto)
             .shadow(10.dp, forma, ambientColor = colorSombra, spotColor = colorSombra)
             .clip(forma)
             .background(fondo)
-            .clickable(role = Role.Button, onClick = onClick),
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(texto, style = estilo(tamanoTexto, FontWeight.Bold, Blanco, espaciado = 0.3))
+            Text(
+                texto,
+                style = estilo(tamanoTexto, FontWeight.Bold, Blanco, espaciado = 0.3, alineacion = TextAlign.Center),
+                modifier = Modifier.weight(1f, fill = false),
+            )
             Spacer(Modifier.width(12.dp))
             Icon(
                 Icons.AutoMirrored.Filled.ArrowForward,
@@ -211,6 +293,16 @@ fun CuadroIcono(
     ) { contenido() }
 }
 
+/**
+ * Emoji usado como ícono dentro de un cuadro de tamaño fijo. Se mide en dp (no crece con la
+ * letra del sistema) para que no se salga del cuadro; con letra normal mide lo mismo que en sp.
+ */
+@Composable
+fun Emoji(emoji: String, tamano: Dp) {
+    val tamanoLetra = with(LocalDensity.current) { tamano.toSp() }
+    Text(emoji, fontSize = tamanoLetra, lineHeight = tamanoLetra)
+}
+
 /** Círculo de selección de las tarjetas: vacío gris o relleno con ✓ blanco. */
 @Composable
 fun IndicadorSeleccion(seleccionada: Boolean, color: Color) {
@@ -269,7 +361,7 @@ fun TarjetaOpcion(
                 verticalAlignment = Alignment.Top,
             ) {
                 CuadroIcono(fondo = fondoEmoji, tamano = 40.dp) {
-                    Text(emoji, fontSize = 20.sp)
+                    Emoji(emoji, tamano = 20.dp)
                 }
                 IndicadorSeleccion(seleccionada, colorSeleccion)
             }

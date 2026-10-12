@@ -3,6 +3,7 @@ package com.finanzia.finanzia.ui.registro
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,10 +37,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
+import com.finanzia.finanzia.ui.PreviewsFinanzia
 import androidx.compose.ui.unit.dp
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
+import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
+import com.finanzia.finanzia.ui.componentes.esCompacto
 import com.finanzia.finanzia.ui.componentes.estilo
 import com.finanzia.finanzia.ui.theme.AzulClaro
 import com.finanzia.finanzia.ui.theme.AzulEnlace
@@ -60,13 +63,7 @@ import com.finanzia.finanzia.ui.theme.VerdeTexto
 @Composable
 fun CuentaCreadaScreen(correo: String, onComenzar: () -> Unit) {
     PantallaBase(fondo = Modifier.background(FondoPantalla)) {
-        Column(
-            modifier = Modifier
-                .safeDrawingPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        ContenidoDesplazable(margenHorizontal = 20.dp, alineacion = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(20.dp))
             PastillaExito()
             Spacer(Modifier.height(26.dp))
@@ -124,7 +121,7 @@ private fun PastillaExito() {
 
 @Composable
 private fun TarjetaTodoListo() {
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(2.dp, RoundedCornerShape(22.dp), ambientColor = Color(0x14000000), spotColor = Color(0x14000000))
@@ -132,48 +129,86 @@ private fun TarjetaTodoListo() {
             .background(Blanco)
             .padding(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFE3ECFB)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Filled.VerifiedUser, contentDescription = null, tint = AzulEscudo, modifier = Modifier.size(22.dp))
+        // Con letra muy grande en pantalla angosta, las etiquetas pasan debajo del texto
+        // para que ninguna palabra se parta. Con letra normal se ve como el diseño.
+        val compacto = esCompacto(maxWidth, minimo = 200.dp)
+        Column {
+            if (compacto) {
+                EncabezadoTodoListo()
+                Spacer(Modifier.height(8.dp))
+                PastillaTresDeTres()
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    EncabezadoTodoListo(Modifier.weight(1f))
+                    PastillaTresDeTres()
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Text("Todo listo para comenzar", style = estilo(17, FontWeight.SemiBold), modifier = Modifier.weight(1f))
-            Box(
-                Modifier
-                    .clip(CircleShape)
-                    .background(VerdeMenta)
-                    .padding(horizontal = 10.dp, vertical = 3.dp),
-            ) {
-                Text("3 de 3", style = estilo(13, FontWeight.Bold))
-            }
+            Spacer(Modifier.height(20.dp))
+            FilaListo(
+                titulo = "Bóveda y cifrado bancario configurados",
+                descripcion = "Protocolo AES-256 de nivel bancario activado.",
+                compacto = compacto,
+            )
+            Spacer(Modifier.height(12.dp))
+            FilaListo(
+                titulo = "Asistente IA Copilot activado",
+                descripcion = "Detección automática de gastos hormiga y suscripciones.",
+                compacto = compacto,
+            )
+            Spacer(Modifier.height(12.dp))
+            FilaListo(
+                titulo = "Bono de bienvenida desbloqueado",
+                descripcion = "Diagnóstico de hábitos financieros y proyección a 12 meses.",
+                etiqueta = "GRATIS",
+                compacto = compacto,
+            )
         }
-        Spacer(Modifier.height(20.dp))
-        FilaListo(
-            titulo = "Bóveda y cifrado bancario configurados",
-            descripcion = "Protocolo AES-256 de nivel bancario activado.",
-        )
-        Spacer(Modifier.height(12.dp))
-        FilaListo(
-            titulo = "Asistente IA Copilot activado",
-            descripcion = "Detección automática de gastos hormiga y suscripciones.",
-        )
-        Spacer(Modifier.height(12.dp))
-        FilaListo(
-            titulo = "Bono de bienvenida desbloqueado",
-            descripcion = "Diagnóstico de hábitos financieros y proyección a 12 meses.",
-            etiqueta = "GRATIS",
-        )
     }
 }
 
 @Composable
-private fun FilaListo(titulo: String, descripcion: String, etiqueta: String? = null) {
+private fun EncabezadoTodoListo(modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFE3ECFB)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.VerifiedUser, contentDescription = null, tint = AzulEscudo, modifier = Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Text("Todo listo para comenzar", style = estilo(17, FontWeight.SemiBold), modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun PastillaTresDeTres() {
+    Box(
+        Modifier
+            .clip(CircleShape)
+            .background(VerdeMenta)
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+    ) {
+        Text("3 de 3", style = estilo(13, FontWeight.Bold))
+    }
+}
+
+@Composable
+private fun EtiquetaGratis(texto: String) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(MoradoClaro)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(texto, style = estilo(13, FontWeight.Bold, MoradoTexto, espaciado = 0.4))
+    }
+}
+
+@Composable
+private fun FilaListo(titulo: String, descripcion: String, compacto: Boolean, etiqueta: String? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -192,19 +227,21 @@ private fun FilaListo(titulo: String, descripcion: String, etiqueta: String? = n
         ) {
             Icon(Icons.Filled.Check, contentDescription = null, tint = AzulMarino, modifier = Modifier.size(18.dp))
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(if (compacto) 8.dp else 12.dp))
         Column(Modifier.weight(1f)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                Text(titulo, style = estilo(14, FontWeight.Medium, altoLinea = 20, espaciado = -0.2), modifier = Modifier.weight(1f))
+            val estiloTitulo = estilo(14, FontWeight.Medium, altoLinea = 20, espaciado = -0.2)
+            if (compacto) {
+                Text(titulo, style = estiloTitulo)
                 if (etiqueta != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(MoradoClaro)
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                    ) {
-                        Text(etiqueta, style = estilo(13, FontWeight.Bold, MoradoTexto, espaciado = 0.4))
+                    Spacer(Modifier.height(4.dp))
+                    EtiquetaGratis(etiqueta)
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                    Text(titulo, style = estiloTitulo, modifier = Modifier.weight(1f))
+                    if (etiqueta != null) {
+                        Spacer(Modifier.width(8.dp))
+                        EtiquetaGratis(etiqueta)
                     }
                 }
             }
@@ -216,43 +253,72 @@ private fun FilaListo(titulo: String, descripcion: String, etiqueta: String? = n
 
 @Composable
 private fun AvisoCorreo(correo: String) {
-    Row(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(AzulClaro)
             .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(Blanco),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Outlined.MarkEmailRead, contentDescription = null, tint = AzulEscudo, modifier = Modifier.size(22.dp))
+        // Con letra muy grande en pantalla angosta, los íconos van arriba y el texto debajo.
+        if (esCompacto(maxWidth, minimo = 230.dp)) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconoCorreo()
+                    Spacer(Modifier.weight(1f))
+                    IconoRecarga()
+                }
+                Spacer(Modifier.height(10.dp))
+                TextosCorreo(correo)
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoCorreo()
+                Spacer(Modifier.width(14.dp))
+                TextosCorreo(correo, Modifier.weight(1f))
+                Spacer(Modifier.width(10.dp))
+                IconoRecarga()
+            }
         }
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text("Correo de confirmación enviado", style = estilo(15, FontWeight.Medium))
-            Text(
-                buildAnnotatedString {
-                    append("Revisa tu bandeja en ")
-                    withStyle(SpanStyle(color = AzulEnlace, fontWeight = FontWeight.Bold)) { append(correo) }
-                },
-                style = estilo(13, color = GrisTexto),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(10.dp))
-        // TODO: el ícono de recarga se ve pero no tiene acción ("Decisiones pendientes" 5).
-        Icon(Icons.Filled.Sync, contentDescription = null, tint = AzulEnlace, modifier = Modifier.size(24.dp))
     }
 }
 
-@Preview(showBackground = true, widthDp = 411, heightDp = 900)
+@Composable
+private fun IconoCorreo() {
+    Box(
+        Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(Blanco),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Outlined.MarkEmailRead, contentDescription = null, tint = AzulEscudo, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun IconoRecarga() {
+    // TODO: el ícono de recarga se ve pero no tiene acción ("Decisiones pendientes" 5).
+    Icon(Icons.Filled.Sync, contentDescription = null, tint = AzulEnlace, modifier = Modifier.size(24.dp))
+}
+
+@Composable
+private fun TextosCorreo(correo: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text("Correo de confirmación enviado", style = estilo(15, FontWeight.Medium))
+        Text(
+            buildAnnotatedString {
+                append("Revisa tu bandeja en ")
+                withStyle(SpanStyle(color = AzulEnlace, fontWeight = FontWeight.Bold)) { append(correo) }
+            },
+            style = estilo(13, color = GrisTexto),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@PreviewsFinanzia
 @Composable
 private fun CuentaCreadaPreview() {
     FinanziaTheme { CuentaCreadaScreen(correo = "paula.gomez@ejemplo.com", onComenzar = {}) }
