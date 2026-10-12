@@ -175,10 +175,10 @@ class NavegacionCrearCuentaTest {
     }
 
     @Test
-    fun iniciarSesionAbreLaPantallaProvisional() {
+    fun iniciarSesionAbreLaPantallaDeInicioDeSesion() {
         clic("Iniciar sesión")
         noSeVe("¡Empieza tu viaje!")
-        seVePantalla(Etiquetas.PANTALLA_INICIAR_SESION)
+        seVe("¡Qué bueno verte!")
     }
 
     // --- Pantallas 2 y 3 ---

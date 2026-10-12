@@ -18,6 +18,9 @@ import com.finanzia.finanzia.ui.onboarding.PrimerosPasosScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaViewModel
 import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
+import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
+import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
+import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 
 object Rutas {
@@ -28,6 +31,8 @@ object Rutas {
     const val PRIMER_GASTO = "primer_gasto"
     const val DASHBOARD = "dashboard"
     const val INICIAR_SESION = "iniciar_sesion"
+    const val ACCESO_AUTORIZADO = "acceso_autorizado"
+    const val OLVIDE_CONTRASENA = "olvide_contrasena"
 }
 
 /** Punto de entrada de las pantallas. Recibe los repositorios para que los tests usen los suyos. */
@@ -85,13 +90,32 @@ fun FinanziaApp(
                     onTerminar = irAlDashboard,
                 )
             }
+            // Módulo 01 · Inicio de sesión
+            composable(Rutas.INICIAR_SESION) {
+                IniciarSesionScreen(
+                    viewModel = viewModel { IniciarSesionViewModel(auth) },
+                    onEntrar = {
+                        // Con la sesión iniciada, "atrás" no debe volver al formulario.
+                        navController.navigate(Rutas.ACCESO_AUTORIZADO) {
+                            popUpTo(Rutas.INICIAR_SESION) { inclusive = true }
+                        }
+                    },
+                    onOlvideContrasena = { navController.navigate(Rutas.OLVIDE_CONTRASENA) },
+                )
+            }
+            composable(Rutas.ACCESO_AUTORIZADO) {
+                AccesoAutorizadoScreen(
+                    nombre = auth.usuarioActual?.nombre.orEmpty(),
+                    onContinuar = irAlDashboard,
+                )
+            }
             // Pantallas provisionales: no son parte de este módulo.
             composable(Rutas.DASHBOARD) {
                 PantallaProvisional("Dashboard", Etiquetas.PANTALLA_DASHBOARD)
             }
-            composable(Rutas.INICIAR_SESION) {
-                // TODO(Módulo 01): reemplazar por la pantalla de docs/specs/01-inicio-sesion.md.
-                PantallaProvisional("Iniciar sesión", Etiquetas.PANTALLA_INICIAR_SESION)
+            composable(Rutas.OLVIDE_CONTRASENA) {
+                // TODO(Módulo 02): reemplazar por la pantalla de docs/specs/02-olvidar-contrasena.md.
+                PantallaProvisional("Olvidé mi contraseña", Etiquetas.PANTALLA_OLVIDE_CONTRASENA)
             }
         }
     }

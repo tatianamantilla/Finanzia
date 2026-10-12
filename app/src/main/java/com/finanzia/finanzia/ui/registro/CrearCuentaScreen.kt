@@ -177,9 +177,9 @@ private fun LogoFinanzia() {
     }
 }
 
-/** Estrella de cuatro puntas del logo. */
+/** Estrella de cuatro puntas del logo. También la usa la pantalla de inicio de sesión. */
 @Composable
-private fun Estrella(modifier: Modifier) {
+internal fun Estrella(modifier: Modifier) {
     Canvas(modifier) {
         val c = size.width / 2
         val curva = size.width * 0.12f

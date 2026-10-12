@@ -60,10 +60,24 @@ Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo ag
 - [ ] La pantalla 1 es visualmente idéntica a `inicio_sesion_1.jpeg` (colores, tipografía, textos, íconos).
 - [ ] La pantalla 2 es visualmente idéntica a `olvidar_contraseña_3.jpeg`.
 - [ ] Un usuario existente en Supabase puede entrar con su correo y contraseña.
-- [ ] Con credenciales incorrectas no entra y ve un mensaje de error.
-- [ ] El ojo muestra y oculta la contraseña.
-- [ ] "¿Olvidaste tu contraseña?" abre el flujo de recuperación.
+- [x] Con credenciales incorrectas no entra y ve un mensaje de error.
+- [x] El ojo muestra y oculta la contraseña.
+- [x] "¿Olvidaste tu contraseña?" abre el flujo de recuperación (por ahora, una pantalla provisional).
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño.
+
+> Verificación (fase 1, datos simulados): los criterios marcados se comprobaron con los tests de
+> `app/src/test` (`NavegacionInicioSesionTest`, `PantallasAdaptablesTest`). Los que dependen de
+> Supabase o de una revisión visual en el emulador siguen sin marcar.
+
+## Decisiones tomadas en la fase 1 (confirmar con el equipo)
+
+- La app sigue abriendo en Crear cuenta; a Inicio de sesión se llega con el enlace "Iniciar sesión" (pendiente 1).
+- "Acceso autorizado" se muestra siempre después de iniciar sesión (pendiente 2).
+- Saldo, porcentaje e insight son los datos de muestra del diseño (pendiente 3).
+- Mensajes del Snackbar: "Ingresa tu correo y tu contraseña" (campos vacíos) y "Correo o contraseña incorrectos".
+- "¿Olvidaste tu contraseña?" lleva a una pantalla provisional hasta que se construya el módulo 02.
+- El ojo del saldo se ve, pero no tiene acción (la spec no la define).
+- Para probar en el emulador existe un usuario simulado: `paula@ejemplo.com` / `Finanzia2026`.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 

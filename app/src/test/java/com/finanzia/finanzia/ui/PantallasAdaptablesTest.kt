@@ -33,6 +33,9 @@ import com.finanzia.finanzia.ui.onboarding.PrimerosPasosScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaViewModel
 import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
+import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
+import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
+import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -253,6 +256,45 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
 
         assertTrue(atras)
         assertEquals("Guardar y Omitir deben llevar al Dashboard", 2, terminado)
+    }
+
+    // --- Módulo 01 · Inicio de sesión ---
+
+    @Test
+    fun iniciarSesion_seLlegaAlBotonYAlEnlace() {
+        var entro = false
+        var olvido = false
+        val auth = FakeAuthRepository().apply { agregarUsuario("Paula Gómez", "paula@ejemplo.com", "Finanzia2026") }
+        mostrar {
+            IniciarSesionScreen(
+                IniciarSesionViewModel(auth),
+                onEntrar = { entro = true },
+                onOlvideContrasena = { olvido = true },
+            )
+        }
+        sinTextosCortados()
+
+        alcanzar(etiqueta(Etiquetas.CAMPO_CORREO)).performTextInput("paula@ejemplo.com")
+        alcanzar(etiqueta(Etiquetas.CAMPO_CONTRASENA)).performTextInput("Finanzia2026")
+        alcanzar(texto("¿Olvidaste tu contraseña?")).performClick()
+        alcanzar(texto("Entrar")).performClick()
+        compose.waitForIdle()
+
+        assertTrue("El botón Entrar no respondió", entro)
+        assertTrue("El enlace ¿Olvidaste tu contraseña? no respondió", olvido)
+    }
+
+    @Test
+    fun accesoAutorizado_seLlegaAlBotonYAlPie() {
+        var continuar = false
+        mostrar { AccesoAutorizadoScreen(nombre = "Paula Gómez", onContinuar = { continuar = true }) }
+        sinTextosCortados()
+
+        alcanzar(texto("Insight Inteligente de Hoy"))
+        alcanzar(texto("Continuar al Dashboard")).performClick()
+        alcanzar(texto("Finanzia Mobile App v3.4.1"))
+
+        assertTrue(continuar)
     }
 }
 

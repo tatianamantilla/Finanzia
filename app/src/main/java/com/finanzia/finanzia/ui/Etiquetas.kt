@@ -9,7 +9,7 @@ object Etiquetas {
     const val CAMPO_MONTO = "campo_monto"
     const val BOTON_ATRAS = "boton_atras"
     const val PANTALLA_DASHBOARD = "pantalla_dashboard"
-    const val PANTALLA_INICIAR_SESION = "pantalla_iniciar_sesion"
+    const val PANTALLA_OLVIDE_CONTRASENA = "pantalla_olvide_contrasena"
 
     // Estado de los indicadores de contraseña (también lo leen los lectores de pantalla).
     const val INDICADOR_CUMPLIDO = "Cumplido"
