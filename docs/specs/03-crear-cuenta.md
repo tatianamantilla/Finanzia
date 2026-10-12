@@ -112,11 +112,24 @@ Permitir que una persona nueva cree su cuenta y pase por un onboarding corto don
 
 - [ ] Las cinco pantallas son visualmente idénticas a sus imágenes.
 - [ ] Se puede crear una cuenta y el usuario aparece en Supabase (Auth y tabla `Usuarios`).
-- [ ] Los tres indicadores de contraseña reaccionan en vivo y la casilla es obligatoria.
-- [ ] La navegación entre las pantallas 1 a 5 y hacia el Dashboard funciona como se describe.
-- [ ] En las pantallas 4 y 5 solo se puede seleccionar una opción a la vez.
-- [ ] "Omitir este paso por ahora" no guarda nada.
+- [x] Los tres indicadores de contraseña reaccionan en vivo y la casilla es obligatoria.
+- [x] La navegación entre las pantallas 1 a 5 y hacia el Dashboard funciona como se describe.
+- [x] En las pantallas 4 y 5 solo se puede seleccionar una opción a la vez.
+- [x] "Omitir este paso por ahora" no guarda nada.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño.
+
+> Verificación (fase 1, datos simulados): los criterios marcados se comprobaron con los tests de
+> `app/src/test` (`NavegacionCrearCuentaTest`, `ValidacionRegistroTest`, `MontosTest`). Los que dependen de
+> Supabase o de una revisión visual en el emulador siguen sin marcar.
+
+## Decisiones tomadas con el equipo (fase 1)
+
+- **Montos sin decimales**: la app pone sola las comas de miles (`18,500`), sin `.00`. Esto reemplaza el formato con dos decimales de la Pantalla 4 y la Pantalla 5.
+- Con el campo de monto vacío se muestra un `0` gris como placeholder.
+- Errores de validación: el botón se ve siempre igual y, al tocarlo, un Snackbar dice qué falta o qué está mal.
+- "Iniciar sesión" lleva a una pantalla provisional hasta que se construya el módulo 01.
+- Los enlaces de Términos y Política se ven, pero no tienen acción (punto 6 de las decisiones pendientes).
+- Tipografía: Manrope (Google Fonts), incluida en la app.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 

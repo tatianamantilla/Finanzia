@@ -25,6 +25,7 @@ Diseñar y desarrollar una aplicación móvil para Android que facilite el regis
 | Interfaz | Jetpack Compose (100 %) |
 | IDE | Android Studio |
 | Base de datos y autenticación | Supabase (en la nube, no local) |
+| Tipografía | Manrope (Google Fonts, incluida en `app/src/main/res/font`) |
 | Paquete base | `com.finanzia.finanzia` |
 
 > Requisito académico: el proyecto debe desarrollarse completamente en Kotlin, Compose y Android Studio.
@@ -67,6 +68,18 @@ SUPABASE_ANON_KEY=tu-clave-publica
 ```
 
 3. Sincronizar Gradle y ejecutar la app en el emulador.
+
+> Fase 1 (actual): la app funciona con datos simulados en memoria, sin Supabase. Por ahora no hace falta llenar las claves.
+
+## Tests
+
+Los tests corren en la computadora, sin emulador (los de pantallas usan Robolectric):
+
+```
+./gradlew :app:testDebugUnitTest
+```
+
+En Android Studio: clic derecho sobre `app/src/test` → *Run 'Tests in…'*.
 
 ## Metodología de trabajo
 

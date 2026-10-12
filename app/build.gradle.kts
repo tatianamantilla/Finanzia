@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.finazia.finanzia"
+    namespace = "com.finanzia.finanzia"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.finazia.finanzia"
+        applicationId = "com.finanzia.finanzia"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -34,6 +34,12 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // Permite correr los tests de Compose en la computadora (Robolectric), sin emulador.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -45,7 +51,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
     testImplementation(libs.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
