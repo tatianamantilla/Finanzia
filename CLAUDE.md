@@ -8,6 +8,16 @@ Lee primero `README.md` para el contexto del proyecto y la carpeta `docs/specs/`
 - Al terminar cada tarea, indica qué archivos cambiaste y cómo probarlo en el emulador de Android Studio.
 - Si algo es ambiguo, pregunta antes de decidir.
 
+## Fase actual: pantallas con datos simulados
+
+Todavía no hay acceso a Supabase. Mientras no se te diga "pasamos a la fase 2":
+
+- Construye solo las **pantallas, la navegación y la validación de formularios**, con datos simulados que viven en memoria (se pierden al cerrar la app). **No crees ninguna base de datos local.**
+- Aunque las specs mencionan Supabase, **no lo conectes todavía** y no pidas ni escribas claves. Los criterios de aceptación que dependen de Supabase (por ejemplo, "el usuario aparece en Supabase") se evalúan en la fase 2.
+- Deja el acceso a datos detrás de interfaces (por ejemplo `AuthRepository`), con una versión simulada. Así, en la fase 2 solo se reemplaza esa capa por la real y las pantallas no cambian.
+- Marca con un comentario `// TODO(Supabase)` cada punto que se reemplazará.
+- En la fase 2: conecta con Supabase siguiendo las specs y resolviendo antes sus "Decisiones pendientes".
+
 ## Reglas técnicas
 
 - Todo el código en **Kotlin** con **Jetpack Compose**. No uses XML para pantallas, Flutter, React Native ni otros frameworks.
