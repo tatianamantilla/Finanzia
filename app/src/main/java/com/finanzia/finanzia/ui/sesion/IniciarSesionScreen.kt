@@ -51,6 +51,7 @@ import com.finanzia.finanzia.ui.PreviewsFinanzia
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
+import com.finanzia.finanzia.ui.componentes.PieConEnlace
 import com.finanzia.finanzia.ui.componentes.esCompacto
 import com.finanzia.finanzia.ui.componentes.estilo
 import com.finanzia.finanzia.ui.registro.Estrella
@@ -76,6 +77,7 @@ fun IniciarSesionScreen(
     viewModel: IniciarSesionViewModel,
     onEntrar: () -> Unit,
     onOlvideContrasena: () -> Unit,
+    onCrearCuenta: () -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(viewModel) {
@@ -153,6 +155,10 @@ fun IniciarSesionScreen(
                 colorSombra = Color(0x400066F5),
             )
             Spacer(Modifier.weight(1f).heightIn(min = 32.dp))
+
+            // Cambio aprobado (spec 01): mismo pie, estilo y posición que en Crear cuenta.
+            PieConEnlace(pregunta = "¿No tienes una cuenta?", enlace = "Crear cuenta", onClick = onCrearCuenta)
+            Spacer(Modifier.height(32.dp))
         }
     }
 }
@@ -252,6 +258,6 @@ private fun CampoSesion(
 @Composable
 private fun IniciarSesionPreview() {
     FinanziaTheme {
-        IniciarSesionScreen(IniciarSesionViewModel(FakeAuthRepository()), onEntrar = {}, onOlvideContrasena = {})
+        IniciarSesionScreen(IniciarSesionViewModel(FakeAuthRepository()), onEntrar = {}, onOlvideContrasena = {}, onCrearCuenta = {})
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finanzia.finanzia.ui.Etiquetas
+import com.finanzia.finanzia.ui.theme.AzulEnlace
 import com.finanzia.finanzia.ui.theme.AzulMarino
 import com.finanzia.finanzia.ui.theme.Blanco
 import com.finanzia.finanzia.ui.theme.BordeTarjeta
@@ -214,6 +216,29 @@ fun BotonPrincipal(
                 modifier = Modifier.size(22.dp),
             )
         }
+    }
+}
+
+/**
+ * Pie con una pregunta gris y un enlace azul en negrita. Lo usan Crear cuenta
+ * ("¿Ya tienes una cuenta? Iniciar sesión") e Inicio de sesión ("¿No tienes una cuenta? Crear cuenta"),
+ * así los dos se ven exactamente igual. Si no cabe en una línea, el enlace pasa a la siguiente.
+ */
+@Composable
+fun PieConEnlace(pregunta: String, enlace: String, onClick: () -> Unit) {
+    FlowRow(
+        horizontalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("$pregunta ", style = estilo(15, color = GrisTexto))
+        Text(
+            enlace,
+            style = estilo(16, FontWeight.Bold, AzulEnlace),
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(horizontal = 2.dp, vertical = 4.dp),
+        )
     }
 }
 

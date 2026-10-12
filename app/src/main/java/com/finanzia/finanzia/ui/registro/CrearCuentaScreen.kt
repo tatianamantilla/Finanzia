@@ -69,6 +69,7 @@ import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
+import com.finanzia.finanzia.ui.componentes.PieConEnlace
 import com.finanzia.finanzia.ui.componentes.estilo
 import kotlinx.coroutines.flow.collectLatest
 import com.finanzia.finanzia.ui.theme.AzulEnlace
@@ -131,7 +132,7 @@ fun CrearCuentaScreen(
 
                     Spacer(Modifier.weight(1f).heightIn(min = 32.dp))
 
-                    PieIniciarSesion(onIniciarSesion)
+                    PieConEnlace(pregunta = "¿Ya tienes una cuenta?", enlace = "Iniciar sesión", onClick = onIniciarSesion)
                     Spacer(Modifier.height(32.dp))
         }
     }
@@ -370,24 +371,6 @@ private fun CasillaTerminos(marcada: Boolean, onCambio: (Boolean) -> Unit) {
                 withStyle(SpanStyle(color = AzulEnlace, fontWeight = FontWeight.SemiBold)) { append("Política de Privacidad") }
             },
             style = estilo(15, color = GrisTexto, altoLinea = 22),
-        )
-    }
-}
-
-@Composable
-private fun PieIniciarSesion(onIniciarSesion: () -> Unit) {
-    FlowRow(
-        horizontalArrangement = Arrangement.Center,
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("¿Ya tienes una cuenta? ", style = estilo(15, color = GrisTexto))
-        Text(
-            "Iniciar sesión",
-            style = estilo(16, FontWeight.Bold, AzulEnlace),
-            modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .clickable(role = Role.Button, onClick = onIniciarSesion)
-                .padding(horizontal = 2.dp, vertical = 4.dp),
         )
     }
 }

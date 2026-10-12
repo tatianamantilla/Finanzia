@@ -11,7 +11,10 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.datos.FakeOnboardingRepository
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.navegacion.FinanziaApp
+import com.finanzia.finanzia.navegacion.Rutas
 import com.finanzia.finanzia.ui.sesion.primerNombre
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -33,9 +36,14 @@ class NavegacionInicioSesionTest {
         agregarUsuario(nombre = "Paula Gómez", correo = "paula@ejemplo.com", contrasena = "Finanzia2026")
     }
 
+    private lateinit var navegacion: NavHostController
+
     @Before
     fun abrirInicioDeSesion() {
-        compose.setContent { FinanziaApp(auth = auth, onboarding = FakeOnboardingRepository()) }
+        compose.setContent {
+            navegacion = rememberNavController()
+            FinanziaApp(auth = auth, onboarding = FakeOnboardingRepository(), navController = navegacion)
+        }
         clic("Iniciar sesión")
     }
 
@@ -64,6 +72,29 @@ class NavegacionInicioSesionTest {
     }
 
     // --- Pantalla 1 · Inicio de sesión ---
+
+    @Test
+    fun elPieParaCrearCuentaExisteYLlevaACrearCuenta() {
+        seVe("¿No tienes una cuenta?")
+        compose.onNodeWithText("Crear cuenta").performScrollTo().assertIsDisplayed().performClick()
+
+        seVe("¡Empieza tu viaje!")
+        compose.onNodeWithText("¡Qué bueno verte!", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun irYVolverEntreCrearCuentaEInicioDeSesionNoApilaPantallas() {
+        // Crear cuenta → Iniciar sesión → Crear cuenta → Iniciar sesión → Crear cuenta
+        clic("Crear cuenta")
+        clic("Iniciar sesión")
+        compose.onNodeWithText("Crear cuenta").performScrollTo().performClick()
+        seVe("¡Empieza tu viaje!")
+        // No quedó ninguna pantalla debajo de Crear cuenta: "atrás" sale de la app, como al abrirla.
+        compose.runOnIdle {
+            assertEquals(Rutas.CREAR_CUENTA, navegacion.currentDestination?.route)
+            assertNull(navegacion.previousBackStackEntry)
+        }
+    }
 
     @Test
     fun sinCorreoPideElCorreo() {

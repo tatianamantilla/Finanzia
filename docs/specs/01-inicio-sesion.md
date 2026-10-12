@@ -30,8 +30,17 @@ De arriba hacia abajo:
 5. Campo **CONTRASEÑA**: ícono de candado, placeholder de puntos, ícono de ojo a la derecha para mostrar u ocultar.
 6. Enlace azul centrado: "¿Olvidaste tu contraseña?"
 7. Botón principal con degradado: "Entrar →"
+8. Pie, abajo de la pantalla: "¿No tienes una cuenta? **Crear cuenta**" ("Crear cuenta" como enlace azul en negrita).
 
-Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo agregues.
+> **Cambio aprobado por Tatiana (única excepción al diseño de `inicio_sesion_1.jpeg`):** el pie copia
+> exactamente el estilo, el tamaño, los colores y la posición del pie de `crear_cuenta_1.jpeg`
+> ("¿Ya tienes una cuenta? Iniciar sesión"). En el código, las dos pantallas usan el mismo componente
+> (`PieConEnlace`).
+>
+> **Aclaración:** la versión actualizada de `inicio_sesion_1.jpeg` ya muestra este pie, pero con dos
+> diferencias: dice "¿No tienes cuenta?" (sin "una") y "Crear cuenta" en azul marino. Vale lo que dice
+> esta spec: **"¿No tienes una cuenta?"** y **"Crear cuenta" en azul**, igual que en Crear cuenta. Todo
+> lo demás de la pantalla sigue siendo idéntico a la imagen.
 
 ## Pantalla 2 · Acceso autorizado (`olvidar_contraseña_3.jpeg`)
 
@@ -52,6 +61,8 @@ Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo ag
   - Éxito: ir a la Pantalla 2. "Continuar al Dashboard" lleva al Dashboard.
   - Error (credenciales incorrectas o campos vacíos): el diseño no define el mensaje. Usa un mensaje temporal estándar (Snackbar) con texto simple, sin cambiar el diseño de la pantalla.
 - **¿Olvidaste tu contraseña?:** abre el flujo de la spec `02-olvidar-contrasena.md`.
+- **Crear cuenta** (pie): lleva a la pantalla de Crear cuenta (`03-crear-cuenta.md`). Si se llegó a Inicio de
+  sesión desde Crear cuenta, vuelve a esa pantalla en vez de abrir otra copia, para no acumular pantallas en el historial.
 - El nombre del usuario sale de la tabla `Usuarios` (campo `Nombre`); usa solo el primer nombre.
 - El saldo y el insight del diseño son **datos de muestra**: ver "Decisiones pendientes".
 
@@ -63,7 +74,8 @@ Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo ag
 - [x] Con credenciales incorrectas no entra y ve un mensaje de error.
 - [x] El ojo muestra y oculta la contraseña.
 - [x] "¿Olvidaste tu contraseña?" abre el flujo de recuperación (por ahora, una pantalla provisional).
-- [ ] No se agregó ningún elemento ni color que no esté en el diseño.
+- [x] El pie "¿No tienes una cuenta? Crear cuenta" existe, con el mismo estilo y posición que el pie de Crear cuenta, y al tocar "Crear cuenta" se abre la pantalla de Crear cuenta.
+- [ ] No se agregó ningún elemento ni color que no esté en el diseño (salvo el pie "Crear cuenta", aprobado).
 
 > Verificación (fase 1, datos simulados): los criterios marcados se comprobaron con los tests de
 > `app/src/test` (`NavegacionInicioSesionTest`, `PantallasAdaptablesTest`). Los que dependen de
@@ -83,6 +95,6 @@ Nota: el diseño **no** tiene enlace a "Crear cuenta" en esta pantalla. No lo ag
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
-1. Pantalla inicial de la app: ¿abre en Inicio de sesión o en Crear cuenta? El diseño no muestra enlace de Inicio de sesión → Crear cuenta.
+1. Pantalla inicial de la app: ¿abre en Inicio de sesión o en Crear cuenta? (Ya existe el enlace Inicio de sesión → Crear cuenta en el pie.)
 2. ¿La pantalla "Acceso autorizado" se muestra siempre tras iniciar sesión, o solo tras restablecer contraseña?
 3. Saldo, porcentaje e insight de la pantalla 2: ¿se calculan con datos reales (`Cuentas` y `Movimientos`) o quedan como datos de muestra por ahora?

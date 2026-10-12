@@ -113,6 +113,15 @@ fun FinanziaApp(
                         }
                     },
                     onOlvideContrasena = { navController.navigate(Rutas.OLVIDE_CONTRASENA) },
+                    onCrearCuenta = {
+                        // Normalmente se llega aquí desde Crear cuenta: se vuelve a esa pantalla en vez de
+                        // apilar otra copia. Si no estaba en el historial, se abre y reemplaza a esta.
+                        if (!navController.popBackStack(Rutas.CREAR_CUENTA, inclusive = false)) {
+                            navController.navigate(Rutas.CREAR_CUENTA) {
+                                popUpTo(Rutas.INICIAR_SESION) { inclusive = true }
+                            }
+                        }
+                    },
                 )
             }
             composable(Rutas.ACCESO_AUTORIZADO) {

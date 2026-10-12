@@ -272,15 +272,17 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
     // --- Módulo 01 · Inicio de sesión ---
 
     @Test
-    fun iniciarSesion_seLlegaAlBotonYAlEnlace() {
+    fun iniciarSesion_seLlegaAlBotonYALosEnlaces() {
         var entro = false
         var olvido = false
+        var crearCuenta = false
         val auth = FakeAuthRepository().apply { agregarUsuario("Paula Gómez", "paula@ejemplo.com", "Finanzia2026") }
         mostrar {
             IniciarSesionScreen(
                 IniciarSesionViewModel(auth),
                 onEntrar = { entro = true },
                 onOlvideContrasena = { olvido = true },
+                onCrearCuenta = { crearCuenta = true },
             )
         }
         sinTextosCortados()
@@ -289,10 +291,13 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
         alcanzar(etiqueta(Etiquetas.CAMPO_CONTRASENA)).performTextInput("Finanzia2026")
         alcanzar(texto("¿Olvidaste tu contraseña?")).performClick()
         alcanzar(texto("Entrar")).performClick()
+        alcanzar(texto("¿No tienes una cuenta?"))
+        alcanzar(compose.onNode(hasText("Crear cuenta"))).performClick()
         compose.waitForIdle()
 
         assertTrue("El botón Entrar no respondió", entro)
         assertTrue("El enlace ¿Olvidaste tu contraseña? no respondió", olvido)
+        assertTrue("El enlace Crear cuenta no respondió", crearCuenta)
     }
 
     @Test
