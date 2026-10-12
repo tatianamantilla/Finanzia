@@ -30,6 +30,10 @@ import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerosPasosScreen
+import com.finanzia.finanzia.ui.recuperacion.NuevaContrasenaScreen
+import com.finanzia.finanzia.ui.recuperacion.NuevaContrasenaViewModel
+import com.finanzia.finanzia.ui.recuperacion.VerificarIdentidadScreen
+import com.finanzia.finanzia.ui.recuperacion.VerificarIdentidadViewModel
 import com.finanzia.finanzia.ui.registro.CrearCuentaScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaViewModel
 import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
@@ -57,7 +61,14 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
     val compose = createComposeRule()
 
     /** Textos que se recortan con "…" a propósito, como en el diseño. */
-    private val recortesPermitidos = listOf("Revisa tu bandeja en")
+    private val recortesPermitidos = listOf(
+        "Revisa tu bandeja en",
+        "Correo verificado:",
+        // Los placeholders del Paso 1 de olvidar contraseña ocupan una línea, como un campo de texto;
+        // con letra muy grande se recortan con "…".
+        "Ej. carlos_mendoza",
+        "hola@ejemplo.com",
+    )
 
     protected fun mostrar(contenido: @Composable () -> Unit) {
         compose.setContent {
@@ -295,6 +306,80 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
         alcanzar(texto("Finanzia Mobile App v3.4.1"))
 
         assertTrue(continuar)
+    }
+
+    // --- Módulo 02 · Olvidar contraseña ---
+
+    @Test
+    fun verificarIdentidad_seLlegaAlBotonYAlEnlace() {
+        var verificado = false
+        var volver = 0
+        val auth = FakeAuthRepository().apply { agregarUsuario("Paula Gómez", "paula@ejemplo.com", "Finanzia2026") }
+        mostrar {
+            VerificarIdentidadScreen(
+                VerificarIdentidadViewModel(auth),
+                onVerificado = { verificado = true },
+                onVolver = { volver++ },
+            )
+        }
+        sinTextosCortados()
+
+        alcanzar(etiqueta(Etiquetas.BOTON_ATRAS)).performClick()
+        alcanzar(etiqueta(Etiquetas.CAMPO_NOMBRE)).performTextInput("Paula Gómez")
+        alcanzar(etiqueta(Etiquetas.CAMPO_CORREO)).performTextInput("paula@ejemplo.com")
+        alcanzar(texto("Contactar a soporte de Finanzia"))
+        alcanzar(texto("Verificar y continuar")).performClick()
+        alcanzar(texto("Volver a Iniciar sesión")).performClick()
+        compose.waitForIdle()
+
+        assertTrue("Verificar y continuar no respondió", verificado)
+        assertEquals("La flecha y Volver deben regresar al inicio de sesión", 2, volver)
+    }
+
+    @Test
+    fun nuevaContrasena_seLlegaAlBotonYALaCasilla() {
+        var actualizada = false
+        var atras = false
+        val auth = FakeAuthRepository().apply { agregarUsuario("Paula Gómez", "paula.gomez@ejemplo.com", "Finanzia2026") }
+        mostrar {
+            NuevaContrasenaScreen(
+                NuevaContrasenaViewModel(auth, correo = "paula.gomez@ejemplo.com"),
+                onAtras = { atras = true },
+                onActualizada = { actualizada = true },
+            )
+        }
+        sinTextosCortados()
+
+        alcanzar(etiqueta(Etiquetas.BOTON_ATRAS)).performClick()
+        alcanzar(etiqueta(Etiquetas.CAMPO_CONTRASENA)).performTextInput("Finanzia2026!")
+        alcanzar(texto("Al menos 1 símbolo especial"))
+        alcanzar(etiqueta(Etiquetas.CAMPO_CONFIRMACION)).performTextInput("Finanzia2026!")
+        alcanzar(etiqueta(Etiquetas.CASILLA_CERRAR_SESIONES))
+        alcanzar(texto("Actualizar contraseña")).performClick()
+        compose.waitForIdle()
+
+        assertTrue(atras)
+        assertTrue("Actualizar contraseña no respondió", actualizada)
+    }
+
+    @Test
+    fun nuevaContrasenaConError_seLlegaATodo() {
+        val viewModel = NuevaContrasenaViewModel(FakeAuthRepository(), correo = "paula@ejemplo.com")
+        mostrar { NuevaContrasenaScreen(viewModel, onAtras = {}, onActualizada = {}) }
+
+        alcanzar(etiqueta(Etiquetas.CAMPO_CONTRASENA)).performTextInput("Finanzia2026!")
+        alcanzar(etiqueta(Etiquetas.CAMPO_CONFIRMACION)).performTextInput("Finanzia2026?")
+        alcanzar(texto("Actualizar contraseña")).performClick()
+        compose.waitForIdle()
+        sinTextosCortados()
+
+        alcanzar(texto("Las contraseñas no coinciden"))
+        alcanzar(texto("Un símbolo especial"))
+        alcanzar(texto("Ambas contraseñas deben ser idénticas."))
+        alcanzar(texto("Mostrar ambas contraseñas")).performClick()
+        alcanzar(texto("Actualizar contraseña"))
+
+        assertTrue(viewModel.mostrarNueva && viewModel.mostrarConfirmacion)
     }
 }
 

@@ -11,6 +11,12 @@ interface AuthRepository {
     suspend fun crearCuenta(nombre: String, correo: String, contrasena: String): Result<Usuario>
 
     suspend fun iniciarSesion(correo: String, contrasena: String): Result<Usuario>
+
+    /** Olvidar contraseña, Paso 1: comprueba que el nombre de usuario y el correo sean de una cuenta. */
+    suspend fun verificarIdentidad(nombreUsuario: String, correo: String): Result<Unit>
+
+    /** Olvidar contraseña, Paso 2: guarda la contraseña nueva y deja la sesión iniciada. */
+    suspend fun restablecerContrasena(correo: String, nuevaContrasena: String, cerrarOtrasSesiones: Boolean): Result<Usuario>
 }
 
 class CorreoYaRegistradoException : Exception("Este correo ya está registrado")
@@ -18,6 +24,8 @@ class CorreoYaRegistradoException : Exception("Este correo ya está registrado")
 class CorreoNoRegistradoException : Exception("Este correo no está registrado")
 
 class ContrasenaIncorrectaException : Exception("La contraseña es incorrecta")
+
+class NombreUsuarioNoCoincideException : Exception("El nombre de usuario no coincide con este correo")
 
 /**
  * Versión simulada: guarda los usuarios en memoria y se pierden al cerrar la app.
@@ -48,6 +56,39 @@ class FakeAuthRepository : AuthRepository {
         if (registro.huellaContrasena != huella(contrasena)) {
             return Result.failure(ContrasenaIncorrectaException())
         }
+        usuarioActual = registro.usuario
+        return Result.success(registro.usuario)
+    }
+
+    /**
+     * El nombre de usuario se compara con el nombre completo, sin importar mayúsculas
+     * ("Decisiones pendientes" 2 de la spec 02: la tabla Usuarios no tiene nombre de usuario).
+     */
+    // TODO(Supabase): la spec 02 pide NO cambiar la contraseña solo con nombre y correo. En la fase 2,
+    //  usar la recuperación de Supabase Auth (enlace o código al correo) antes de permitir el Paso 2.
+    override suspend fun verificarIdentidad(nombreUsuario: String, correo: String): Result<Unit> {
+        val registro = usuarios[correo.trim().lowercase()]
+            ?: return Result.failure(CorreoNoRegistradoException())
+        if (!registro.usuario.nombre.equals(nombreUsuario.trim(), ignoreCase = true)) {
+            return Result.failure(NombreUsuarioNoCoincideException())
+        }
+        return Result.success(Unit)
+    }
+
+    /** Solo para los tests: si en el último restablecimiento se pidió cerrar las demás sesiones. */
+    var cerroOtrasSesiones: Boolean? = null
+        private set
+
+    // TODO(Supabase): actualizar la contraseña con Supabase Auth y, si se pide, cerrar las demás sesiones.
+    override suspend fun restablecerContrasena(
+        correo: String,
+        nuevaContrasena: String,
+        cerrarOtrasSesiones: Boolean,
+    ): Result<Usuario> {
+        val clave = correo.trim().lowercase()
+        val registro = usuarios[clave] ?: return Result.failure(CorreoNoRegistradoException())
+        usuarios[clave] = Registro(registro.usuario, huella(nuevaContrasena))
+        cerroOtrasSesiones = cerrarOtrasSesiones
         usuarioActual = registro.usuario
         return Result.success(registro.usuario)
     }

@@ -87,11 +87,33 @@ Tras actualizar la contraseña con éxito se muestra "Acceso autorizado" (`olvid
 ## Criterios de aceptación
 
 - [ ] Las cuatro pantallas son visualmente idénticas a sus imágenes.
-- [ ] Los requisitos y la barra de fuerza reaccionan en vivo.
-- [ ] Con confirmación distinta se muestra el estado de error del diseño.
-- [ ] Con contraseña válida e idéntica se actualiza y se llega a "Acceso autorizado".
-- [ ] Una contraseña que no cumple los cuatro requisitos no se puede guardar.
+- [x] Los requisitos y la barra de fuerza reaccionan en vivo.
+- [x] Con confirmación distinta se muestra el estado de error del diseño.
+- [x] Con contraseña válida e idéntica se actualiza y se llega a "Acceso autorizado".
+- [x] Una contraseña que no cumple los cuatro requisitos no se puede guardar.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño.
+
+> Verificación (fase 1, datos simulados): los criterios marcados se comprobaron con los tests de
+> `app/src/test` (`NavegacionOlvideContrasenaTest`, `ValidacionNuevaContrasenaTest`, `PantallasAdaptablesTest`).
+> Los que dependen de una revisión visual en el emulador siguen sin marcar.
+
+## Decisiones tomadas en la fase 1 (confirmar con el equipo)
+
+- **Seguridad (pendiente 1):** en la fase 1 el Paso 1 solo compara nombre y correo con los datos simulados en memoria.
+  Esto es temporal y está marcado con `TODO(Supabase)`: en la fase 2 se debe usar la recuperación de Supabase Auth
+  (enlace o código al correo) antes de permitir el Paso 2, como recomienda esta spec.
+- **Nombre de usuario (pendiente 2):** se compara con el campo `Nombre` (nombre completo), sin importar mayúsculas.
+- **Soporte (pendiente 3):** "Contactar a soporte de Finanzia" se ve, pero no tiene acción.
+- **Textos de fuerza (pendiente 4):** 1 o 2 requisitos = "Seguridad baja" (provisional); 3 = "Seguridad media"; 4 = "Cumple requisitos".
+- Mensajes del Snackbar, uno por cada problema: "Ingresa tu nombre de usuario", "Ingresa tu correo electrónico",
+  "El correo no tiene un formato válido", "Este correo no está registrado", "El nombre de usuario no coincide con este correo",
+  "Ingresa tu nueva contraseña" y "La nueva contraseña no cumple todos los requisitos".
+- La pantalla de error aparece al pulsar "Actualizar contraseña" con dos contraseñas distintas y se mantiene hasta actualizar;
+  el campo de confirmación deja de verse en rojo en cuanto las dos coinciden.
+- La casilla "Cerrar sesión en todos los demás dispositivos" empieza marcada, como en el diseño.
+- El botón azul de persona del Paso 2 se ve, pero no tiene acción (la spec no la define).
+- En `olvidar_contraseña_error.jpeg` la tarjeta "PASO FINAL" tiene un espacio vacío a la izquierda (parece una imagen que
+  no cargó). Se dejó sin ese espacio: confirmar si va una ilustración.
 
 ## Decisión de seguridad (leer antes de implementar)
 

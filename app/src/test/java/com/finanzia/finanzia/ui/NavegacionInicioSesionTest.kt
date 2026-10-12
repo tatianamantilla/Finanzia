@@ -117,7 +117,7 @@ class NavegacionInicioSesionTest {
     @Test
     fun olvidasteTuContrasenaAbreLaRecuperacion() {
         clic("¿Olvidaste tu contraseña?")
-        compose.onNodeWithTag(Etiquetas.PANTALLA_OLVIDE_CONTRASENA).assertIsDisplayed()
+        seVe("PASO 1 DE 2")
     }
 
     // --- Pantalla 2 · Acceso autorizado ---

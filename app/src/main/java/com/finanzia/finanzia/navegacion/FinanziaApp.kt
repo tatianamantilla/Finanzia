@@ -1,8 +1,11 @@
 package com.finanzia.finanzia.navegacion
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,6 +18,10 @@ import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerosPasosScreen
+import com.finanzia.finanzia.ui.recuperacion.NuevaContrasenaScreen
+import com.finanzia.finanzia.ui.recuperacion.NuevaContrasenaViewModel
+import com.finanzia.finanzia.ui.recuperacion.VerificarIdentidadScreen
+import com.finanzia.finanzia.ui.recuperacion.VerificarIdentidadViewModel
 import com.finanzia.finanzia.ui.registro.CrearCuentaScreen
 import com.finanzia.finanzia.ui.registro.CrearCuentaViewModel
 import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
@@ -33,6 +40,11 @@ object Rutas {
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
+    const val ARG_CORREO = "correo"
+    const val NUEVA_CONTRASENA = "nueva_contrasena/{$ARG_CORREO}"
+
+    /** Ruta del Paso 2 con el correo ya verificado en el Paso 1. */
+    fun nuevaContrasena(correo: String) = "nueva_contrasena/${Uri.encode(correo)}"
 }
 
 /** Punto de entrada de las pantallas. Recibe los repositorios para que los tests usen los suyos. */
@@ -109,13 +121,33 @@ fun FinanziaApp(
                     onContinuar = irAlDashboard,
                 )
             }
+            // Módulo 02 · Olvidar contraseña
+            composable(Rutas.OLVIDE_CONTRASENA) {
+                VerificarIdentidadScreen(
+                    viewModel = viewModel { VerificarIdentidadViewModel(auth) },
+                    onVerificado = { correo -> navController.navigate(Rutas.nuevaContrasena(correo)) },
+                    onVolver = { navController.popBackStack(Rutas.INICIAR_SESION, inclusive = false) },
+                )
+            }
+            composable(
+                Rutas.NUEVA_CONTRASENA,
+                arguments = listOf(navArgument(Rutas.ARG_CORREO) { type = NavType.StringType }),
+            ) { entrada ->
+                val correo = entrada.arguments?.getString(Rutas.ARG_CORREO).orEmpty()
+                NuevaContrasenaScreen(
+                    viewModel = viewModel { NuevaContrasenaViewModel(auth, correo) },
+                    onAtras = { navController.popBackStack() },
+                    onActualizada = {
+                        // Con la contraseña cambiada, "atrás" no debe volver al restablecimiento.
+                        navController.navigate(Rutas.ACCESO_AUTORIZADO) {
+                            popUpTo(Rutas.INICIAR_SESION) { inclusive = true }
+                        }
+                    },
+                )
+            }
             // Pantallas provisionales: no son parte de este módulo.
             composable(Rutas.DASHBOARD) {
                 PantallaProvisional("Dashboard", Etiquetas.PANTALLA_DASHBOARD)
-            }
-            composable(Rutas.OLVIDE_CONTRASENA) {
-                // TODO(Módulo 02): reemplazar por la pantalla de docs/specs/02-olvidar-contrasena.md.
-                PantallaProvisional("Olvidé mi contraseña", Etiquetas.PANTALLA_OLVIDE_CONTRASENA)
             }
         }
     }
