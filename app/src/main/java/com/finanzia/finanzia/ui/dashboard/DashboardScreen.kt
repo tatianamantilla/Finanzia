@@ -2,6 +2,8 @@ package com.finanzia.finanzia.ui.dashboard
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -85,6 +87,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.finanzia.finanzia.datos.CATEGORIA_INGRESOS
 import com.finanzia.finanzia.datos.CUENTA_PRINCIPAL
 import com.finanzia.finanzia.datos.CuentaDashboard
@@ -365,11 +368,13 @@ private fun TarjetaBalance(resumen: ResumenDashboard, visible: Boolean, onOjo: (
         Spacer(Modifier.height(18.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(
+                // El balance se ve completo: si un monto largo no cabe, la letra se reduce lo justo
+                // (con montos que caben queda del tamaño del diseño).
+                BasicText(
                     if (visible) FormatosDashboard.monto(resumen.balance) else "••••••",
                     style = estilo(38, FontWeight.ExtraBold, Blanco, altoLinea = 46, espaciado = -0.5),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = 38.sp, stepSize = 1.sp),
                     modifier = Modifier.testTag(Etiquetas.MONTO_BALANCE),
                 )
                 // Sin "• • • • 8492": esos dígitos no existen en los datos (spec 04).

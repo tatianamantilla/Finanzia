@@ -95,19 +95,39 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 ## Criterios de aceptación
 
 - [ ] La pantalla es visualmente idéntica a las imágenes (colores, degradados, tipografía, íconos, textos y orden).
-- [ ] Después del onboarding muestra el nombre real del usuario, el balance, los ingresos, los gastos y los movimientos que acaba de registrar.
-- [ ] Tras cerrar sesión e iniciar sesión de nuevo, muestra los mismos datos.
-- [ ] El balance es igual al saldo inicial + ingresos − gastos.
-- [ ] Los movimientos aparecen del más reciente al más antiguo, con monto en verde y `+` para ingresos, y rojo y `-` para gastos, y la categoría correcta.
-- [ ] El ojo muestra y oculta el balance.
-- [ ] "Cerrar sesión" cierra la sesión y lleva al inicio de sesión.
-- [ ] Un usuario sin movimientos ve `$0.00` y el texto "Aún no tienes movimientos".
+- [x] Después del onboarding muestra el nombre real del usuario, el balance, los ingresos, los gastos y los movimientos que acaba de registrar.
+- [x] Tras cerrar sesión e iniciar sesión de nuevo, muestra los mismos datos.
+- [x] El balance es igual al saldo inicial + ingresos − gastos.
+- [x] Los movimientos aparecen del más reciente al más antiguo, con monto en verde y `+` para ingresos, y rojo y `-` para gastos, y la categoría correcta.
+- [x] El ojo muestra y oculta el balance.
+- [x] "Cerrar sesión" cierra la sesión y lleva al inicio de sesión.
+- [x] Un usuario sin movimientos ve `$0.00` y el texto "Aún no tienes movimientos".
 - [ ] Un usuario solo ve sus propios datos.
-- [ ] Se puede hacer scroll hasta el final en pantalla pequeña y los botones no quedan tapados.
-- [ ] No hay ningún dato inventado: no aparecen "Paula", "$12,450.00", "8492", "Mercadona", "Vacaciones", "12% extra" ni "3 suscripciones" si el usuario no los ingresó.
+- [x] Se puede hacer scroll hasta el final en pantalla pequeña y los botones no quedan tapados.
+- [x] No hay ningún dato inventado: no aparecen "Paula", "$12,450.00", "8492", "Mercadona", "Vacaciones", "12% extra" ni "3 suscripciones" si el usuario no los ingresó.
 - [ ] Un usuario sin metas ve "Aún no tienes metas" y uno con metas ve su meta real con su progreso.
-- [ ] El texto del consejo y la pastilla "Saludable" salen de los datos reales del usuario y cambian cuando cambian sus movimientos.
+- [x] El texto del consejo y la pastilla "Saludable" salen de los datos reales del usuario y cambian cuando cambian sus movimientos.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño (salvo el menú de cerrar sesión y los estados vacíos).
+
+> Verificación: los criterios marcados se comprobaron con `CalculosDashboardTest`, `FormatosDashboardTest`,
+> `DashboardTest`, `DashboardNavegacionTest`, `DashboardPantallaPequenaTest`, la prueba manual contra Supabase real
+> `integracion/manual/DemoMateoMarinTest` (Mateo Marin) y en el emulador (iniciar sesión, Dashboard y cerrar sesión).
+> Sin marcar: la igualdad visual exacta y "ningún elemento ni color nuevo" (revisión a ojo del equipo); "un usuario solo
+> ve sus propios datos" (las políticas RLS están activas, pero falta una prueba con dos usuarios reales); y la meta real
+> con progreso (se probó la pantalla con datos simulados, pero no la lectura de `metas` y `aportes` desde Supabase,
+> porque ningún usuario tiene metas).
+
+## Decisiones tomadas por defecto (confirmar con el equipo)
+
+- Pendiente 1: pastilla "Saludable" = ahorro del mes; consejo = categoría con más gasto del mes (porcentaje redondeado a entero).
+- Pendiente 2: campana, "Ver todos", "+", "Conversar con Finanzia IA", chevron y pestañas se ven pero no tienen acción.
+- Pendiente 3: los recuadros Ingresos y Gastos muestran el **mes actual** (zona horaria del teléfono).
+- Pendiente 4: "Cuenta …" muestra la primera cuenta activa (la "Principal").
+- Pendiente 5: la frecuencia se guarda en `usuarios.frecuencia_ingreso` (columna de `docs/supabase/01-usuarios-y-auth.sql`).
+- Subtítulo del saludo: "Aquí tienes el resumen financiero de hoy", en una línea y cortado con "…" como en el diseño.
+- El balance grande reduce su letra solo si un monto largo no cabe (con montos cortos queda igual al diseño).
+- Línea de tendencia: un punto por movimiento con el balance acumulado.
+- Color de cada fila: el color de la categoría en `colores`, suavizado como fondo del ícono.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 

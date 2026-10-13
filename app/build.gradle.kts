@@ -78,13 +78,19 @@ android {
     }
     testOptions {
         unitTests {
-            // Los tests de integración (paquete "integracion") hablan con Supabase real: solo corren con
-            // ./gradlew testDebugUnitTest -Pintegracion. Sin esa opción se excluyen y no cuentan.
+            // Tests contra Supabase real (carpeta "integracion"), aparte de los normales:
+            // - ./gradlew testDebugUnitTest -Pintegracion → solo lectura y comprobaciones.
+            // - ./gradlew testDebugUnitTest -Pdemo        → prueba MANUAL de Mateo Marin (escribe datos reales).
+            // Sin esas opciones se excluyen y no cuentan.
             all { prueba ->
-                if (project.hasProperty("integracion")) {
-                    prueba.filter.includeTestsMatching("com.finanzia.finanzia.integracion.*")
-                } else {
-                    prueba.filter.excludeTestsMatching("com.finanzia.finanzia.integracion.*")
+                when {
+                    project.hasProperty("demo") ->
+                        prueba.filter.includeTestsMatching("com.finanzia.finanzia.integracion.manual.*")
+                    project.hasProperty("integracion") -> {
+                        prueba.filter.includeTestsMatching("com.finanzia.finanzia.integracion.*")
+                        prueba.filter.excludeTestsMatching("com.finanzia.finanzia.integracion.manual.*")
+                    }
+                    else -> prueba.filter.excludeTestsMatching("com.finanzia.finanzia.integracion.*")
                 }
             }
             // Permite correr los tests de Compose en la computadora (Robolectric), sin emulador.

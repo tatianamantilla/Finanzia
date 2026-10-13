@@ -91,6 +91,16 @@ Están en `app/src/test/java/com/finanzia/finanzia/integracion/`. No corren con 
 ./gradlew :app:testDebugUnitTest -Pintegracion
 ```
 
+### Prueba manual con el usuario de demostración (Mateo Marin)
+
+`app/src/test/java/com/finanzia/finanzia/integracion/manual/DemoMateoMarinTest.kt` registra (o reutiliza) al usuario de demostración **Mateo Marin**, hace el onboarding completo (ingreso mensual y gasto en Comida), cierra sesión, vuelve a entrar y comprueba el Dashboard. **Escribe datos reales y no los borra**; es idempotente (no duplica nada). Sus movimientos dicen "DEMO Mateo Marin".
+
+```
+./gradlew :app:testDebugUnitTest -Pdemo
+```
+
+Necesita `DEMO_PASSWORD` en `local.properties` (nunca en el código). En Android Studio: *Run → Edit Configurations → + Gradle* con la tarea `:app:testDebugUnitTest -Pdemo`.
+
 ## Supabase (fase 2)
 
 - SDK oficial **supabase-kt 3.8.0** (Auth + Postgrest) con Ktor 3.5.1. Requiere **Kotlin 2.4.20**.

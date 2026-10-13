@@ -111,13 +111,17 @@ Permitir que una persona nueva cree su cuenta y pase por un onboarding corto don
 ## Criterios de aceptación
 
 - [ ] Las cinco pantallas son visualmente idénticas a sus imágenes.
-- [ ] Se puede crear una cuenta y el usuario aparece en Supabase (Auth y tabla `Usuarios`).
+- [x] Se puede crear una cuenta y el usuario aparece en Supabase (Auth y tabla `Usuarios`).
 - [x] Los tres indicadores de contraseña reaccionan en vivo y la casilla es obligatoria.
 - [x] La navegación entre las pantallas 1 a 5 y hacia el Dashboard funciona como se describe.
 - [x] En las pantallas 4 y 5 solo se puede seleccionar una opción a la vez.
 - [x] "Omitir este paso por ahora" no guarda nada.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño.
 
+> Verificación (fase 2, Supabase real): la creación de cuenta se comprobó con la prueba manual
+> `integracion/manual/DemoMateoMarinTest` (registro en Auth, fila en `usuarios`, cuenta "Principal",
+> 5 categorías con color, primer ingreso y primer gasto) y en el emulador.
+>
 > Verificación (fase 1, datos simulados): los criterios marcados se comprobaron con los tests de
 > `app/src/test` (`NavegacionCrearCuentaTest`, `ValidacionRegistroTest`, `MontosTest`). Los que dependen de
 > Supabase o de una revisión visual en el emulador siguen sin marcar.
@@ -126,7 +130,9 @@ Permitir que una persona nueva cree su cuenta y pase por un onboarding corto don
 
 - **Montos sin decimales**: la app pone sola las comas de miles (`18,500`), sin `.00`. Esto reemplaza el formato con dos decimales de la Pantalla 4 y la Pantalla 5.
 - Con el campo de monto vacío se muestra un `0` gris como placeholder.
-- Errores de validación: el botón se ve siempre igual y, al tocarlo, un Snackbar dice qué falta o qué está mal.
+- Errores de validación (fase 2): sin Snackbar. Cada error va en rojo dentro de su campo (borde rojo, fondo rosado,
+  etiqueta roja, ícono de alerta y texto debajo) con el estilo de `olvidar_contraseña_error.jpeg`, y se borra al corregir.
+  Los errores que no son de un campo (sin conexión, confirmar correo) van en rojo sobre el botón.
 - "Iniciar sesión" lleva a una pantalla provisional hasta que se construya el módulo 01.
 - Los enlaces de Términos y Política se ven, pero no tienen acción (punto 6 de las decisiones pendientes).
 - Tipografía: Manrope (Google Fonts), incluida en la app.
