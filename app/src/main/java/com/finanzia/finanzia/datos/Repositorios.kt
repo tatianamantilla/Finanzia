@@ -1,11 +1,13 @@
 package com.finanzia.finanzia.datos
 
-/** Repositorios que usa la app al ejecutarse. Los tests crean los suyos. */
+import com.finanzia.finanzia.datos.supabase.SupabaseAuthRepository
+import com.finanzia.finanzia.datos.supabase.SupabaseOnboardingRepository
+
+/**
+ * Repositorios que usa la app al ejecutarse: los reales, conectados a Supabase.
+ * Los tests crean los suyos con las versiones simuladas (FakeAuthRepository, FakeOnboardingRepository).
+ */
 object Repositorios {
-    // TODO(Supabase): usar las implementaciones reales y quitar el usuario de prueba.
-    val auth: AuthRepository = FakeAuthRepository().apply {
-        // Usuario de prueba para entrar en el emulador (los datos simulados se borran al cerrar la app).
-        agregarUsuario(nombre = "Paula Gómez", correo = "paula@ejemplo.com", contrasena = "Finanzia2026")
-    }
-    val onboarding: OnboardingRepository = FakeOnboardingRepository()
+    val auth: AuthRepository by lazy { SupabaseAuthRepository() }
+    val onboarding: OnboardingRepository by lazy { SupabaseOnboardingRepository() }
 }
