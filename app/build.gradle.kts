@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // --- Claves de Supabase ---
@@ -77,6 +78,15 @@ android {
     }
     testOptions {
         unitTests {
+            // Los tests de integración (paquete "integracion") hablan con Supabase real: solo corren con
+            // ./gradlew testDebugUnitTest -Pintegracion. Sin esa opción se excluyen y no cuentan.
+            all { prueba ->
+                if (project.hasProperty("integracion")) {
+                    prueba.filter.includeTestsMatching("com.finanzia.finanzia.integracion.*")
+                } else {
+                    prueba.filter.excludeTestsMatching("com.finanzia.finanzia.integracion.*")
+                }
+            }
             // Permite correr los tests de Compose en la computadora (Robolectric), sin emulador.
             isIncludeAndroidResources = true
         }
@@ -95,6 +105,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    // Supabase (SDK oficial supabase-kt): Auth para cuentas y sesiones, Postgrest para las tablas.
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.ktor.client.okhttp)
     testImplementation(libs.junit)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)

@@ -83,6 +83,25 @@ Los tests corren en la computadora, sin emulador (los de pantallas usan Robolect
 
 En Android Studio: clic derecho sobre `app/src/test` → *Run 'Tests in…'*.
 
+### Tests de integración (Supabase real)
+
+Están en `app/src/test/java/com/finanzia/finanzia/integracion/`. No corren con el comando anterior: necesitan internet y las claves de `local.properties`.
+
+```
+./gradlew :app:testDebugUnitTest -Pintegracion
+```
+
+## Supabase (fase 2)
+
+- SDK oficial **supabase-kt 3.8.0** (Auth + Postgrest) con Ktor 3.5.1. Requiere **Kotlin 2.4.20**.
+- El cliente está en `datos/supabase/ClienteSupabase.kt` y lee la URL y la clave desde `BuildConfig`.
+- Los cambios de la base de datos están en `docs/supabase/`. La app **no** los ejecuta: se revisan y se corren a mano en Supabase → SQL Editor, en este orden:
+  1. `00-consultar-esquema.sql`: solo lectura; muestra tablas, permisos y políticas.
+  2. `01-usuarios-y-auth.sql`: quita `contrasena`, une `usuarios` con Auth y agrega la frecuencia del ingreso. Crea el trigger que, al registrarse, crea la fila en `usuarios`, la cuenta "Principal" y las categorías.
+  3. `02-permisos-y-rls.sql`: quita los permisos al rol anónimo y activa RLS para que cada persona vea solo sus datos.
+  4. `03-limpieza-pruebas.sql` (opcional): permite que los usuarios de prueba de los tests de integración se borren solos.
+- En Supabase está **desactivada** la confirmación por correo (Authentication → Sign In / Providers → Confirm email).
+
 ## Pantallas adaptables
 
 - Todas las pantallas usan `ContenidoDesplazable` (`ui/componentes/Componentes.kt`): se desplazan cuando el contenido no cabe, respetan las barras del sistema y el teclado, y en tabletas centran el contenido con un ancho máximo de 480 dp.
