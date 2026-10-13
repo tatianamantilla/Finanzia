@@ -1,15 +1,19 @@
 package com.finanzia.finanzia.datos.supabase
 
 import com.finanzia.finanzia.datos.AuthRepository
+import com.finanzia.finanzia.datos.CorreoNoRegistradoException
 import com.finanzia.finanzia.datos.CorreoYaRegistradoException
+import com.finanzia.finanzia.datos.NombreUsuarioNoCoincideException
 import com.finanzia.finanzia.datos.Usuario
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -18,9 +22,6 @@ import kotlinx.serialization.json.put
 class CredencialesIncorrectasException : Exception("El correo o la contraseña son incorrectos")
 
 class SinConexionException : Exception("No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.")
-
-class RecuperacionNoDisponibleException :
-    Exception("La recuperación de contraseña todavía no está disponible.")
 
 /**
  * Registro e inicio de sesión con Supabase Auth.
@@ -76,16 +77,66 @@ class SupabaseAuthRepository(
             cargarUsuario(info, nombrePorDefecto = null)
         }
 
-    // TODO(Supabase): decisión pendiente del equipo (spec 02). Comprobar solo nombre y correo no es
-    //  seguro con usuarios reales: hay que usar la recuperación de Supabase Auth (código al correo).
+    /**
+     * Olvidé mi contraseña · Paso 1: comprueba nombre y correo con la función
+     * `verificar_identidad` (docs/supabase/04-recuperar-contrasena.sql).
+     *
+     * ADVERTENCIA (decisión del equipo, spec 02): solo nombre + correo no es seguro con usuarios
+     * reales. Antes de publicar la app, cambiarlo por un código enviado al correo.
+     */
     override suspend fun verificarIdentidad(nombreUsuario: String, correo: String): Result<Unit> =
-        Result.failure(RecuperacionNoDisponibleException())
+        intentar {
+            val resultado = llamarFuncion("verificar_identidad") {
+                put("p_nombre", nombreUsuario.trim())
+                put("p_correo", correo.trim())
+            }
+            lanzarSiNoEsOk(resultado)
+            // El Paso 2 solo recibe el correo: se recuerda el nombre ya verificado.
+            nombresVerificados[correo.trim().lowercase()] = nombreUsuario.trim()
+            Unit
+        }
 
+    /** Olvidé mi contraseña · Paso 2: guarda la contraseña nueva y deja la sesión iniciada. */
     override suspend fun restablecerContrasena(
         correo: String,
         nuevaContrasena: String,
         cerrarOtrasSesiones: Boolean,
-    ): Result<Usuario> = Result.failure(RecuperacionNoDisponibleException())
+    ): Result<Usuario> = intentar {
+        val clave = correo.trim().lowercase()
+        val nombre = nombresVerificados[clave]
+            ?: error("Vuelve al paso anterior y verifica tu identidad otra vez.")
+        val resultado = llamarFuncion("restablecer_contrasena") {
+            put("p_nombre", nombre)
+            put("p_correo", correo.trim())
+            put("p_nueva", nuevaContrasena)
+            put("p_cerrar_sesiones", cerrarOtrasSesiones)
+        }
+        lanzarSiNoEsOk(resultado)
+        nombresVerificados.remove(clave)
+
+        // Con la contraseña nueva se inicia sesión para llegar a "Acceso autorizado".
+        cliente.auth.signInWith(Email) {
+            email = correo.trim()
+            password = nuevaContrasena
+        }
+        val info = cliente.auth.currentUserOrNull() ?: error("No se pudo iniciar sesión. Inténtalo de nuevo.")
+        cargarUsuario(info, nombrePorDefecto = nombre)
+    }
+
+    private val nombresVerificados = mutableMapOf<String, String>()
+
+    private suspend fun llamarFuncion(nombre: String, parametros: JsonObjectBuilder.() -> Unit): String =
+        cliente.postgrest.rpc(nombre, buildJsonObject(parametros)).decodeAs<String>()
+
+    private fun lanzarSiNoEsOk(resultado: String) {
+        when (resultado) {
+            "ok" -> Unit
+            "correo_no_registrado" -> throw CorreoNoRegistradoException()
+            "nombre_no_coincide" -> throw NombreUsuarioNoCoincideException()
+            "contrasena_invalida" -> error("La contraseña no cumple los requisitos.")
+            else -> error("No se pudo verificar tu identidad. Inténtalo de nuevo.")
+        }
+    }
 
     /** Lee nombre y correo de la tabla `usuarios` (la RLS solo deja ver la fila propia). */
     private suspend fun cargarUsuario(info: UserInfo, nombrePorDefecto: String?): Usuario {
@@ -111,6 +162,10 @@ class SupabaseAuthRepository(
         } catch (e: CorreoYaRegistradoException) {
             Result.failure(e)
         } catch (e: CredencialesIncorrectasException) {
+            Result.failure(e)
+        } catch (e: CorreoNoRegistradoException) {
+            Result.failure(e)
+        } catch (e: NombreUsuarioNoCoincideException) {
             Result.failure(e)
         } catch (e: io.github.jan.supabase.exceptions.HttpRequestException) {
             Result.failure(SinConexionException())
