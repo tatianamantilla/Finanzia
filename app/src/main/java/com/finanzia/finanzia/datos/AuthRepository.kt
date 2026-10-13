@@ -17,6 +17,12 @@ interface AuthRepository {
 
     /** Olvidar contraseña, Paso 2: guarda la contraseña nueva y deja la sesión iniciada. */
     suspend fun restablecerContrasena(correo: String, nuevaContrasena: String, cerrarOtrasSesiones: Boolean): Result<Usuario>
+
+    /** Al abrir la app: recupera la sesión guardada en el teléfono, o `null` si no hay ninguna. */
+    suspend fun restaurarSesion(): Usuario? = usuarioActual
+
+    /** Cierra la sesión (menú del Dashboard). */
+    suspend fun cerrarSesion(): Result<Unit>
 }
 
 class CorreoYaRegistradoException : Exception("Este correo ya está registrado")
@@ -26,6 +32,18 @@ class CorreoNoRegistradoException : Exception("Este correo no está registrado")
 class ContrasenaIncorrectaException : Exception("La contraseña es incorrecta")
 
 class NombreUsuarioNoCoincideException : Exception("El nombre de usuario no coincide con este correo")
+
+/** Supabase no dice si falló el correo o la contraseña (por seguridad): un solo mensaje para ambos. */
+class CredencialesIncorrectasException : Exception("El correo o la contraseña son incorrectos")
+
+class SinConexionException : Exception("No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.")
+
+/** Supabase pide confirmar el correo antes de entregar la sesión. */
+class ConfirmacionCorreoPendienteException :
+    Exception("Revisa tu correo y confirma tu cuenta antes de iniciar sesión.")
+
+/** La sesión ya no existe (se cerró o venció). */
+class SesionTerminadaException : Exception("Tu sesión terminó. Inicia sesión de nuevo.")
 
 /**
  * Versión simulada: guarda los usuarios en memoria y se pierden al cerrar la app.
@@ -91,6 +109,11 @@ class FakeAuthRepository : AuthRepository {
         cerroOtrasSesiones = cerrarOtrasSesiones
         usuarioActual = registro.usuario
         return Result.success(registro.usuario)
+    }
+
+    override suspend fun cerrarSesion(): Result<Unit> {
+        usuarioActual = null
+        return Result.success(Unit)
     }
 
     /** Agrega un usuario sin iniciar sesión (para el usuario de prueba y los tests). */

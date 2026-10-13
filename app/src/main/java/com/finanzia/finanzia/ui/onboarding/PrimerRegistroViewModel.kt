@@ -11,14 +11,12 @@ import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.datos.PrimerGasto
 import com.finanzia.finanzia.datos.PrimerIngreso
 import com.finanzia.finanzia.validacion.Montos
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /**
  * Estado común de las pantallas 4 y 5: un monto y una sola opción seleccionada.
  * [T] es la frecuencia del ingreso o la categoría del gasto.
+ * Los errores se muestran en rojo dentro de la pantalla (sin Snackbar).
  */
 abstract class PrimerRegistroViewModel<T>(opcionInicial: T) : ViewModel() {
 
@@ -30,26 +28,29 @@ abstract class PrimerRegistroViewModel<T>(opcionInicial: T) : ViewModel() {
     var guardando by mutableStateOf(false)
         private set
 
-    private val canalMensajes = Channel<String>(Channel.BUFFERED)
-    val mensajes: Flow<String> = canalMensajes.receiveAsFlow()
+    /** Monto vacío o en cero: va en rojo dentro de la tarjeta del monto. */
+    var errorMonto by mutableStateOf<String?>(null)
+        private set
 
-    fun cambiarMonto(entrada: String) { monto = Montos.limpiar(entrada) }
-    fun seleccionar(nueva: T) { opcion = nueva }
+    /** Errores al guardar (sin conexión, sesión terminada…), sobre el botón. */
+    var errorGeneral by mutableStateOf<String?>(null)
+        private set
+
+    fun cambiarMonto(entrada: String) { monto = Montos.limpiar(entrada); errorMonto = null; errorGeneral = null }
+    fun seleccionar(nueva: T) { opcion = nueva; errorGeneral = null }
 
     protected abstract suspend fun persistir(monto: Long, opcion: T): Result<Unit>
 
     fun guardar(alTerminar: () -> Unit) {
         if (guardando) return
-        val error = Montos.validar(monto)
-        if (error != null) {
-            canalMensajes.trySend(error.mensaje)
-            return
-        }
+        errorMonto = Montos.validar(monto)?.mensaje
+        errorGeneral = null
+        if (errorMonto != null) return
         guardando = true
         viewModelScope.launch {
             persistir(monto.toLong(), opcion)
                 .onSuccess { alTerminar() }
-                .onFailure { canalMensajes.send(it.message ?: "No se pudo guardar. Inténtalo de nuevo.") }
+                .onFailure { errorGeneral = it.message ?: "No se pudo guardar. Inténtalo de nuevo." }
             guardando = false
         }
     }

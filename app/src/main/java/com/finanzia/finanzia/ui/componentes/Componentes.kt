@@ -34,6 +34,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,6 +53,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +69,8 @@ import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.theme.AzulEnlace
 import com.finanzia.finanzia.ui.theme.AzulMarino
 import com.finanzia.finanzia.ui.theme.Blanco
+import com.finanzia.finanzia.ui.theme.ErrorCirculo
+import com.finanzia.finanzia.ui.theme.ErrorRojo
 import com.finanzia.finanzia.ui.theme.BordeTarjeta
 import com.finanzia.finanzia.ui.theme.GrisRadio
 import com.finanzia.finanzia.ui.theme.GrisSuave
@@ -190,6 +197,7 @@ fun BotonPrincipal(
     forma: Shape = RoundedCornerShape(18.dp),
     colorSombra: Color = Color(0x4010B981),
     tamanoTexto: Int = 18,
+    cargando: Boolean = false,
 ) {
     Box(
         modifier = modifier
@@ -198,7 +206,9 @@ fun BotonPrincipal(
             .shadow(10.dp, forma, ambientColor = colorSombra, spotColor = colorSombra)
             .clip(forma)
             .background(fondo)
-            .clickable(role = Role.Button, onClick = onClick)
+            // Mientras espera a Supabase no responde a más toques (evita registros dobles).
+            .clickable(role = Role.Button, enabled = !cargando, onClick = onClick)
+            .semantics { if (cargando) stateDescription = Etiquetas.CARGANDO }
             .padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -209,13 +219,57 @@ fun BotonPrincipal(
                 modifier = Modifier.weight(1f, fill = false),
             )
             Spacer(Modifier.width(12.dp))
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = Blanco,
-                modifier = Modifier.size(22.dp),
-            )
+            // Estado de carga: el botón se ve igual; solo la flecha se vuelve un círculo girando.
+            Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
+                if (cargando) {
+                    CircularProgressIndicator(color = Blanco, strokeWidth = 2.5.dp, modifier = Modifier.size(20.dp))
+                } else {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Blanco,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
         }
+    }
+}
+
+/**
+ * Texto de error en rojo debajo de un campo (o de la pantalla), con el ícono de alerta.
+ * Mismo estilo que "Ambas contraseñas deben ser idénticas." de olvidar_contraseña_error.jpeg.
+ */
+@Composable
+fun MensajeError(texto: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            Icons.Outlined.WarningAmber,
+            contentDescription = "Error",
+            tint = ErrorRojo,
+            modifier = Modifier.padding(top = 1.dp).size(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(texto, style = estilo(13, FontWeight.SemiBold, ErrorRojo, altoLinea = 18))
+    }
+}
+
+/** Círculo rojo con "!" que va a la derecha de un campo con error (como en el diseño de error). */
+@Composable
+fun IconoAlertaCampo() {
+    Box(
+        Modifier
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(ErrorCirculo),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Filled.PriorityHigh, contentDescription = null, tint = Blanco, modifier = Modifier.size(15.dp))
     }
 }
 

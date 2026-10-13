@@ -11,6 +11,16 @@ object Etiquetas {
     const val CAMPO_MONTO = "campo_monto"
     const val BOTON_ATRAS = "boton_atras"
     const val PANTALLA_DASHBOARD = "pantalla_dashboard"
+    const val BOTON_OJO_BALANCE = "boton_ojo_balance"
+    const val BOTON_PERFIL = "boton_perfil"
+    const val MONTO_BALANCE = "monto_balance"
+    const val LINEA_TENDENCIA = "linea_tendencia"
+    const val PASTILLA_SALUDABLE = "pastilla_saludable"
+    const val FILA_MOVIMIENTO = "fila_movimiento"
+    const val BOTON_REINTENTAR = "boton_reintentar"
+
+    // Estado del botón principal mientras espera a Supabase.
+    const val CARGANDO = "Cargando"
 
     // Estado de los indicadores de contraseña (también lo leen los lectores de pantalla).
     const val INDICADOR_CUMPLIDO = "Cumplido"

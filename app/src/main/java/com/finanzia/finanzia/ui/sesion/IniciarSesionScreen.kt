@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +48,8 @@ import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.PreviewsFinanzia
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
+import com.finanzia.finanzia.ui.componentes.IconoAlertaCampo
+import com.finanzia.finanzia.ui.componentes.MensajeError
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.PieConEnlace
@@ -60,13 +61,15 @@ import com.finanzia.finanzia.ui.theme.AzulMarino
 import com.finanzia.finanzia.ui.theme.Blanco
 import com.finanzia.finanzia.ui.theme.BordeTarjeta
 import com.finanzia.finanzia.ui.theme.DegradadoPrincipal
+import com.finanzia.finanzia.ui.theme.ErrorRojo
+import com.finanzia.finanzia.ui.theme.ErrorRosaBorde
+import com.finanzia.finanzia.ui.theme.ErrorRosaFondo
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
 import com.finanzia.finanzia.ui.theme.GrisEtiqueta
 import com.finanzia.finanzia.ui.theme.GrisTexto
 import com.finanzia.finanzia.ui.theme.VerdeMarca
 import com.finanzia.finanzia.ui.theme.VerdeTexto
-import kotlinx.coroutines.flow.collectLatest
 
 private val GrisIcono = Color(0xFF6B7280)
 private val GrisPlaceholderClaro = Color(0xFFB8C2CF)
@@ -79,13 +82,7 @@ fun IniciarSesionScreen(
     onOlvideContrasena: () -> Unit,
     onCrearCuenta: () -> Unit,
 ) {
-    val snackbar = remember { SnackbarHostState() }
-    LaunchedEffect(viewModel) {
-        // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
-        viewModel.mensajes.collectLatest { snackbar.showSnackbar(it) }
-    }
-
-    PantallaBase(fondo = Modifier.background(FondoPantalla), snackbar = snackbar) {
+    PantallaBase(fondo = Modifier.background(FondoPantalla)) {
         // En el diseño todo el bloque queda centrado en vertical: los dos espacios flexibles lo logran.
         ContenidoDesplazable(margenHorizontal = 28.dp, llenarAlto = true, alineacion = Alignment.CenterHorizontally) {
             Spacer(Modifier.weight(1f).heightIn(min = 32.dp))
@@ -105,6 +102,7 @@ fun IniciarSesionScreen(
             Spacer(Modifier.height(28.dp))
 
             CampoSesion(
+                error = viewModel.errorCorreo,
                 etiqueta = "CORREO ELECTRÓNICO",
                 valor = viewModel.correo,
                 onCambio = viewModel::cambiarCorreo,
@@ -115,6 +113,7 @@ fun IniciarSesionScreen(
             )
             Spacer(Modifier.height(16.dp))
             CampoSesion(
+                error = viewModel.errorContrasena,
                 etiqueta = "CONTRASEÑA",
                 valor = viewModel.contrasena,
                 onCambio = viewModel::cambiarContrasena,
@@ -146,8 +145,12 @@ fun IniciarSesionScreen(
                     .padding(horizontal = 8.dp, vertical = 6.dp),
             )
             Spacer(Modifier.height(18.dp))
+            viewModel.errorGeneral?.let {
+                MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp))
+            }
             BotonPrincipal(
                 texto = "Entrar",
+                cargando = viewModel.enviando,
                 fondo = DegradadoPrincipal,
                 onClick = { viewModel.entrar(onEntrar) },
                 alto = 56.dp,
@@ -184,6 +187,7 @@ private fun LogoFinanzia() {
 /** Campo blanco con el ícono a la izquierda y la etiqueta en mayúsculas dentro del recuadro. */
 @Composable
 private fun CampoSesion(
+    error: String?,
     etiqueta: String,
     valor: String,
     onCambio: (String) -> Unit,
@@ -195,11 +199,13 @@ private fun CampoSesion(
     alFinal: (@Composable () -> Unit)? = null,
 ) {
     val forma = RoundedCornerShape(20.dp)
+    val conError = error != null
+    val colorIcono = if (conError) ErrorRojo else GrisIcono
     BasicTextField(
         value = valor,
         onValueChange = onCambio,
         singleLine = true,
-        textStyle = estilo(16, FontWeight.Medium, AzulMarino),
+        textStyle = estilo(16, FontWeight.Medium, if (conError) ErrorRojo else AzulMarino),
         keyboardOptions = teclado,
         visualTransformation = transformacion,
         cursorBrush = SolidColor(VerdeMarca),
@@ -212,14 +218,14 @@ private fun CampoSesion(
                     .fillMaxWidth()
                     .heightIn(min = 66.dp)
                     .clip(forma)
-                    .background(Blanco)
-                    .border(1.dp, BordeTarjeta, forma)
+                    .background(if (conError) ErrorRosaFondo else Blanco)
+                    .border(if (conError) 1.5.dp else 1.dp, if (conError) ErrorRosaBorde else BordeTarjeta, forma)
                     .padding(start = 18.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 val textos: @Composable (Modifier) -> Unit = { modifier ->
                     Column(modifier) {
-                        Text(etiqueta, style = estilo(13, FontWeight.Medium, GrisEtiqueta, espaciado = 0.6))
+                        Text(etiqueta, style = estilo(13, FontWeight.Medium, if (conError) ErrorRojo else GrisEtiqueta, espaciado = 0.6))
                         Spacer(Modifier.height(4.dp))
                         Box {
                             if (valor.isEmpty()) {
@@ -234,8 +240,9 @@ private fun CampoSesion(
                 if (esCompacto(maxWidth, minimo = 200.dp)) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(icono, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(24.dp))
+                            Icon(icono, contentDescription = null, tint = colorIcono, modifier = Modifier.size(24.dp))
                             Spacer(Modifier.weight(1f))
+                            if (conError) IconoAlertaCampo()
                             if (alFinal != null) alFinal()
                         }
                         Spacer(Modifier.height(6.dp))
@@ -243,15 +250,20 @@ private fun CampoSesion(
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(icono, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(24.dp))
+                        Icon(icono, contentDescription = null, tint = colorIcono, modifier = Modifier.size(24.dp))
                         Spacer(Modifier.width(28.dp))
                         textos(Modifier.weight(1f))
+                        if (conError) {
+                            IconoAlertaCampo()
+                            if (alFinal != null) Spacer(Modifier.width(6.dp))
+                        }
                         if (alFinal != null) alFinal()
                     }
                 }
             }
         },
     )
+    if (error != null) MensajeError(error, Modifier.padding(start = 4.dp, top = 8.dp))
 }
 
 @PreviewsFinanzia

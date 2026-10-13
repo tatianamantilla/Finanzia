@@ -35,6 +35,32 @@ object ValidacionRegistro {
         tieneMayuscula = contrasena.any { it.isUpperCase() },
     )
 
+    /** Todos los problemas del formulario (como máximo uno por campo), en el orden de la pantalla. */
+    fun validarCampos(
+        nombre: String,
+        correo: String,
+        contrasena: String,
+        aceptaTerminos: Boolean,
+    ): List<ErrorRegistro> {
+        val reglas = reglasContrasena(contrasena)
+        return listOfNotNull(
+            ErrorRegistro.NOMBRE_VACIO.takeIf { nombre.isBlank() },
+            when {
+                correo.isBlank() -> ErrorRegistro.CORREO_VACIO
+                !esCorreoValido(correo) -> ErrorRegistro.CORREO_INVALIDO
+                else -> null
+            },
+            when {
+                contrasena.isEmpty() -> ErrorRegistro.CONTRASENA_VACIA
+                !reglas.tieneLongitud -> ErrorRegistro.CONTRASENA_CORTA
+                !reglas.tieneNumero -> ErrorRegistro.CONTRASENA_SIN_NUMERO
+                !reglas.tieneMayuscula -> ErrorRegistro.CONTRASENA_SIN_MAYUSCULA
+                else -> null
+            },
+            ErrorRegistro.TERMINOS_NO_ACEPTADOS.takeIf { !aceptaTerminos },
+        )
+    }
+
     /** Devuelve el primer problema del formulario, o `null` si todo está correcto. */
     fun validar(
         nombre: String,

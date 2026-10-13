@@ -33,7 +33,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,18 +67,20 @@ import com.finanzia.finanzia.ui.componentes.BotonPrincipal
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.CuadroIcono
 import com.finanzia.finanzia.ui.componentes.EnlaceGris
+import com.finanzia.finanzia.ui.componentes.MensajeError
 import com.finanzia.finanzia.ui.componentes.MilesVisualTransformation
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.Pastilla
 import com.finanzia.finanzia.ui.componentes.TarjetaOpcion
 import com.finanzia.finanzia.ui.componentes.esCompacto
 import com.finanzia.finanzia.ui.componentes.estilo
-import kotlinx.coroutines.flow.collectLatest
 import com.finanzia.finanzia.ui.theme.AzulIntenso
 import com.finanzia.finanzia.ui.theme.AzulMarino
 import com.finanzia.finanzia.ui.theme.Blanco
 import com.finanzia.finanzia.ui.theme.BordeTarjeta
 import com.finanzia.finanzia.ui.theme.DegradadoIngreso
+import com.finanzia.finanzia.ui.theme.ErrorRojo
+import com.finanzia.finanzia.ui.theme.ErrorRosaFondo
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
 import com.finanzia.finanzia.ui.theme.GrisEtiqueta
@@ -127,7 +128,6 @@ fun PrimerIngresoScreen(
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
-        mensajes = viewModel,
         pastilla = { Pastilla("Paso 2 • Ingresos", VerdeClaro, VerdeBordeClaro, VerdeTexto) },
         icono = Icons.Filled.ArrowDownward,
         colorIcono = VerdeMarca,
@@ -139,6 +139,7 @@ fun PrimerIngresoScreen(
         onOmitir = onTerminar,
     ) {
         TarjetaMonto(
+            error = viewModel.errorMonto,
             etiqueta = "MONTO DEL INGRESO (COP)",
             ayuda = "Podrás modificar o agregar más fuentes de ingreso después.",
             iconoAyuda = Icons.Outlined.CheckCircle,
@@ -152,11 +153,13 @@ fun PrimerIngresoScreen(
                     onCambio = viewModel::cambiarMonto,
                     estiloTexto = estilo(28, FontWeight.ExtraBold, altoLinea = 34),
                 ) { campo ->
+                    val conError = viewModel.errorMonto != null
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = 54.dp)
-                            .border(2.dp, VerdeCampo, RoundedCornerShape(2.dp))
+                            .background(if (conError) ErrorRosaFondo else Color.Transparent)
+                            .border(2.dp, if (conError) ErrorRojo else VerdeCampo, RoundedCornerShape(2.dp))
                             .padding(horizontal = 18.dp, vertical = 6.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) { campo() }
@@ -192,10 +195,12 @@ fun PrimerIngresoScreen(
             estiloTexto = estilo(14, color = GrisEtiqueta, altoLinea = 21),
         )
         Spacer(Modifier.height(22.dp))
+        viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
             texto = "Guardar y continuar",
             fondo = DegradadoIngreso,
             onClick = { viewModel.guardar(onTerminar) },
+            cargando = viewModel.guardando,
             alto = 60.dp,
             forma = RoundedCornerShape(20.dp),
             colorSombra = Color(0x402563EB),
@@ -211,7 +216,6 @@ fun PrimerGastoScreen(
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
-        mensajes = viewModel,
         pastilla = { Pastilla("Paso 2 • Gastos", RosaClaro, RosaBorde, RojoTexto, tamano = 16) },
         icono = Icons.Filled.ArrowUpward,
         colorIcono = RojoGasto,
@@ -223,6 +227,7 @@ fun PrimerGastoScreen(
         onOmitir = onTerminar,
     ) {
         TarjetaMonto(
+            error = viewModel.errorMonto,
             etiqueta = "MONTO ESTIMADO DEL GASTO (COP)",
             ayuda = "Finanzia detectará oportunidades de ahorro en esta categoría.",
             iconoAyuda = Icons.Outlined.Info,
@@ -233,7 +238,7 @@ fun PrimerGastoScreen(
                 onCambio = viewModel::cambiarMonto,
                 estiloTexto = estilo(30, FontWeight.ExtraBold, altoLinea = 38),
             ) { campo ->
-                Column {
+                Column(Modifier.background(if (viewModel.errorMonto != null) ErrorRosaFondo else Color.Transparent)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("$", style = estilo(30, FontWeight.ExtraBold, RojoGasto, altoLinea = 38))
                         Spacer(Modifier.width(10.dp))
@@ -283,10 +288,12 @@ fun PrimerGastoScreen(
             estiloTexto = estilo(15, color = GrisEtiqueta, altoLinea = 22),
         )
         Spacer(Modifier.height(30.dp))
+        viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
             texto = "Guardar gasto y finalizar",
             fondo = SolidColor(AzulIntenso),
             onClick = { viewModel.guardar(onTerminar) },
+            cargando = viewModel.guardando,
             alto = 58.dp,
             forma = RoundedCornerShape(18.dp),
             colorSombra = Color(0x400B63F0),
@@ -297,7 +304,6 @@ fun PrimerGastoScreen(
 /** Parte común: botón atrás, pastilla, título con ícono, contenido y "Omitir este paso por ahora". */
 @Composable
 private fun EstructuraPaso2(
-    mensajes: PrimerRegistroViewModel<*>,
     pastilla: @Composable () -> Unit,
     icono: ImageVector,
     colorIcono: Color,
@@ -309,12 +315,7 @@ private fun EstructuraPaso2(
     onOmitir: () -> Unit,
     contenido: @Composable ColumnScope.() -> Unit,
 ) {
-    val snackbar = remember { SnackbarHostState() }
-    LaunchedEffect(mensajes) {
-        // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
-        mensajes.mensajes.collectLatest { snackbar.showSnackbar(it) }
-    }
-    PantallaBase(fondo = Modifier.background(FondoPantalla), snackbar = snackbar) {
+    PantallaBase(fondo = Modifier.background(FondoPantalla)) {
         ContenidoDesplazable(margenHorizontal = 18.dp) {
             Spacer(Modifier.height(12.dp))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -346,6 +347,7 @@ private fun EstructuraPaso2(
 
 @Composable
 private fun TarjetaMonto(
+    error: String?,
     etiqueta: String,
     ayuda: String,
     iconoAyuda: ImageVector,
@@ -362,9 +364,10 @@ private fun TarjetaMonto(
             .border(1.dp, BordeTarjeta, forma)
             .padding(horizontal = 20.dp, vertical = 20.dp),
     ) {
-        Text(etiqueta, style = estilo(14, FontWeight.SemiBold, GrisEtiqueta, espaciado = 0.9))
+        Text(etiqueta, style = estilo(14, FontWeight.SemiBold, if (error != null) ErrorRojo else GrisEtiqueta, espaciado = 0.9))
         Spacer(Modifier.height(12.dp))
         campo()
+        if (error != null) MensajeError(error, Modifier.padding(top = 10.dp))
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.Top) {
             Icon(iconoAyuda, contentDescription = null, tint = colorAyuda, modifier = Modifier.padding(top = 2.dp).size(17.dp))

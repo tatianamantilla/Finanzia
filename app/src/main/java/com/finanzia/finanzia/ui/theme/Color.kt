@@ -48,3 +48,9 @@ val MoradoTexto = Color(0xFF4C2A85)
 val DegradadoPrincipal = Brush.horizontalGradient(listOf(Color(0xFF10B981), Color(0xFF0066F5)))
 val DegradadoCuentaCreada = Brush.horizontalGradient(listOf(Color(0xFF05794A), Color(0xFF0048D6)))
 val DegradadoIngreso = Brush.horizontalGradient(listOf(Color(0xFF1DB584), Color(0xFF2563EB)))
+
+// Errores en los campos: mismo estilo que docs/design/olvidar_contraseña_error.jpeg
+val ErrorRojo = Color(0xFFB91C1C)
+val ErrorCirculo = Color(0xFFC81E1E)
+val ErrorRosaFondo = Color(0xFFFDD5D5)
+val ErrorRosaBorde = Color(0xFFF3A5A5)

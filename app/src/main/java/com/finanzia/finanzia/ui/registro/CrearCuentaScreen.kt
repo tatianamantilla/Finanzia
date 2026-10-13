@@ -34,7 +34,6 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,16 +66,20 @@ import androidx.compose.ui.unit.dp
 import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
+import com.finanzia.finanzia.ui.componentes.IconoAlertaCampo
+import com.finanzia.finanzia.ui.componentes.MensajeError
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.PieConEnlace
 import com.finanzia.finanzia.ui.componentes.estilo
-import kotlinx.coroutines.flow.collectLatest
 import com.finanzia.finanzia.ui.theme.AzulEnlace
 import com.finanzia.finanzia.ui.theme.AzulMarino
 import com.finanzia.finanzia.ui.theme.Blanco
 import com.finanzia.finanzia.ui.theme.BordeCampo
 import com.finanzia.finanzia.ui.theme.DegradadoPrincipal
+import com.finanzia.finanzia.ui.theme.ErrorRojo
+import com.finanzia.finanzia.ui.theme.ErrorRosaBorde
+import com.finanzia.finanzia.ui.theme.ErrorRosaFondo
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.GrisEtiqueta
 import com.finanzia.finanzia.ui.theme.GrisPlaceholder
@@ -95,13 +98,7 @@ fun CrearCuentaScreen(
     onCuentaCreada: () -> Unit,
     onIniciarSesion: () -> Unit,
 ) {
-    val snackbar = remember { SnackbarHostState() }
-    LaunchedEffect(viewModel) {
-        // collectLatest: un mensaje nuevo reemplaza al anterior en vez de esperar a que se cierre.
-        viewModel.mensajes.collectLatest { snackbar.showSnackbar(it) }
-    }
-
-    PantallaBase(fondo = Modifier.drawBehind { fondoCrearCuenta() }, snackbar = snackbar) {
+    PantallaBase(fondo = Modifier.drawBehind { fondoCrearCuenta() }) {
         ContenidoDesplazable(margenHorizontal = 28.dp, llenarAlto = true, alineacion = Alignment.CenterHorizontally) {
                     Spacer(Modifier.height(12.dp))
                     LogoFinanzia()
@@ -124,10 +121,14 @@ fun CrearCuentaScreen(
                     Formulario(viewModel)
 
                     Spacer(Modifier.height(26.dp))
+                    viewModel.errorGeneral?.let {
+                        MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp))
+                    }
                     BotonPrincipal(
                         texto = "Crear cuenta",
                         fondo = DegradadoPrincipal,
                         onClick = { viewModel.crearCuenta(onCuentaCreada) },
+                        cargando = viewModel.enviando,
                     )
 
                     Spacer(Modifier.weight(1f).heightIn(min = 32.dp))
@@ -199,8 +200,9 @@ internal fun Estrella(modifier: Modifier) {
 @Composable
 private fun Formulario(viewModel: CrearCuentaViewModel) {
     Column(Modifier.fillMaxWidth()) {
-        EtiquetaCampo("NOMBRE COMPLETO")
+        EtiquetaCampo("NOMBRE COMPLETO", conError = viewModel.errorNombre != null)
         CampoFormulario(
+            error = viewModel.errorNombre,
             valor = viewModel.nombre,
             onCambio = viewModel::cambiarNombre,
             placeholder = "Paula Gómez",
@@ -209,8 +211,9 @@ private fun Formulario(viewModel: CrearCuentaViewModel) {
             teclado = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(22.dp))
-        EtiquetaCampo("CORREO ELECTRÓNICO")
+        EtiquetaCampo("CORREO ELECTRÓNICO", conError = viewModel.errorCorreo != null)
         CampoFormulario(
+            error = viewModel.errorCorreo,
             valor = viewModel.correo,
             onCambio = viewModel::cambiarCorreo,
             placeholder = "hola@ejemplo.com",
@@ -219,8 +222,9 @@ private fun Formulario(viewModel: CrearCuentaViewModel) {
             teclado = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
         Spacer(Modifier.height(22.dp))
-        EtiquetaCampo("CONTRASEÑA")
+        EtiquetaCampo("CONTRASEÑA", conError = viewModel.errorContrasena != null)
         CampoFormulario(
+            error = viewModel.errorContrasena,
             valor = viewModel.contrasena,
             onCambio = viewModel::cambiarContrasena,
             placeholder = "Mínimo 8 caracteres",
@@ -244,21 +248,22 @@ private fun Formulario(viewModel: CrearCuentaViewModel) {
         Spacer(Modifier.height(14.dp))
         IndicadoresContrasena(viewModel)
         Spacer(Modifier.height(24.dp))
-        CasillaTerminos(viewModel.aceptaTerminos, viewModel::cambiarAceptaTerminos)
+        CasillaTerminos(viewModel.aceptaTerminos, viewModel::cambiarAceptaTerminos, viewModel.errorTerminos)
     }
 }
 
 @Composable
-private fun EtiquetaCampo(texto: String) {
+private fun EtiquetaCampo(texto: String, conError: Boolean = false) {
     Text(
         texto,
-        style = estilo(13, FontWeight.Bold, GrisEtiqueta, espaciado = 1.0),
+        style = estilo(13, FontWeight.Bold, if (conError) ErrorRojo else GrisEtiqueta, espaciado = 1.0),
         modifier = Modifier.padding(start = 4.dp, bottom = 10.dp),
     )
 }
 
 @Composable
 private fun CampoFormulario(
+    error: String?,
     valor: String,
     onCambio: (String) -> Unit,
     placeholder: String,
@@ -269,11 +274,12 @@ private fun CampoFormulario(
     alFinal: (@Composable () -> Unit)? = null,
 ) {
     val forma = RoundedCornerShape(18.dp)
+    val conError = error != null
     BasicTextField(
         value = valor,
         onValueChange = onCambio,
         singleLine = true,
-        textStyle = estilo(16, FontWeight.Medium, AzulMarino),
+        textStyle = estilo(16, FontWeight.Medium, if (conError) ErrorRojo else AzulMarino),
         keyboardOptions = teclado,
         visualTransformation = transformacion,
         cursorBrush = SolidColor(VerdeMarca),
@@ -286,12 +292,12 @@ private fun CampoFormulario(
                     .fillMaxWidth()
                     .heightIn(min = 54.dp)
                     .clip(forma)
-                    .background(Blanco)
-                    .border(1.dp, BordeCampo, forma)
+                    .background(if (conError) ErrorRosaFondo else Blanco)
+                    .border(if (conError) 1.5.dp else 1.dp, if (conError) ErrorRosaBorde else BordeCampo, forma)
                     .padding(start = 18.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(icono, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(22.dp))
+                Icon(icono, contentDescription = null, tint = if (conError) ErrorRojo else GrisIcono, modifier = Modifier.size(22.dp))
                 Spacer(Modifier.width(14.dp))
                 Box(Modifier.weight(1f)) {
                     if (valor.isEmpty()) {
@@ -299,10 +305,16 @@ private fun CampoFormulario(
                     }
                     campo()
                 }
+                if (conError) {
+                    Spacer(Modifier.width(8.dp))
+                    IconoAlertaCampo()
+                    if (alFinal != null) Spacer(Modifier.width(6.dp))
+                }
                 if (alFinal != null) alFinal()
             }
         },
     )
+    if (error != null) MensajeError(error, Modifier.padding(start = 4.dp, top = 8.dp))
 }
 
 @Composable
@@ -342,16 +354,31 @@ private fun Indicador(texto: String, cumplido: Boolean) {
 }
 
 @Composable
-private fun CasillaTerminos(marcada: Boolean, onCambio: (Boolean) -> Unit) {
+private fun CasillaTerminos(marcada: Boolean, onCambio: (Boolean) -> Unit, error: String?) {
     val forma = RoundedCornerShape(6.dp)
+    val conError = error != null
     Row(verticalAlignment = Alignment.Top) {
         Box(
             modifier = Modifier
                 .padding(top = 1.dp)
                 .size(22.dp)
                 .clip(forma)
-                .background(if (marcada) VerdeMarca else Blanco)
-                .border(1.5.dp, if (marcada) VerdeMarca else BordeCasilla, forma)
+                .background(
+                    when {
+                        marcada -> VerdeMarca
+                        conError -> ErrorRosaFondo
+                        else -> Blanco
+                    },
+                )
+                .border(
+                    if (conError) 2.dp else 1.5.dp,
+                    when {
+                        marcada -> VerdeMarca
+                        conError -> ErrorRojo
+                        else -> BordeCasilla
+                    },
+                    forma,
+                )
                 .clickable(role = Role.Checkbox) { onCambio(!marcada) }
                 .semantics { stateDescription = if (marcada) "Marcada" else "Sin marcar" }
                 .testTag(Etiquetas.CASILLA_TERMINOS),
@@ -373,6 +400,7 @@ private fun CasillaTerminos(marcada: Boolean, onCambio: (Boolean) -> Unit) {
             style = estilo(15, color = GrisTexto, altoLinea = 22),
         )
     }
+    if (error != null) MensajeError(error, Modifier.padding(start = 4.dp, top = 8.dp))
 }
 
 @PreviewsFinanzia

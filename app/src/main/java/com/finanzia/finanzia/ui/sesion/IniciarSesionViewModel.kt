@@ -6,14 +6,17 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.finanzia.finanzia.datos.AuthRepository
+import com.finanzia.finanzia.datos.ContrasenaIncorrectaException
+import com.finanzia.finanzia.datos.CorreoNoRegistradoException
+import com.finanzia.finanzia.datos.CredencialesIncorrectasException
 import com.finanzia.finanzia.validacion.ErrorRegistro
 import com.finanzia.finanzia.validacion.ValidacionRegistro
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-/** Estado y acciones de la Pantalla 1 · Inicio de sesión (spec 01). */
+/**
+ * Estado y acciones de la Pantalla 1 · Inicio de sesión (spec 01).
+ * Cada error se muestra en rojo dentro de su campo (sin Snackbar) y se borra al corregir ese campo.
+ */
 class IniciarSesionViewModel(private val auth: AuthRepository) : ViewModel() {
 
     var correo by mutableStateOf("")
@@ -25,32 +28,42 @@ class IniciarSesionViewModel(private val auth: AuthRepository) : ViewModel() {
     var enviando by mutableStateOf(false)
         private set
 
-    private val canalMensajes = Channel<String>(Channel.BUFFERED)
+    var errorCorreo by mutableStateOf<String?>(null)
+        private set
+    var errorContrasena by mutableStateOf<String?>(null)
+        private set
 
-    /** Mensajes para el Snackbar (campos vacíos o credenciales incorrectas). */
-    val mensajes: Flow<String> = canalMensajes.receiveAsFlow()
+    /** Errores que no son de un campo (sin conexión, confirmar el correo…), sobre el botón. */
+    var errorGeneral by mutableStateOf<String?>(null)
+        private set
 
-    fun cambiarCorreo(valor: String) { correo = valor.trim() }
-    fun cambiarContrasena(valor: String) { contrasena = valor }
+    fun cambiarCorreo(valor: String) { correo = valor.trim(); errorCorreo = null; errorGeneral = null }
+    fun cambiarContrasena(valor: String) { contrasena = valor; errorContrasena = null; errorGeneral = null }
     fun alternarMostrarContrasena() { mostrarContrasena = !mostrarContrasena }
 
     fun entrar(alEntrar: () -> Unit) {
         if (enviando) return
-        val error = when {
+        errorCorreo = when {
             correo.isBlank() -> MENSAJE_CORREO_VACIO
             !ValidacionRegistro.esCorreoValido(correo) -> MENSAJE_CORREO_INVALIDO
-            contrasena.isEmpty() -> MENSAJE_CONTRASENA_VACIA
             else -> null
         }
-        if (error != null) {
-            canalMensajes.trySend(error)
-            return
-        }
+        errorContrasena = if (contrasena.isEmpty()) MENSAJE_CONTRASENA_VACIA else null
+        errorGeneral = null
+        if (errorCorreo != null || errorContrasena != null) return
+
         enviando = true
         viewModelScope.launch {
             auth.iniciarSesion(correo, contrasena)
                 .onSuccess { alEntrar() }
-                .onFailure { canalMensajes.send(it.message ?: MENSAJE_ERROR) }
+                .onFailure { e ->
+                    when (e) {
+                        is CorreoNoRegistradoException -> errorCorreo = e.message
+                        // Supabase no dice cuál de los dos falló: el mensaje va en la contraseña.
+                        is ContrasenaIncorrectaException, is CredencialesIncorrectasException -> errorContrasena = e.message
+                        else -> errorGeneral = e.message ?: MENSAJE_ERROR
+                    }
+                }
             enviando = false
         }
     }

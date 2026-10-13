@@ -1,12 +1,17 @@
 package com.finanzia.finanzia.datos.supabase
 
 import com.finanzia.finanzia.datos.AuthRepository
+import com.finanzia.finanzia.datos.ConfirmacionCorreoPendienteException
+import com.finanzia.finanzia.datos.CredencialesIncorrectasException
+import com.finanzia.finanzia.datos.SinConexionException
 import com.finanzia.finanzia.datos.CorreoNoRegistradoException
 import com.finanzia.finanzia.datos.CorreoYaRegistradoException
 import com.finanzia.finanzia.datos.NombreUsuarioNoCoincideException
 import com.finanzia.finanzia.datos.Usuario
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.exception.AuthErrorCode
+import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.from
@@ -17,11 +22,6 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-
-/** Supabase no dice si falló el correo o la contraseña (por seguridad): un solo mensaje para ambos. */
-class CredencialesIncorrectasException : Exception("El correo o la contraseña son incorrectos")
-
-class SinConexionException : Exception("No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.")
 
 /**
  * Registro e inicio de sesión con Supabase Auth.
@@ -44,21 +44,20 @@ class SupabaseAuthRepository(
                 cliente.auth.signUpWith(Email) {
                     email = correo.trim()
                     password = contrasena
+                    // El trigger del registro usa este nombre para crear la fila en `usuarios`.
                     data = buildJsonObject { put("nombre", nombre.trim()) }
                 }
-            } catch (e: Exception) {
-                if (e.esError("already", "exists", "registered")) throw CorreoYaRegistradoException()
+            } catch (e: AuthRestException) {
+                if (e.errorCode == AuthErrorCode.UserAlreadyExists || e.errorCode == AuthErrorCode.EmailExists) {
+                    throw CorreoYaRegistradoException()
+                }
                 throw e
             }
-            // Con "Confirm email" desactivado, Supabase deja la sesión iniciada al registrarse.
-            // Si no fuera así, se inicia sesión aquí mismo.
-            val info = cliente.auth.currentUserOrNull() ?: run {
-                cliente.auth.signInWith(Email) {
-                    email = correo.trim()
-                    password = contrasena
-                }
-                cliente.auth.currentUserOrNull()
-            } ?: error("No se pudo crear la cuenta. Inténtalo de nuevo.")
+            // Con "Confirm email" desactivado, Supabase entrega la sesión al registrarse. Si no la
+            // entrega, es porque pide confirmar el correo: se avisa en la pantalla, no se falla en silencio.
+            val info = cliente.auth.currentUserOrNull() ?: throw ConfirmacionCorreoPendienteException()
+            // Cuenta "Principal" + categorías (incluida "Ingresos") con su color, sin duplicar.
+            DatosInicialesSupabase.asegurar(cliente)
             cargarUsuario(info, nombrePorDefecto = nombre.trim())
         }
 
@@ -69,13 +68,31 @@ class SupabaseAuthRepository(
                     email = correo.trim()
                     password = contrasena
                 }
-            } catch (e: Exception) {
-                if (e.esError("invalid", "credentials")) throw CredencialesIncorrectasException()
-                throw e
+            } catch (e: AuthRestException) {
+                when (e.errorCode) {
+                    AuthErrorCode.InvalidCredentials -> throw CredencialesIncorrectasException()
+                    AuthErrorCode.EmailNotConfirmed -> throw ConfirmacionCorreoPendienteException()
+                    else -> throw e
+                }
             }
             val info = cliente.auth.currentUserOrNull() ?: throw CredencialesIncorrectasException()
+            DatosInicialesSupabase.asegurar(cliente)
             cargarUsuario(info, nombrePorDefecto = null)
         }
+
+    /** Al abrir la app: si el teléfono tiene una sesión guardada, la usa. */
+    override suspend fun restaurarSesion(): Usuario? {
+        usuarioActual?.let { return it }
+        return intentar {
+            cliente.auth.awaitInitialization()
+            cliente.auth.currentUserOrNull()?.let { cargarUsuario(it, nombrePorDefecto = null) }
+        }.getOrNull()
+    }
+
+    override suspend fun cerrarSesion(): Result<Unit> = intentar {
+        cliente.auth.signOut()
+        usuarioActual = null
+    }
 
     /**
      * Olvidé mi contraseña · Paso 1: comprueba nombre y correo con la función
@@ -140,11 +157,10 @@ class SupabaseAuthRepository(
 
     /** Lee nombre y correo de la tabla `usuarios` (la RLS solo deja ver la fila propia). */
     private suspend fun cargarUsuario(info: UserInfo, nombrePorDefecto: String?): Usuario {
-        val fila = runCatching {
-            cliente.from("usuarios").select {
-                filter { eq("id_auth", info.id) }
-            }.decodeSingleOrNull<FilaUsuario>()
-        }.getOrNull()
+        // Si falla (sin conexión, permisos), el error sube y la pantalla lo muestra.
+        val fila = cliente.from("usuarios").select {
+            filter { eq("id_auth", info.id) }
+        }.decodeSingleOrNull<FilaUsuario>()
 
         val correo = fila?.correo ?: info.email.orEmpty()
         val nombre = fila?.nombre
@@ -155,30 +171,8 @@ class SupabaseAuthRepository(
         return Usuario(id = info.id, nombre = nombre, correo = correo).also { usuarioActual = it }
     }
 
-    /** Convierte errores de red en un mensaje claro y deja pasar los nuestros. */
-    private suspend fun <T> intentar(bloque: suspend () -> T): Result<T> =
-        try {
-            Result.success(bloque())
-        } catch (e: CorreoYaRegistradoException) {
-            Result.failure(e)
-        } catch (e: CredencialesIncorrectasException) {
-            Result.failure(e)
-        } catch (e: CorreoNoRegistradoException) {
-            Result.failure(e)
-        } catch (e: NombreUsuarioNoCoincideException) {
-            Result.failure(e)
-        } catch (e: io.github.jan.supabase.exceptions.HttpRequestException) {
-            Result.failure(SinConexionException())
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-
-    private fun Exception.esError(vararg palabras: String): Boolean {
-        val texto = (message ?: "").lowercase()
-        return palabras.any { it in texto }
-    }
+    /** Errores de red → mensaje claro; los demás se devuelven tal cual (ver ErroresSupabase.kt). */
+    private suspend fun <T> intentar(bloque: suspend () -> T): Result<T> = conErroresClaros(bloque)
 
     @Serializable
     private data class FilaUsuario(
