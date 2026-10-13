@@ -732,6 +732,7 @@ private fun BotonMas(modifier: Modifier) {
     // Botón flotante sin acción por ahora (spec 04).
     Box(
         modifier
+            .testTag(Etiquetas.BOTON_MAS)
             .size(60.dp)
             .shadow(10.dp, CircleShape, ambientColor = Color(0x600B57D0), spotColor = Color(0x600B57D0))
             .clip(CircleShape)
@@ -747,6 +748,7 @@ private fun BarraInferior() {
     Row(
         Modifier
             .fillMaxWidth()
+            .testTag(Etiquetas.BARRA_INFERIOR)
             .background(Blanco)
             .border(1.dp, BordeTarjeta)
             .navigationBarsPadding()

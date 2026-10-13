@@ -18,6 +18,8 @@ object Etiquetas {
     const val PASTILLA_SALUDABLE = "pastilla_saludable"
     const val FILA_MOVIMIENTO = "fila_movimiento"
     const val BOTON_REINTENTAR = "boton_reintentar"
+    const val BARRA_INFERIOR = "barra_inferior"
+    const val BOTON_MAS = "boton_mas"
 
     // Estado del botón principal mientras espera a Supabase.
     const val CARGANDO = "Cargando"
