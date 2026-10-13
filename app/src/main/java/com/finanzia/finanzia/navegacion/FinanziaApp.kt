@@ -1,7 +1,16 @@
 package com.finanzia.finanzia.navegacion
 
 import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -10,9 +19,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.datos.AuthRepository
+import com.finanzia.finanzia.datos.DashboardRepository
+import com.finanzia.finanzia.datos.DashboardSimulado
 import com.finanzia.finanzia.datos.OnboardingRepository
-import com.finanzia.finanzia.ui.Etiquetas
-import com.finanzia.finanzia.ui.PantallaProvisional
+import com.finanzia.finanzia.ui.dashboard.DashboardScreen
+import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -29,6 +40,7 @@ import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
+import com.finanzia.finanzia.ui.theme.FondoPantalla
 
 object Rutas {
     const val CREAR_CUENTA = "crear_cuenta"
@@ -52,6 +64,7 @@ object Rutas {
 fun FinanziaApp(
     auth: AuthRepository,
     onboarding: OnboardingRepository,
+    dashboard: DashboardRepository = remember(auth, onboarding) { DashboardSimulado(auth, onboarding) },
     navController: NavHostController = rememberNavController(),
 ) {
     // Al llegar al Dashboard se borra el historial: "atrás" ya no vuelve al onboarding.
@@ -61,8 +74,20 @@ fun FinanziaApp(
         }
     }
 
+    // Pantalla inicial: si el teléfono tiene una sesión guardada, "Acceso autorizado"; si no, Crear cuenta.
+    var inicio by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(auth) {
+        inicio = if (auth.restaurarSesion() != null) Rutas.ACCESO_AUTORIZADO else Rutas.CREAR_CUENTA
+    }
+
     FinanziaTheme {
-        NavHost(navController = navController, startDestination = Rutas.CREAR_CUENTA) {
+        val destinoInicial = inicio
+        if (destinoInicial == null) {
+            // Mientras se revisa la sesión guardada (un instante), solo el fondo de la app.
+            Box(Modifier.fillMaxSize().background(FondoPantalla))
+            return@FinanziaTheme
+        }
+        NavHost(navController = navController, startDestination = destinoInicial) {
             composable(Rutas.CREAR_CUENTA) {
                 CrearCuentaScreen(
                     viewModel = viewModel { CrearCuentaViewModel(auth) },
@@ -154,9 +179,17 @@ fun FinanziaApp(
                     },
                 )
             }
-            // Pantallas provisionales: no son parte de este módulo.
+            // Spec 04 · Dashboard (reemplaza al Dashboard provisional).
             composable(Rutas.DASHBOARD) {
-                PantallaProvisional("Dashboard", Etiquetas.PANTALLA_DASHBOARD)
+                DashboardScreen(
+                    viewModel = viewModel { DashboardViewModel(dashboard, auth) },
+                    onSesionCerrada = {
+                        // Sin sesión no se puede volver a ninguna pantalla anterior.
+                        navController.navigate(Rutas.INICIAR_SESION) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                )
             }
         }
     }
