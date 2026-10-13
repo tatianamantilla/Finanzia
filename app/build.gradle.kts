@@ -3,6 +3,43 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// --- Claves de Supabase ---
+// Se leen de local.properties (que NO se sube a git) y quedan en BuildConfig.
+// Si faltan o la clave no es la pública (sb_publishable_), la compilación se detiene con un mensaje claro.
+val propiedadesLocales: Map<String, String> = providers
+    .fileContents(rootProject.layout.projectDirectory.file("local.properties"))
+    .asText
+    .orElse("")
+    .get()
+    .lines()
+    .map { it.trim() }
+    .filter { it.isNotEmpty() && !it.startsWith("#") && "=" in it }
+    .associate { it.substringBefore("=").trim() to it.substringAfter("=").trim() }
+
+fun propiedadSupabase(nombre: String): String =
+    propiedadesLocales[nombre]?.takeIf { it.isNotBlank() } ?: throw GradleException(
+        "Falta $nombre en local.properties. Agrega estas dos líneas (sin comillas) y vuelve a sincronizar Gradle:\n" +
+            "  SUPABASE_URL=https://TU-PROYECTO.supabase.co\n" +
+            "  SUPABASE_ANON_KEY=sb_publishable_...\n" +
+            "Las encuentras en Supabase → Project Settings → API Keys. Usa solo la clave publishable, nunca la secreta.",
+    )
+
+val supabaseUrl = propiedadSupabase("SUPABASE_URL")
+val supabaseClave = propiedadSupabase("SUPABASE_ANON_KEY")
+
+if (!Regex("""https://[a-z0-9]+\.supabase\.co/?""").matches(supabaseUrl)) {
+    throw GradleException("SUPABASE_URL en local.properties no tiene el formato https://TU-PROYECTO.supabase.co")
+}
+if (supabaseClave.startsWith("sb_secret_") || "service_role" in supabaseClave) {
+    throw GradleException(
+        "SUPABASE_ANON_KEY en local.properties es una clave SECRETA. Nunca la pongas en la app: " +
+            "reemplázala por la clave publishable (sb_publishable_...) y revoca la secreta en Supabase.",
+    )
+}
+if (!supabaseClave.startsWith("sb_publishable_")) {
+    throw GradleException("SUPABASE_ANON_KEY en local.properties debe ser la clave publishable (empieza por sb_publishable_).")
+}
+
 android {
     namespace = "com.finanzia.finanzia"
     compileSdk {
@@ -17,6 +54,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPABASE_URL", "\"${supabaseUrl.trimEnd('/')}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseClave\"")
     }
 
     buildTypes {
@@ -33,6 +73,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests {

@@ -69,6 +69,8 @@ SUPABASE_ANON_KEY=tu-clave-publica
 
 3. Sincronizar Gradle y ejecutar la app en el emulador.
 
+> La compilación se detiene con un mensaje en español si falta alguna de las dos claves, si la URL no tiene el formato `https://TU-PROYECTO.supabase.co` o si la clave no es la *publishable* (`sb_publishable_…`). Nunca uses la clave secreta (`sb_secret_…` / `service_role`) en la app.
+
 > Fase 1 (actual): la app funciona con datos simulados en memoria, sin Supabase. Por ahora no hace falta llenar las claves.
 
 ## Tests
