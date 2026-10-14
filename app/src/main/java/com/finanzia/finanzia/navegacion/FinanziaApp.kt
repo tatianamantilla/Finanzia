@@ -39,8 +39,11 @@ import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
 import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
+import com.finanzia.finanzia.ui.sesion.SALDO_SIN_DATO
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
+import com.finanzia.finanzia.validacion.CalculosDashboard
+import com.finanzia.finanzia.validacion.FormatosDashboard
 
 object Rutas {
     const val CREAR_CUENTA = "crear_cuenta"
@@ -150,8 +153,17 @@ fun FinanziaApp(
                 )
             }
             composable(Rutas.ACCESO_AUTORIZADO) {
+                // Saldo real del usuario: el mismo cálculo que el balance del Dashboard
+                // (saldo inicial de las cuentas + ingresos − gastos).
+                var saldo by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(dashboard) {
+                    saldo = dashboard.cargar().getOrNull()
+                        ?.let { FormatosDashboard.monto(CalculosDashboard.balance(it)) }
+                        ?: SALDO_SIN_DATO
+                }
                 AccesoAutorizadoScreen(
                     nombre = auth.usuarioActual?.nombre.orEmpty(),
+                    saldo = saldo,
                     onContinuar = irAlDashboard,
                 )
             }

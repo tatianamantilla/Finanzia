@@ -63,21 +63,30 @@ private val AzulIconoClaro = Color(0xFFDCE7FA)
 private val GrisIcono = Color(0xFF6B7280)
 
 /**
- * Datos de muestra del diseño. No vienen del usuario ("Decisiones pendientes" 3 de la spec 01).
+ * Datos de muestra del diseño. El saldo real ya viene del usuario (ver FinanziaApp); [SALDO] solo
+ * se usa en la Preview para que se vea como la imagen del diseño.
  */
-// TODO(Supabase): calcular saldo, variación e insight con las tablas Cuentas y Movimientos, si el equipo lo decide.
+// TODO(Supabase): calcular variación e insight con las tablas Cuentas y Movimientos, si el equipo lo decide.
 object DatosMuestraAcceso {
     const val SALDO = "$14,250.00"
     const val VARIACION = "+4.8%"
 }
 
+/** Lo que se muestra mientras se calcula el saldo, o si no se pudo leer. */
+const val SALDO_SIN_DATO = "—"
+
 /** Solo el primer nombre: "Paula Gómez" → "Paula". */
 fun primerNombre(nombreCompleto: String): String =
     nombreCompleto.trim().split(Regex("\\s+")).firstOrNull().orEmpty()
 
-/** Pantalla 2 · Acceso autorizado (docs/design/olvidar_contraseña_3.jpeg). */
+/**
+ * Pantalla 2 · Acceso autorizado (docs/design/olvidar_contraseña_3.jpeg).
+ *
+ * [saldo] es el saldo total disponible ya formateado ("$1,234.00"), el mismo que muestra el
+ * Dashboard. `null` mientras se calcula.
+ */
 @Composable
-fun AccesoAutorizadoScreen(nombre: String, onContinuar: () -> Unit) {
+fun AccesoAutorizadoScreen(nombre: String, saldo: String? = null, onContinuar: () -> Unit) {
     PantallaBase(fondo = Modifier.background(FondoPantalla)) {
         ContenidoDesplazable(margenHorizontal = 22.dp, alineacion = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(8.dp))
@@ -94,7 +103,7 @@ fun AccesoAutorizadoScreen(nombre: String, onContinuar: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
             Spacer(Modifier.height(30.dp))
-            TarjetaSaldo()
+            TarjetaSaldo(saldo ?: SALDO_SIN_DATO)
             Spacer(Modifier.height(38.dp))
             BotonPrincipal(
                 texto = "Continuar al Dashboard",
@@ -131,7 +140,7 @@ private fun PastillaAcceso() {
 }
 
 @Composable
-private fun TarjetaSaldo() {
+private fun TarjetaSaldo(saldo: String) {
     val forma = RoundedCornerShape(22.dp)
     Column(
         modifier = Modifier
@@ -151,7 +160,7 @@ private fun TarjetaSaldo() {
             }
             .padding(18.dp),
     ) {
-        EncabezadoSaldo()
+        EncabezadoSaldo(saldo)
         Spacer(Modifier.height(22.dp))
         RecuadroInsight()
         Spacer(Modifier.height(22.dp))
@@ -180,7 +189,7 @@ private fun TarjetaSaldo() {
 }
 
 @Composable
-private fun EncabezadoSaldo() {
+private fun EncabezadoSaldo(saldo: String) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         // Con letra muy grande en pantalla angosta, la pastilla de variación pasa debajo del saldo.
         val compacto = esCompacto(maxWidth, minimo = 300.dp)
@@ -193,13 +202,13 @@ private fun EncabezadoSaldo() {
                     PastillaVariacion()
                 }
                 Spacer(Modifier.height(12.dp))
-                TextosSaldo(compacto = true)
+                TextosSaldo(saldo, compacto = true)
             }
         } else {
             Row(verticalAlignment = Alignment.Top) {
                 IconoBilletera(Modifier.padding(top = 12.dp))
                 Spacer(Modifier.width(14.dp))
-                TextosSaldo(compacto = false, modifier = Modifier.weight(1f))
+                TextosSaldo(saldo, compacto = false, modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(8.dp))
                 PastillaVariacion()
             }
@@ -221,7 +230,7 @@ private fun IconoBilletera(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TextosSaldo(compacto: Boolean, modifier: Modifier = Modifier) {
+private fun TextosSaldo(saldo: String, compacto: Boolean, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("SALDO TOTAL DISPONIBLE", style = estilo(12, FontWeight.Medium, GrisTexto, espaciado = 0.6))
         Spacer(Modifier.height(4.dp))
@@ -230,7 +239,7 @@ private fun TextosSaldo(compacto: Boolean, modifier: Modifier = Modifier) {
         val tamanoMonto = if (compacto) with(LocalDensity.current) { 30.dp.toSp().value } else 30f
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(
-                DatosMuestraAcceso.SALDO,
+                saldo,
                 style = estilo(tamanoMonto, FontWeight.ExtraBold, altoLinea = tamanoMonto * 1.2f, espaciado = -0.5),
             )
             Spacer(Modifier.width(12.dp))
@@ -336,5 +345,5 @@ private fun PieProteccion() {
 @PreviewsFinanzia
 @Composable
 private fun AccesoAutorizadoPreview() {
-    FinanziaTheme { AccesoAutorizadoScreen(nombre = "Paula Gómez", onContinuar = {}) }
+    FinanziaTheme { AccesoAutorizadoScreen(nombre = "Paula Gómez", saldo = DatosMuestraAcceso.SALDO, onContinuar = {}) }
 }
