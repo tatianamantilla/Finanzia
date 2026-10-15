@@ -20,6 +20,8 @@ object Etiquetas {
     const val BOTON_REINTENTAR = "boton_reintentar"
     const val BARRA_INFERIOR = "barra_inferior"
     const val BOTON_MAS = "boton_mas"
+    const val BOTON_INGRESO = "boton_ingreso"
+    const val BOTON_GASTO = "boton_gasto"
 
     // Estado del botón principal mientras espera a Supabase.
     const val CARGANDO = "Cargando"

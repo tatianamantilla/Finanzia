@@ -1,7 +1,16 @@
 package com.finanzia.finanzia.ui.dashboard
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.border
@@ -69,7 +78,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -149,6 +160,8 @@ private val DegradadoBalance = Brush.linearGradient(
 )
 private val DegradadoConversar = Brush.horizontalGradient(listOf(Color(0xFF0B6B4F), Color(0xFF1D5FE0)))
 private val DegradadoMas = Brush.linearGradient(listOf(Color(0xFF0F766E), Color(0xFF0B57D0)))
+/** Velo suave detrás del menú del "+" abierto. */
+private val VeloMenuMas = Color(0x330D1B3E)
 
 /** Dashboard · Inicio (spec 04, docs/design/usuario_creado_onboarding.jpeg). */
 @Composable
@@ -180,8 +193,29 @@ fun DashboardScreen(viewModel: DashboardViewModel, onSesionCerrada: () -> Unit) 
                     // Espacio para que el botón "+" flotante no tape lo último.
                     Spacer(Modifier.height(88.dp))
                 }
+                // Menú del "+": al abrirlo, un velo suave cubre el contenido; tocarlo (o "atrás") lo cierra.
+                var menuMasAbierto by remember { mutableStateOf(false) }
+                BackHandler(enabled = menuMasAbierto) { menuMasAbierto = false }
+                val opacidadVelo by animateFloatAsState(if (menuMasAbierto) 1f else 0f, tween(200), label = "veloMas")
+                if (opacidadVelo > 0f) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .alpha(opacidadVelo)
+                            .background(VeloMenuMas)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { menuMasAbierto = false },
+                    )
+                }
                 BotonMas(
-                    Modifier
+                    abierto = menuMasAbierto,
+                    onAlternar = { menuMasAbierto = !menuMasAbierto },
+                    // TODO: cuando el equipo defina las pantallas de registro, llevar a cada una.
+                    onIngreso = { menuMasAbierto = false },
+                    onGasto = { menuMasAbierto = false },
+                    modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 20.dp, bottom = 16.dp),
                 )
@@ -732,19 +766,122 @@ private fun BotonConversar() {
     }
 }
 
+/**
+ * Botón flotante "+". Al tocarlo suben dos botones, "Ingreso" y "Gasto", y el "+" gira hasta
+ * quedar como una "×" para cerrar. Los dos botones todavía no llevan a ninguna pantalla
+ * (spec 04, decisión pendiente 2): por ahora solo cierran el menú.
+ */
 @Composable
-private fun BotonMas(modifier: Modifier) {
-    // Botón flotante sin acción por ahora (spec 04).
-    Box(
-        modifier
-            .testTag(Etiquetas.BOTON_MAS)
-            .size(60.dp)
-            .shadow(10.dp, CircleShape, ambientColor = Color(0x600B57D0), spotColor = Color(0x600B57D0))
-            .clip(CircleShape)
-            .background(DegradadoMas),
-        contentAlignment = Alignment.Center,
+private fun BotonMas(
+    abierto: Boolean,
+    onAlternar: () -> Unit,
+    onIngreso: () -> Unit,
+    onGasto: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val giro by animateFloatAsState(if (abierto) 45f else 0f, tween(250), label = "giroMas")
+    Column(
+        modifier,
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Icon(Icons.Filled.Add, contentDescription = "Agregar", tint = Blanco, modifier = Modifier.size(32.dp))
+        // "Ingreso" (arriba) aparece un instante después de "Gasto", para que se vean subir en cascada.
+        OpcionAnimada(visible = abierto, retraso = 60) {
+            OpcionMas(
+                texto = "Ingreso",
+                icono = Icons.Filled.ArrowDownward,
+                fondoIcono = MentaIngresos,
+                colorIcono = AzulMarino,
+                etiqueta = Etiquetas.BOTON_INGRESO,
+                onClick = onIngreso,
+            )
+        }
+        OpcionAnimada(visible = abierto, retraso = 0) {
+            OpcionMas(
+                texto = "Gasto",
+                icono = Icons.Filled.ArrowUpward,
+                fondoIcono = RosaGastos,
+                colorIcono = RojoFlecha,
+                etiqueta = Etiquetas.BOTON_GASTO,
+                onClick = onGasto,
+            )
+        }
+        Box(
+            Modifier
+                .testTag(Etiquetas.BOTON_MAS)
+                .size(60.dp)
+                .shadow(10.dp, CircleShape, ambientColor = Color(0x600B57D0), spotColor = Color(0x600B57D0))
+                .clip(CircleShape)
+                .background(DegradadoMas)
+                .clickable(role = Role.Button, onClick = onAlternar),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = if (abierto) "Cerrar" else "Agregar",
+                tint = Blanco,
+                modifier = Modifier.size(32.dp).rotate(giro),
+            )
+        }
+    }
+}
+
+/** Sube desde el "+" mientras aparece, y baja mientras se oculta. */
+@Composable
+private fun ColumnScope.OpcionAnimada(visible: Boolean, retraso: Int, contenido: @Composable () -> Unit) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(220, delayMillis = retraso)) +
+            slideInVertically(tween(220, delayMillis = retraso)) { alto -> alto },
+        exit = fadeOut(tween(150)) + slideOutVertically(tween(150)) { alto -> alto },
+    ) {
+        contenido()
+    }
+}
+
+/** Una opción del menú: etiqueta blanca a la izquierda y botón redondo con su ícono. */
+@Composable
+private fun OpcionMas(
+    texto: String,
+    icono: ImageVector,
+    fondoIcono: Color,
+    colorIcono: Color,
+    etiqueta: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .testTag(etiqueta)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            // Centra el botón pequeño (46 dp) con el "+" (60 dp).
+            .padding(end = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            texto,
+            style = estilo(15, FontWeight.SemiBold, AzulMarino),
+            modifier = Modifier
+                .shadow(4.dp, RoundedCornerShape(12.dp), ambientColor = Color(0x22000000), spotColor = Color(0x22000000))
+                .clip(RoundedCornerShape(12.dp))
+                .background(Blanco)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Box(
+            Modifier
+                .size(46.dp)
+                .shadow(6.dp, CircleShape, ambientColor = Color(0x33000000), spotColor = Color(0x33000000))
+                .clip(CircleShape)
+                .background(fondoIcono),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icono, contentDescription = null, tint = colorIcono, modifier = Modifier.size(24.dp))
+        }
     }
 }
 
