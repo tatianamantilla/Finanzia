@@ -35,7 +35,7 @@ Se **mantienen**, con sus datos reales o con el mensaje de "sin datos": el conse
 
 1. **Encabezado:**
    - A la izquierda, botón circular con flecha hacia atrás.
-   - Título en negrita (cortado en la imagen: "Metas Fin…") con una insignia verde de check, y debajo, en gris, "Tu copiloto IA proyect…" (una línea cortada con "…").
+   - Título "Metas Financieras" en negrita con una insignia verde de check, y debajo, en gris, "Finanzia proyecta tu ahorro".
    - A la derecha, botón con borde azul "⊕ + Nueva Meta".
 2. **Tarjeta Ahorro acumulado** (fondo blanco, bordes redondeados):
    - Ícono de alcancía en un círculo azul, "Ahorro Acumulado en Metas" y, a la derecha, pastilla verde clara "[X]% completado".

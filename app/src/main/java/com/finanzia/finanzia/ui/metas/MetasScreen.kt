@@ -165,7 +165,7 @@ private fun Encabezado(onAtras: () -> Unit, onNuevaMeta: () -> Unit) {
                 Icon(Icons.Filled.Verified, contentDescription = null, tint = VerdeTexto, modifier = Modifier.size(18.dp))
             }
             Text(
-                "Tu copiloto IA proyecta tu ahorro",
+                "Finanzia proyecta tu ahorro",
                 style = estilo(13, color = GrisTexto, altoLinea = 18),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
