@@ -21,9 +21,16 @@ import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.datos.AuthRepository
 import com.finanzia.finanzia.datos.DashboardRepository
 import com.finanzia.finanzia.datos.DashboardSimulado
+import com.finanzia.finanzia.datos.MetasRepository
+import com.finanzia.finanzia.datos.MetasSimulado
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
 import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
+import com.finanzia.finanzia.ui.componentes.PestanaApp
+import com.finanzia.finanzia.ui.metas.MetasScreen
+import com.finanzia.finanzia.ui.metas.MetasViewModel
+import com.finanzia.finanzia.ui.metas.NuevaMetaScreen
+import com.finanzia.finanzia.ui.metas.NuevaMetaViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -52,6 +59,8 @@ object Rutas {
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
+    const val METAS = "metas"
+    const val NUEVA_META = "nueva_meta"
     const val ARG_CORREO = "correo"
     const val NUEVA_CONTRASENA = "nueva_contrasena/{$ARG_CORREO}"
 
@@ -65,12 +74,26 @@ fun FinanziaApp(
     auth: AuthRepository,
     onboarding: OnboardingRepository,
     dashboard: DashboardRepository = remember(auth, onboarding) { DashboardSimulado(auth, onboarding) },
+    metas: MetasRepository = remember { MetasSimulado() },
     navController: NavHostController = rememberNavController(),
 ) {
     // Al llegar al Dashboard se borra el historial: "atrás" ya no vuelve al onboarding.
     val irAlDashboard: () -> Unit = {
         navController.navigate(Rutas.DASHBOARD) {
             popUpTo(navController.graph.id) { inclusive = true }
+        }
+    }
+
+    // Barra inferior (spec 05): Inicio y Metas cambian de pantalla sin apilar copias; Billetera y
+    // Asistente todavía no tienen pantalla, así que no hacen nada.
+    val irAPestana: (PestanaApp) -> Unit = { pestana ->
+        when (pestana) {
+            PestanaApp.INICIO -> navController.popBackStack(Rutas.DASHBOARD, inclusive = false)
+            PestanaApp.METAS -> navController.navigate(Rutas.METAS) {
+                popUpTo(Rutas.DASHBOARD)
+                launchSingleTop = true
+            }
+            PestanaApp.BILLETERA, PestanaApp.ASISTENTE -> Unit
         }
     }
 
@@ -187,6 +210,29 @@ fun FinanziaApp(
                         // Sin sesión no se puede volver a ninguna pantalla anterior.
                         navController.navigate(Rutas.INICIAR_SESION) {
                             popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onPestana = irAPestana,
+                )
+            }
+            // Spec 07 · Metas
+            composable(Rutas.METAS) {
+                MetasScreen(
+                    viewModel = viewModel { MetasViewModel(metas) },
+                    onAtras = { navController.popBackStack(Rutas.DASHBOARD, inclusive = false) },
+                    onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
+                    onPestana = irAPestana,
+                )
+            }
+            // Spec 08 · Nueva meta
+            composable(Rutas.NUEVA_META) {
+                NuevaMetaScreen(
+                    viewModel = viewModel { NuevaMetaViewModel(metas) },
+                    onAtras = { navController.popBackStack() },
+                    onGuardada = {
+                        // Se vuelve a Metas y se recarga para que la meta nueva aparezca de primera.
+                        navController.navigate(Rutas.METAS) {
+                            popUpTo(Rutas.METAS) { inclusive = true }
                         }
                     },
                 )
