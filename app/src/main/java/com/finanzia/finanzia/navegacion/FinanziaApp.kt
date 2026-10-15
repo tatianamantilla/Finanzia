@@ -39,11 +39,12 @@ import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
 import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
-import com.finanzia.finanzia.ui.sesion.SALDO_SIN_DATO
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
-import com.finanzia.finanzia.validacion.CalculosDashboard
-import com.finanzia.finanzia.validacion.FormatosDashboard
+import com.finanzia.finanzia.validacion.CalculosAcceso
+import com.finanzia.finanzia.validacion.ResumenAcceso
+import java.time.Instant
+import java.time.ZoneId
 
 object Rutas {
     const val CREAR_CUENTA = "crear_cuenta"
@@ -153,17 +154,18 @@ fun FinanziaApp(
                 )
             }
             composable(Rutas.ACCESO_AUTORIZADO) {
-                // Saldo real del usuario: el mismo cálculo que el balance del Dashboard
-                // (saldo inicial de las cuentas + ingresos − gastos).
-                var saldo by remember { mutableStateOf<String?>(null) }
+                // Saldo, variación del mes e insight con los datos reales del usuario
+                // (los mismos movimientos que lee el Dashboard; ver CalculosAcceso).
+                var resumen by remember { mutableStateOf<ResumenAcceso?>(null) }
                 LaunchedEffect(dashboard) {
-                    saldo = dashboard.cargar().getOrNull()
-                        ?.let { FormatosDashboard.monto(CalculosDashboard.balance(it)) }
-                        ?: SALDO_SIN_DATO
+                    resumen = dashboard.cargar().fold(
+                        onSuccess = { CalculosAcceso.resumir(it, Instant.now(), ZoneId.systemDefault()) },
+                        onFailure = { ResumenAcceso.SIN_DATOS },
+                    )
                 }
                 AccesoAutorizadoScreen(
                     nombre = auth.usuarioActual?.nombre.orEmpty(),
-                    saldo = saldo,
+                    resumen = resumen,
                     onContinuar = irAlDashboard,
                 )
             }
