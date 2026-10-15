@@ -23,6 +23,22 @@ class SupabaseOnboardingRepository(
     private val cliente: SupabaseClient = ClienteSupabase.cliente,
 ) : OnboardingRepository {
 
+    /** Ingreso desde el Dashboard: solo el movimiento; la frecuencia del usuario no cambia. */
+    override suspend fun guardarIngreso(monto: Long, descripcion: String): Result<Unit> = conErroresClaros {
+        val ids = DatosInicialesSupabase.asegurar(cliente)
+        cliente.from("movimientos").insert(
+            NuevoMovimiento(
+                idUsuario = ids.idUsuario,
+                idCuenta = ids.idCuentaPrincipal,
+                idCategoria = ids.categorias[CATEGORIA_INGRESOS] ?: error("No se encontró la categoría $CATEGORIA_INGRESOS."),
+                tipo = "ingreso",
+                monto = monto,
+                descripcion = descripcion,
+            ),
+        )
+        Unit
+    }
+
     override suspend fun guardarPrimerIngreso(ingreso: PrimerIngreso): Result<Unit> = conErroresClaros {
         val ids = DatosInicialesSupabase.asegurar(cliente)
         cliente.from("movimientos").insert(

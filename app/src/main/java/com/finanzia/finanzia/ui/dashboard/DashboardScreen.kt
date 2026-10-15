@@ -99,6 +99,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.finanzia.finanzia.datos.CATEGORIA_INGRESOS
 import com.finanzia.finanzia.datos.CUENTA_PRINCIPAL
 import com.finanzia.finanzia.datos.CuentaDashboard
@@ -165,7 +166,13 @@ private val VeloMenuMas = Color(0x330D1B3E)
 
 /** Dashboard · Inicio (spec 04, docs/design/usuario_creado_onboarding.jpeg). */
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel, onSesionCerrada: () -> Unit) {
+fun DashboardScreen(
+    viewModel: DashboardViewModel,
+    /** Botones "Ingreso" y "Gasto" del menú "+". */
+    onIngreso: () -> Unit = {},
+    onGasto: () -> Unit = {},
+    onSesionCerrada: () -> Unit,
+) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_DASHBOARD)) {
         Column(Modifier.fillMaxSize()) {
             Box(
@@ -212,9 +219,8 @@ fun DashboardScreen(viewModel: DashboardViewModel, onSesionCerrada: () -> Unit) 
                 BotonMas(
                     abierto = menuMasAbierto,
                     onAlternar = { menuMasAbierto = !menuMasAbierto },
-                    // TODO: cuando el equipo defina las pantallas de registro, llevar a cada una.
-                    onIngreso = { menuMasAbierto = false },
-                    onGasto = { menuMasAbierto = false },
+                    onIngreso = { menuMasAbierto = false; onIngreso() },
+                    onGasto = { menuMasAbierto = false; onGasto() },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 20.dp, bottom = 16.dp),
@@ -768,8 +774,7 @@ private fun BotonConversar() {
 
 /**
  * Botón flotante "+". Al tocarlo suben dos botones, "Ingreso" y "Gasto", y el "+" gira hasta
- * quedar como una "×" para cerrar. Los dos botones todavía no llevan a ninguna pantalla
- * (spec 04, decisión pendiente 2): por ahora solo cierran el menú.
+ * quedar como una "×" para cerrar. Cada botón cierra el menú y abre su pantalla de registro.
  */
 @Composable
 private fun BotonMas(
@@ -938,7 +943,8 @@ private val datosVistaPrevia = DatosDashboard(
 private fun DashboardVacioPreview() {
     FinanziaTheme {
         DashboardScreen(
-            DashboardViewModel(DashboardFijo(Result.success(datosVistaPrevia)), FakeAuthRepository(), ahora = { Instant.EPOCH }),
+            // Igual que en la app: el ViewModel se crea con viewModel { }, no directamente.
+            viewModel { DashboardViewModel(DashboardFijo(Result.success(datosVistaPrevia)), FakeAuthRepository(), ahora = { Instant.EPOCH }) },
             onSesionCerrada = {},
         )
     }

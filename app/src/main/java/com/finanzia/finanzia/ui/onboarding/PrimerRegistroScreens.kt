@@ -120,23 +120,35 @@ private val opcionesGasto = listOf(
     Opcion(CategoriaGasto.TRANSPORTE, "🚗", Color(0xFFE6EEFB), "Transporte", "Gasolina, transporte público, Uber/DiDi"),
 )
 
-/** Pantalla 4 · Paso 2 • Ingresos (docs/design/crear_cuenta_4.jpeg). */
+/**
+ * Pantalla 4 · Paso 2 • Ingresos (docs/design/crear_cuenta_4.jpeg).
+ *
+ * Con [desdeDashboard] = true es "Nuevo ingreso" (botón "+" del Dashboard): sin "Paso 2", sin
+ * "Omitir" y sin la sección de frecuencia (la frecuencia se elige solo en el onboarding).
+ */
 @Composable
 fun PrimerIngresoScreen(
     viewModel: PrimerIngresoViewModel,
+    desdeDashboard: Boolean = false,
     onAtras: () -> Unit,
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
-        pastilla = { Pastilla("Paso 2 • Ingresos", VerdeClaro, VerdeBordeClaro, VerdeTexto) },
+        pastilla = {
+            Pastilla(if (desdeDashboard) "Nuevo ingreso" else "Paso 2 • Ingresos", VerdeClaro, VerdeBordeClaro, VerdeTexto)
+        },
         icono = Icons.Filled.ArrowDownward,
         colorIcono = VerdeMarca,
         fondoIcono = Color(0xFFDDF6EA),
-        titulo = "Registra tu primer ingreso",
+        titulo = if (desdeDashboard) "Registra un ingreso" else "Registra tu primer ingreso",
         tamanoTitulo = 28,
-        descripcion = "Indica la frecuencia con la que recibes dinero y el monto aproximado para proyectar tus metas.",
+        descripcion = if (desdeDashboard) {
+            "Anota el monto que recibiste. Se sumará a tu saldo."
+        } else {
+            "Indica la frecuencia con la que recibes dinero y el monto aproximado para proyectar tus metas."
+        },
         onAtras = onAtras,
-        onOmitir = onTerminar,
+        onOmitir = if (desdeDashboard) null else onTerminar,
     ) {
         TarjetaMonto(
             error = viewModel.errorMonto,
@@ -166,38 +178,41 @@ fun PrimerIngresoScreen(
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("TIPO / FRECUENCIA DE INGRESO", style = estilo(14, FontWeight.Bold, GrisEtiqueta, espaciado = 0.6))
-            Text("Selecciona uno", style = estilo(13, FontWeight.Bold, VerdeTexto))
+        // La frecuencia solo se elige en el onboarding.
+        if (!desdeDashboard) {
+            Spacer(Modifier.height(24.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("TIPO / FRECUENCIA DE INGRESO", style = estilo(14, FontWeight.Bold, GrisEtiqueta, espaciado = 0.6))
+                Text("Selecciona uno", style = estilo(13, FontWeight.Bold, VerdeTexto))
+            }
+            Spacer(Modifier.height(14.dp))
+            CuadriculaOpciones(
+                opciones = opcionesIngreso,
+                seleccionada = viewModel.opcion,
+                onSeleccionar = viewModel::seleccionar,
+                colorSeleccion = VerdeMarca,
+                fondoSeleccion = FondoSeleccionIngreso,
+            )
+            Spacer(Modifier.height(18.dp))
+            RecuadroConsejo(
+                texto = buildAnnotatedString {
+                    withStyle(SpanStyle(color = Color(0xFF1E4FBF), fontWeight = FontWeight.Bold)) { append("Consejo de Finanzia:") }
+                    append(" Configurar tu frecuencia nos permite predecir cuándo tendrás dinero disponible para tus ahorros.")
+                },
+                fondo = Brush.horizontalGradient(listOf(Color(0xFFEEF5FC), Color(0xFFEAF7F2))),
+                borde = Color(0xFFDCE8EE),
+                estiloTexto = estilo(14, color = GrisEtiqueta, altoLinea = 21),
+            )
         }
-        Spacer(Modifier.height(14.dp))
-        CuadriculaOpciones(
-            opciones = opcionesIngreso,
-            seleccionada = viewModel.opcion,
-            onSeleccionar = viewModel::seleccionar,
-            colorSeleccion = VerdeMarca,
-            fondoSeleccion = FondoSeleccionIngreso,
-        )
-        Spacer(Modifier.height(18.dp))
-        RecuadroConsejo(
-            texto = buildAnnotatedString {
-                withStyle(SpanStyle(color = Color(0xFF1E4FBF), fontWeight = FontWeight.Bold)) { append("Consejo de Finanzia:") }
-                append(" Configurar tu frecuencia nos permite predecir cuándo tendrás dinero disponible para tus ahorros.")
-            },
-            fondo = Brush.horizontalGradient(listOf(Color(0xFFEEF5FC), Color(0xFFEAF7F2))),
-            borde = Color(0xFFDCE8EE),
-            estiloTexto = estilo(14, color = GrisEtiqueta, altoLinea = 21),
-        )
         Spacer(Modifier.height(22.dp))
         viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
-            texto = "Guardar y continuar",
+            texto = if (desdeDashboard) "Guardar ingreso" else "Guardar y continuar",
             fondo = DegradadoIngreso,
             onClick = { viewModel.guardar(onTerminar) },
             cargando = viewModel.guardando,
@@ -208,27 +223,38 @@ fun PrimerIngresoScreen(
     }
 }
 
-/** Pantalla 5 · Paso 2 • Gastos (docs/design/crear_cuenta_5.jpeg). */
+/**
+ * Pantalla 5 · Paso 2 • Gastos (docs/design/crear_cuenta_5.jpeg).
+ *
+ * Con [desdeDashboard] = true es "Nuevo gasto" (botón "+" del Dashboard): sin "Paso 2" ni "Omitir".
+ */
 @Composable
 fun PrimerGastoScreen(
     viewModel: PrimerGastoViewModel,
+    desdeDashboard: Boolean = false,
     onAtras: () -> Unit,
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
-        pastilla = { Pastilla("Paso 2 • Gastos", RosaClaro, RosaBorde, RojoTexto, tamano = 16) },
+        pastilla = {
+            Pastilla(if (desdeDashboard) "Nuevo gasto" else "Paso 2 • Gastos", RosaClaro, RosaBorde, RojoTexto, tamano = 16)
+        },
         icono = Icons.Filled.ArrowUpward,
         colorIcono = RojoGasto,
         fondoIcono = Color(0xFFFDE2E6),
-        titulo = "Registra tu primer gasto",
+        titulo = if (desdeDashboard) "Registra un gasto" else "Registra tu primer gasto",
         tamanoTitulo = 24,
-        descripcion = "Selecciona la categoría principal y anota cuánto sueles destinar para comenzar a optimizar.",
+        descripcion = if (desdeDashboard) {
+            "Anota el monto y elige la categoría del gasto. Se restará de tu saldo."
+        } else {
+            "Selecciona la categoría principal y anota cuánto sueles destinar para comenzar a optimizar."
+        },
         onAtras = onAtras,
-        onOmitir = onTerminar,
+        onOmitir = if (desdeDashboard) null else onTerminar,
     ) {
         TarjetaMonto(
             error = viewModel.errorMonto,
-            etiqueta = "MONTO ESTIMADO DEL GASTO (COP)",
+            etiqueta = if (desdeDashboard) "MONTO DEL GASTO (COP)" else "MONTO ESTIMADO DEL GASTO (COP)",
             ayuda = "Finanzia detectará oportunidades de ahorro en esta categoría.",
             iconoAyuda = Icons.Outlined.Info,
             colorAyuda = RojoGasto,
@@ -290,7 +316,7 @@ fun PrimerGastoScreen(
         Spacer(Modifier.height(30.dp))
         viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
-            texto = "Guardar gasto y finalizar",
+            texto = if (desdeDashboard) "Guardar gasto" else "Guardar gasto y finalizar",
             fondo = SolidColor(AzulIntenso),
             onClick = { viewModel.guardar(onTerminar) },
             cargando = viewModel.guardando,
@@ -301,7 +327,10 @@ fun PrimerGastoScreen(
     }
 }
 
-/** Parte común: botón atrás, pastilla, título con ícono, contenido y "Omitir este paso por ahora". */
+/**
+ * Parte común: botón atrás, pastilla, título con ícono, contenido y "Omitir este paso por ahora"
+ * (este último no se muestra si [onOmitir] es null, como al registrar desde el Dashboard).
+ */
 @Composable
 private fun EstructuraPaso2(
     pastilla: @Composable () -> Unit,
@@ -312,7 +341,7 @@ private fun EstructuraPaso2(
     tamanoTitulo: Int,
     descripcion: String,
     onAtras: () -> Unit,
-    onOmitir: () -> Unit,
+    onOmitir: (() -> Unit)?,
     contenido: @Composable ColumnScope.() -> Unit,
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla)) {
@@ -339,7 +368,7 @@ private fun EstructuraPaso2(
             Spacer(Modifier.height(20.dp))
             contenido()
             Spacer(Modifier.height(16.dp))
-            EnlaceGris("Omitir este paso por ahora", onOmitir, Modifier.align(Alignment.CenterHorizontally))
+            onOmitir?.let { EnlaceGris("Omitir este paso por ahora", it, Modifier.align(Alignment.CenterHorizontally)) }
             Spacer(Modifier.height(20.dp))
         }
     }

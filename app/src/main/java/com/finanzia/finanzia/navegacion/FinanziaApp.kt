@@ -53,6 +53,8 @@ object Rutas {
     const val PRIMER_INGRESO = "primer_ingreso"
     const val PRIMER_GASTO = "primer_gasto"
     const val DASHBOARD = "dashboard"
+    const val NUEVO_INGRESO = "nuevo_ingreso"
+    const val NUEVO_GASTO = "nuevo_gasto"
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
@@ -197,12 +199,32 @@ fun FinanziaApp(
             composable(Rutas.DASHBOARD) {
                 DashboardScreen(
                     viewModel = viewModel { DashboardViewModel(dashboard, auth) },
+                    onIngreso = { navController.navigate(Rutas.NUEVO_INGRESO) },
+                    onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
                     onSesionCerrada = {
                         // Sin sesión no se puede volver a ninguna pantalla anterior.
                         navController.navigate(Rutas.INICIAR_SESION) {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
                     },
+                )
+            }
+            // Botón "+" del Dashboard: mismas pantallas del onboarding, en modo "Nuevo ingreso/gasto".
+            // Al guardar se vuelve a un Dashboard nuevo, que lee otra vez los datos (saldo y movimientos al día).
+            composable(Rutas.NUEVO_INGRESO) {
+                PrimerIngresoScreen(
+                    viewModel = viewModel { PrimerIngresoViewModel(onboarding, desdeDashboard = true) },
+                    desdeDashboard = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = irAlDashboard,
+                )
+            }
+            composable(Rutas.NUEVO_GASTO) {
+                PrimerGastoScreen(
+                    viewModel = viewModel { PrimerGastoViewModel(onboarding, desdeDashboard = true) },
+                    desdeDashboard = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = irAlDashboard,
                 )
             }
         }
