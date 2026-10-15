@@ -37,7 +37,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MusicNote
@@ -48,12 +47,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.Adjust
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -97,10 +93,12 @@ import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.datos.MetaDashboard
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.PreviewsFinanzia
+import com.finanzia.finanzia.ui.componentes.BarraNavegacion
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.Emoji
 import com.finanzia.finanzia.ui.componentes.MensajeError
 import com.finanzia.finanzia.ui.componentes.PantallaBase
+import com.finanzia.finanzia.ui.componentes.PestanaApp
 import com.finanzia.finanzia.ui.componentes.estilo
 import com.finanzia.finanzia.ui.theme.AzulEnlace
 import com.finanzia.finanzia.ui.theme.AzulMarino
@@ -136,8 +134,6 @@ private val AzulMeta = Color(0xFFDCE7FB)
 private val PistaProgreso = Color(0xFFC7D6F5)
 private val MentaMeta = Color(0xFFA8F0D3)
 private val VerdeIconoMeta = Color(0xFF0E6B4D)
-private val GrisIconoBarra = Color(0xFF3A4255)
-private val AzulPestana = Color(0xFFDCE8FB)
 private val FondoIconoNeutro = Color(0xFFEEF2FA)
 
 private val DegradadoLogo = Brush.linearGradient(listOf(Color(0xFF0F766E), Color(0xFF1D4ED8)))
@@ -152,7 +148,11 @@ private val DegradadoMas = Brush.linearGradient(listOf(Color(0xFF0F766E), Color(
 
 /** Dashboard · Inicio (spec 04, docs/design/usuario_creado_onboarding.jpeg). */
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel, onSesionCerrada: () -> Unit) {
+fun DashboardScreen(
+    viewModel: DashboardViewModel,
+    onSesionCerrada: () -> Unit,
+    onPestana: (PestanaApp) -> Unit = {},
+) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_DASHBOARD)) {
         Column(Modifier.fillMaxSize()) {
             Box(
@@ -186,7 +186,7 @@ fun DashboardScreen(viewModel: DashboardViewModel, onSesionCerrada: () -> Unit) 
                         .padding(end = 20.dp, bottom = 16.dp),
                 )
             }
-            BarraInferior()
+            BarraNavegacion(seleccionada = PestanaApp.INICIO, onPestana = onPestana)
         }
     }
 }
@@ -745,45 +745,6 @@ private fun BotonMas(modifier: Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Filled.Add, contentDescription = "Agregar", tint = Blanco, modifier = Modifier.size(32.dp))
-    }
-}
-
-@Composable
-private fun BarraInferior() {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .testTag(Etiquetas.BARRA_INFERIOR)
-            .background(Blanco)
-            .border(1.dp, BordeTarjeta)
-            .navigationBarsPadding()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-    ) {
-        // Solo "Inicio" está seleccionada; las demás pestañas no tienen acción por ahora (spec 04).
-        Pestana("Inicio", Icons.Filled.Home, seleccionada = true)
-        Pestana("Gráficos", Icons.Filled.BarChart)
-        Pestana("Billetera", Icons.Outlined.AccountBalanceWallet)
-        Pestana("Metas", Icons.Outlined.Adjust)
-        Pestana("Asistente", Icons.Outlined.SmartToy)
-    }
-}
-
-@Composable
-private fun RowScope.Pestana(texto: String, icono: ImageVector, seleccionada: Boolean = false) {
-    val color = if (seleccionada) AzulProgreso else GrisIconoBarra
-    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .clip(CircleShape)
-                .background(if (seleccionada) AzulPestana else Color.Transparent)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
-        }
-        Spacer(Modifier.height(2.dp))
-        Text(texto, style = estilo(12, if (seleccionada) FontWeight.SemiBold else FontWeight.Normal, color), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
