@@ -28,7 +28,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /** Ejemplos de notificaciones_1.png: nunca deben aparecer (spec 05). */
 private val EJEMPLOS_NOTIFICACIONES = listOf(
-    "Restaurantes", "85%", "Bancolombia", "180.000", "210.000", "450.000", "Vence mañana", "Hace 20 min", "16 días",
+    "Restaurantes", "85%", "Oportunidad", "IA Alert", "Ajustar límite", "Posponer", "Ver detalle", "Bancolombia", "180.000", "210.000", "450.000", "Vence mañana", "Hace 20 min", "16 días",
 )
 
 @RunWith(AndroidJUnit4::class)
@@ -74,8 +74,8 @@ class NotificacionesTest {
         seVe("0 alertas activas sin revisar")
         seVe("Todas (0)")
         seVe("HOY")
-        compose.onAllNodesWithTag(EtiquetasNotificaciones.TARJETA_AVISO).assertCountEquals(3)
-        compose.onAllNodes(hasText("Aún no hay datos")).assertCountEquals(3)
+        compose.onAllNodesWithTag(EtiquetasNotificaciones.TARJETA_AVISO).assertCountEquals(2)
+        compose.onAllNodes(hasText("Aún no hay datos")).assertCountEquals(2)
         EJEMPLOS_NOTIFICACIONES.forEach(::noAparece)
         noAparece("Gráficos")
     }

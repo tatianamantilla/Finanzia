@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Restaurant
@@ -59,7 +58,6 @@ import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
 import com.finanzia.finanzia.ui.theme.GrisSuave
 import com.finanzia.finanzia.ui.theme.GrisTexto
-import com.finanzia.finanzia.ui.theme.VerdeTexto
 
 // Colores tomados de docs/design/notificaciones_1.png.
 private val AzulPunto = Color(0xFF1D4ED8)
@@ -67,7 +65,6 @@ private val AzulIconoClaro = Color(0xFFE3ECFC)
 private val AzulTarjeta = Color(0xFF2563EB)
 private val VerdeFiltro = Color(0xFFBFF5DE)
 private val VerdeIcono = Color(0xFF0E6B4D)
-private val VerdeIconoClaro = Color(0xFFD5F7E7)
 
 /** Nombres internos que usan los tests de Notificaciones. No se ven en pantalla. */
 object EtiquetasNotificaciones {
@@ -75,7 +72,7 @@ object EtiquetasNotificaciones {
     const val TARJETA_AVISO = "tarjeta_aviso"
 }
 
-/** Clases de aviso del diseño (spec 05). */
+/** Clases de aviso que se mantienen (spec 05, simplificación aprobada: sin "Oportunidad de Finanzia IA"). */
 enum class TipoAviso(
     val titulo: String,
     val origen: String,
@@ -86,7 +83,6 @@ enum class TipoAviso(
 ) {
     PRESUPUESTO("Límite de presupuesto", "Presupuestos inteligentes", "Alertas de presupuesto", Icons.Filled.Restaurant, AzulIconoClaro, AzulPunto),
     VENCIMIENTO("Vencimiento de tarjeta", "Próximo vencimiento", "Vencimientos", Icons.Filled.CreditCard, AzulTarjeta, Blanco),
-    OPORTUNIDAD_IA("Oportunidad de ahorro", "Finanzia IA", "Finanzia IA", Icons.Filled.AutoAwesome, VerdeIconoClaro, VerdeIcono),
 }
 
 /**
@@ -255,16 +251,6 @@ private fun TarjetaAviso(tipo: TipoAviso) {
                     Spacer(Modifier.width(6.dp))
                     Text(tipo.origen, style = estilo(12, color = GrisTexto))
                 }
-            }
-            if (tipo == TipoAviso.OPORTUNIDAD_IA) {
-                Text(
-                    "IA Alert",
-                    style = estilo(11, FontWeight.Bold, VerdeTexto),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(VerdeIconoClaro)
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                )
             }
         }
         Spacer(Modifier.height(14.dp))

@@ -14,6 +14,16 @@ Lee antes `README.md` y `CLAUDE.md`.
 
 Mostrar al usuario, en una sola lista, los avisos importantes sobre su dinero: cuándo se acerca al límite de una categoría, cuándo vence un pago y las oportunidades de ahorro que detecte Finanzia IA. Se llega a esta pantalla desde la campana del Dashboard (spec 04).
 
+## Simplificación aprobada (Valentina, 2026-10-19)
+
+Para que la pantalla muestre solo lo importante:
+
+- **Avisos que se mantienen:** Límite de presupuesto y Vencimiento de tarjeta. Se quita la tarjeta "Oportunidad de Finanzia IA" y su pastilla "IA Alert".
+- **Encabezado:** se mantiene solo el botón de "marcar todo como leído" (doble check). Se quita el botón de ajustes.
+- **Filtros:** "Todas ([N])" y un filtro por cada aviso que se mantiene ("Alertas de presupuesto" y "Vencimientos").
+- **Botones de las tarjetas:** se quitan "Ajustar límite", "Posponer 6h" y "Ver detalle →", y el menú de tres puntos.
+- **Sin datos:** mientras Supabase no tenga límites de presupuesto ni fechas de pago, cada tarjeta conserva su ícono, título y origen, y muestra "Aún no hay datos" en vez de los ejemplos del diseño.
+
 ## Diseño de referencia
 
 - `docs/design/notificaciones_1.png`: parte superior de la pantalla, con las dos primeras notificaciones completas y el comienzo de la tercera.
