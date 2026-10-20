@@ -152,6 +152,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel,
     onSesionCerrada: () -> Unit,
     onPestana: (PestanaApp) -> Unit = {},
+    onNotificaciones: () -> Unit = {},
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_DASHBOARD)) {
         Column(Modifier.fillMaxSize()) {
@@ -166,6 +167,7 @@ fun DashboardScreen(
                     Encabezado(
                         cerrandoSesion = viewModel.cerrandoSesion,
                         onCerrarSesion = { viewModel.cerrarSesion(onSesionCerrada) },
+                        onNotificaciones = onNotificaciones,
                     )
                     viewModel.errorCerrarSesion?.let { MensajeError(it, Modifier.padding(top = 8.dp)) }
                     when (val estado = viewModel.estado) {
@@ -192,7 +194,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit) {
+private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
     var menuAbierto by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
@@ -214,12 +216,16 @@ private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit) {
             Text("Finanzia", style = estilo(21, FontWeight.SemiBold, altoLinea = 26))
             Text("Copiloto IA", style = estilo(14, FontWeight.SemiBold, VerdeTexto, altoLinea = 18))
         }
-        // Campana sin punto azul: no hay notificaciones reales (spec 04). Sin acción por ahora.
+        // Campana sin punto azul: no hay notificaciones reales (spec 04). Abre Notificaciones (spec 05).
         Icon(
             Icons.Outlined.NotificationsNone,
             contentDescription = "Notificaciones",
             tint = AzulMarino,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = onNotificaciones)
+                .padding(4.dp)
+                .size(28.dp),
         )
         Spacer(Modifier.width(18.dp))
         Box {

@@ -31,6 +31,7 @@ import com.finanzia.finanzia.ui.metas.MetasScreen
 import com.finanzia.finanzia.ui.metas.MetasViewModel
 import com.finanzia.finanzia.ui.metas.NuevaMetaScreen
 import com.finanzia.finanzia.ui.metas.NuevaMetaViewModel
+import com.finanzia.finanzia.ui.notificaciones.NotificacionesScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -61,6 +62,7 @@ object Rutas {
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
     const val METAS = "metas"
     const val NUEVA_META = "nueva_meta"
+    const val NOTIFICACIONES = "notificaciones"
     const val ARG_CORREO = "correo"
     const val NUEVA_CONTRASENA = "nueva_contrasena/{$ARG_CORREO}"
 
@@ -212,6 +214,14 @@ fun FinanziaApp(
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
                     },
+                    onPestana = irAPestana,
+                    onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) { launchSingleTop = true } },
+                )
+            }
+            // Spec 05 · Notificaciones (se abre con la campana de Inicio).
+            composable(Rutas.NOTIFICACIONES) {
+                NotificacionesScreen(
+                    onAtras = { navController.popBackStack(Rutas.DASHBOARD, inclusive = false) },
                     onPestana = irAPestana,
                 )
             }
