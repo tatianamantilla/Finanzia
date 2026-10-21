@@ -12,6 +12,8 @@ object Etiquetas {
     const val BOTON_ATRAS = "boton_atras"
     const val PANTALLA_DASHBOARD = "pantalla_dashboard"
     const val BOTON_OJO_BALANCE = "boton_ojo_balance"
+    const val BOTON_OJO_SALDO_ACCESO = "boton_ojo_saldo_acceso"
+    const val MONTO_SALDO_ACCESO = "monto_saldo_acceso"
     const val BOTON_PERFIL = "boton_perfil"
     const val MONTO_BALANCE = "monto_balance"
     const val LINEA_TENDENCIA = "linea_tendencia"

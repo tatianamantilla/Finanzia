@@ -1,6 +1,7 @@
 package com.finanzia.finanzia.ui.sesion
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,9 +25,14 @@ import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +42,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -43,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.PreviewsFinanzia
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
@@ -252,14 +261,31 @@ private fun TextosSaldo(saldo: String, compacto: Boolean, modifier: Modifier = M
         // En modo compacto el monto se mide en dp (no crece con la letra del sistema) para que quepa
         // completo. Con letra normal mide lo mismo que en el diseño.
         val tamanoMonto = if (compacto) with(LocalDensity.current) { 30.dp.toSp().value } else 30f
+        // El ojo funciona igual que en el Dashboard: por defecto se ve el monto y al tocarlo se
+        // cambia por "••••••". rememberSaveable lo mantiene si se gira el teléfono.
+        var visible by rememberSaveable { mutableStateOf(true) }
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(
-                saldo,
+                if (visible) saldo else "••••••",
                 style = estilo(tamanoMonto, FontWeight.ExtraBold, altoLinea = tamanoMonto * 1.2f, espaciado = -0.5),
+                modifier = Modifier.testTag(Etiquetas.MONTO_SALDO_ACCESO),
             )
-            Spacer(Modifier.width(12.dp))
-            // TODO: el ojo se ve pero la spec 01 no define su acción.
-            Icon(Icons.Outlined.Visibility, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(4.dp))
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button) { visible = !visible }
+                    .testTag(Etiquetas.BOTON_OJO_SALDO_ACCESO),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                    contentDescription = if (visible) "Ocultar saldo" else "Mostrar saldo",
+                    tint = GrisIcono,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
     }
 }
