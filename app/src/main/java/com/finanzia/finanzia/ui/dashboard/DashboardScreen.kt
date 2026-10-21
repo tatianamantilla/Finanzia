@@ -167,6 +167,8 @@ fun DashboardScreen(
     onGasto: () -> Unit = {},
     /** Campana: abre Notificaciones (spec 05). */
     onNotificaciones: () -> Unit = {},
+    /** Pestaña Metas de la barra inferior (spec 07). */
+    onMetas: () -> Unit = {},
     onSesionCerrada: () -> Unit,
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_DASHBOARD)) {
@@ -224,7 +226,7 @@ fun DashboardScreen(
                 )
             }
             // Ya estamos en Inicio: tocar "Inicio" no hace nada.
-            BarraNavegacion()
+            BarraNavegacion(onMetas = onMetas)
         }
     }
 }

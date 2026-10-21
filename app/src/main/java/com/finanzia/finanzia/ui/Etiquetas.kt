@@ -29,6 +29,16 @@ object Etiquetas {
     const val CONTADOR_NOTIFICACIONES = "contador_notificaciones"
     const val FILTRO_NOTIFICACIONES = "filtro_notificaciones"
     const val ESTADO_VACIO_NOTIFICACIONES = "estado_vacio_notificaciones"
+    const val PANTALLA_METAS = "pantalla_metas"
+    const val BOTON_NUEVA_META = "boton_nueva_meta"
+    const val MONTO_AHORRO_METAS = "monto_ahorro_metas"
+    const val TARJETA_META = "tarjeta_meta"
+    const val ESTADO_VACIO_METAS = "estado_vacio_metas"
+    const val PANTALLA_NUEVA_META = "pantalla_nueva_meta"
+    const val CAMPO_NOMBRE_META = "campo_nombre_meta"
+    const val CAMPO_MONTO_META = "campo_monto_meta"
+    const val CAMPO_FECHA_META = "campo_fecha_meta"
+    const val BOTON_GUARDAR_META = "boton_guardar_meta"
 
     // Estado del botón principal mientras espera a Supabase.
     const val CARGANDO = "Cargando"

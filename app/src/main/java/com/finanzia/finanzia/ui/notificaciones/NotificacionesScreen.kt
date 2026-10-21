@@ -100,6 +100,7 @@ private val AzulProgresoCarga = Color(0xFF1D4ED8)
 fun NotificacionesScreen(
     viewModel: NotificacionesViewModel,
     onAtras: () -> Unit,
+    onMetas: () -> Unit = {},
     ahora: () -> Instant = Instant::now,
     zona: ZoneId = ZoneId.systemDefault(),
 ) {
@@ -129,7 +130,7 @@ fun NotificacionesScreen(
                 }
             }
             // A esta pantalla se llega desde Inicio: "Inicio" queda seleccionada y vuelve al Dashboard.
-            BarraNavegacion(onInicio = onAtras)
+            BarraNavegacion(onInicio = onAtras, onMetas = onMetas)
         }
     }
 }

@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity() {
                 onboarding = Repositorios.onboarding,
                 dashboard = Repositorios.dashboard,
                 notificaciones = Repositorios.notificaciones,
+                metas = Repositorios.metas,
             )
         }
     }

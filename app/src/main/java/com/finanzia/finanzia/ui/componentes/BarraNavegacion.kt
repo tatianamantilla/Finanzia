@@ -42,16 +42,23 @@ private val AzulPestanaActiva = Color(0xFF1D4ED8)
 private val GrisIconoBarra = Color(0xFF3A4255)
 private val AzulPestana = Color(0xFFDCE8FB)
 
+/** Pestañas que ya tienen pantalla. */
+enum class PestanaApp { INICIO, METAS }
+
 /**
  * Barra de navegación inferior de toda la app: Inicio, Gráficos, Billetera, Metas y Asistente.
- * "Gráficos" se mantiene por decisión del equipo (entrará en función más adelante). Por ahora solo
- * "Inicio" está construida y queda seleccionada; las demás se ven pero no tienen acción hasta que
- * exista su pantalla.
+ * "Gráficos" se mantiene por decisión del equipo (entrará en función más adelante). Por ahora
+ * Inicio y Metas tienen pantalla; las demás se ven pero no tienen acción hasta que exista la suya.
  *
- * [onInicio] = null cuando ya se está en el Dashboard (tocar "Inicio" no hace nada).
+ * [seleccionada] es la pestaña de la pantalla actual. Un callback en null (por ejemplo [onInicio]
+ * cuando ya se está en el Dashboard) hace que tocar esa pestaña no haga nada.
  */
 @Composable
-fun BarraNavegacion(onInicio: (() -> Unit)? = null) {
+fun BarraNavegacion(
+    seleccionada: PestanaApp = PestanaApp.INICIO,
+    onInicio: (() -> Unit)? = null,
+    onMetas: (() -> Unit)? = null,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -62,10 +69,10 @@ fun BarraNavegacion(onInicio: (() -> Unit)? = null) {
             .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround,
     ) {
-        Pestana("Inicio", Icons.Filled.Home, seleccionada = true, onClick = onInicio)
+        Pestana("Inicio", Icons.Filled.Home, seleccionada = seleccionada == PestanaApp.INICIO, onClick = onInicio)
         Pestana("Gráficos", Icons.Filled.BarChart)
         Pestana("Billetera", Icons.Outlined.AccountBalanceWallet)
-        Pestana("Metas", Icons.Outlined.Adjust)
+        Pestana("Metas", Icons.Outlined.Adjust, seleccionada = seleccionada == PestanaApp.METAS, onClick = onMetas)
         Pestana("Asistente", Icons.Outlined.SmartToy)
     }
 }
