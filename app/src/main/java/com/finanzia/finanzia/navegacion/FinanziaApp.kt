@@ -21,9 +21,13 @@ import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.datos.AuthRepository
 import com.finanzia.finanzia.datos.DashboardRepository
 import com.finanzia.finanzia.datos.DashboardSimulado
+import com.finanzia.finanzia.datos.NotificacionesRepository
+import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
 import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
+import com.finanzia.finanzia.ui.notificaciones.NotificacionesScreen
+import com.finanzia.finanzia.ui.notificaciones.NotificacionesViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -55,6 +59,7 @@ object Rutas {
     const val DASHBOARD = "dashboard"
     const val NUEVO_INGRESO = "nuevo_ingreso"
     const val NUEVO_GASTO = "nuevo_gasto"
+    const val NOTIFICACIONES = "notificaciones"
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
@@ -71,6 +76,8 @@ fun FinanziaApp(
     auth: AuthRepository,
     onboarding: OnboardingRepository,
     dashboard: DashboardRepository = remember(auth, onboarding) { DashboardSimulado(auth, onboarding) },
+    // La app real pasa Repositorios.notificaciones (Supabase); los tests usan los simulados.
+    notificaciones: NotificacionesRepository = remember { NotificacionesSinDatos() },
     navController: NavHostController = rememberNavController(),
 ) {
     // Al llegar al Dashboard se borra el historial: "atrás" ya no vuelve al onboarding.
@@ -201,12 +208,20 @@ fun FinanziaApp(
                     viewModel = viewModel { DashboardViewModel(dashboard, auth) },
                     onIngreso = { navController.navigate(Rutas.NUEVO_INGRESO) },
                     onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
+                    onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     onSesionCerrada = {
                         // Sin sesión no se puede volver a ninguna pantalla anterior.
                         navController.navigate(Rutas.INICIAR_SESION) {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
                     },
+                )
+            }
+            // Spec 05 · Notificaciones: se abre con la campana; la flecha (o "Inicio") vuelve al Dashboard.
+            composable(Rutas.NOTIFICACIONES) {
+                NotificacionesScreen(
+                    viewModel = viewModel { NotificacionesViewModel(notificaciones) },
+                    onAtras = { navController.popBackStack(Rutas.DASHBOARD, inclusive = false) },
                 )
             }
             // Botón "+" del Dashboard: mismas pantallas del onboarding, en modo "Nuevo ingreso/gasto".

@@ -12,7 +12,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FinanziaApp(auth = Repositorios.auth, onboarding = Repositorios.onboarding, dashboard = Repositorios.dashboard)
+            FinanziaApp(
+                auth = Repositorios.auth,
+                onboarding = Repositorios.onboarding,
+                dashboard = Repositorios.dashboard,
+                notificaciones = Repositorios.notificaciones,
+            )
         }
     }
 }

@@ -24,6 +24,11 @@ object Etiquetas {
     const val BOTON_MAS = "boton_mas"
     const val BOTON_INGRESO = "boton_ingreso"
     const val BOTON_GASTO = "boton_gasto"
+    const val BOTON_CAMPANA = "boton_campana"
+    const val PANTALLA_NOTIFICACIONES = "pantalla_notificaciones"
+    const val CONTADOR_NOTIFICACIONES = "contador_notificaciones"
+    const val FILTRO_NOTIFICACIONES = "filtro_notificaciones"
+    const val ESTADO_VACIO_NOTIFICACIONES = "estado_vacio_notificaciones"
 
     // Estado del botón principal mientras espera a Supabase.
     const val CARGANDO = "Cargando"
