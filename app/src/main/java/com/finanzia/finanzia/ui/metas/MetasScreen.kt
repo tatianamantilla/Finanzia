@@ -109,6 +109,7 @@ fun MetasScreen(
     onAtras: () -> Unit,
     onNuevaMeta: () -> Unit,
     hoy: () -> LocalDate = { LocalDate.now() },
+    onDetalle: (Long) -> Unit = {},
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_METAS)) {
         Column(Modifier.fillMaxSize()) {
@@ -124,7 +125,7 @@ fun MetasScreen(
                     when (val estado = viewModel.estado) {
                         EstadoMetas.Cargando -> Cargando()
                         is EstadoMetas.Error -> ErrorCarga(estado.mensaje, onReintentar = viewModel::cargar)
-                        is EstadoMetas.Listo -> Contenido(estado.metas, hoy(), viewModel)
+                        is EstadoMetas.Listo -> Contenido(estado.metas, hoy(), viewModel, onDetalle)
                     }
                     Spacer(Modifier.height(24.dp))
                 }
@@ -224,7 +225,7 @@ private fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
 }
 
 @Composable
-private fun Contenido(metas: List<Meta>, hoy: LocalDate, viewModel: MetasViewModel) {
+private fun Contenido(metas: List<Meta>, hoy: LocalDate, viewModel: MetasViewModel, onDetalle: (Long) -> Unit) {
     Spacer(Modifier.height(20.dp))
     TarjetaAhorroAcumulado(metas, hoy)
     Spacer(Modifier.height(24.dp))
@@ -244,7 +245,7 @@ private fun Contenido(metas: List<Meta>, hoy: LocalDate, viewModel: MetasViewMod
     } else {
         metas.forEach {
             Spacer(Modifier.height(14.dp))
-            TarjetaMeta(it, hoy, viewModel)
+            TarjetaMeta(it, hoy, viewModel, onDetalle)
         }
     }
 }
@@ -392,7 +393,7 @@ fun textoConsejo(consejo: ConsejoMetas?) = buildAnnotatedString {
 }
 
 @Composable
-private fun TarjetaMeta(meta: Meta, hoy: LocalDate, viewModel: MetasViewModel) {
+private fun TarjetaMeta(meta: Meta, hoy: LocalDate, viewModel: MetasViewModel, onDetalle: (Long) -> Unit) {
     val falta = CalculosMetas.falta(meta)
     val porcentaje = CalculosMetas.porcentaje(meta.ahorrado, meta.montoObjetivo)
     Box(Modifier.testTag(Etiquetas.TARJETA_META)) {
@@ -506,21 +507,37 @@ private fun TarjetaMeta(meta: Meta, hoy: LocalDate, viewModel: MetasViewModel) {
                 )
                 return@Tarjeta
             }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 46.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(AzulBotonOscuro)
-                    .clickable(role = Role.Button) { viewModel.abrirAporte(meta.id) }
-                    .testTag(EtiquetasAportes.BOTON_APORTAR)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null, tint = Blanco, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Aportar", style = estilo(15, FontWeight.Bold, Blanco))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AzulBotonOscuro)
+                        .clickable(role = Role.Button) { viewModel.abrirAporte(meta.id) }
+                        .testTag(EtiquetasAportes.BOTON_APORTAR)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = Blanco, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Aportar", style = estilo(15, FontWeight.Bold, Blanco))
+                }
+                // "Detalle de meta" (spec 09): mismo tamaño, con borde azul como "+ Nueva Meta".
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.5.dp, AzulBordeBoton, RoundedCornerShape(12.dp))
+                        .clickable(role = Role.Button) { onDetalle(meta.id) }
+                        .testTag(EtiquetasAportes.BOTON_DETALLE_META)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Detalle de meta", style = estilo(15, FontWeight.Bold, AzulBordeBoton), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
     }

@@ -28,6 +28,8 @@ import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
 import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
+import com.finanzia.finanzia.ui.metas.DetalleMetaScreen
+import com.finanzia.finanzia.ui.metas.DetalleMetaViewModel
 import com.finanzia.finanzia.ui.metas.MetasScreen
 import com.finanzia.finanzia.ui.metas.MetasViewModel
 import com.finanzia.finanzia.ui.metas.NuevaMetaScreen
@@ -68,6 +70,8 @@ object Rutas {
     const val NOTIFICACIONES = "notificaciones"
     const val METAS = "metas"
     const val NUEVA_META = "nueva_meta"
+    const val ARG_ID_META = "idMeta"
+    const val DETALLE_META = "detalle_meta/{$ARG_ID_META}"
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
@@ -76,6 +80,9 @@ object Rutas {
 
     /** Ruta del Paso 2 con el correo ya verificado en el Paso 1. */
     fun nuevaContrasena(correo: String) = "nueva_contrasena/${Uri.encode(correo)}"
+
+    /** Ruta del detalle de una meta (spec 09). */
+    fun detalleMeta(idMeta: Long) = "detalle_meta/$idMeta"
 }
 
 /** Punto de entrada de las pantallas. Recibe los repositorios para que los tests usen los suyos. */
@@ -247,10 +254,25 @@ fun FinanziaApp(
             }
             // Spec 07 · Metas: pestaña Metas de la barra inferior.
             composable(Rutas.METAS) {
+                val metasViewModel = viewModel { MetasViewModel(metas) }
+                // Al volver del detalle (donde se pueden editar aportes) se leen de nuevo los totales.
+                LaunchedEffect(Unit) { metasViewModel.refrescar() }
                 MetasScreen(
-                    viewModel = viewModel { MetasViewModel(metas) },
+                    viewModel = metasViewModel,
                     onAtras = volverAlDashboard,
                     onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
+                    onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
+                )
+            }
+            // Spec 09 · Detalle de meta: botón "Detalle de meta" de cada tarjeta.
+            composable(
+                Rutas.DETALLE_META,
+                arguments = listOf(navArgument(Rutas.ARG_ID_META) { type = NavType.LongType }),
+            ) { entrada ->
+                val idMeta = entrada.arguments?.getLong(Rutas.ARG_ID_META) ?: 0L
+                DetalleMetaScreen(
+                    viewModel = viewModel { DetalleMetaViewModel(metas, idMeta) },
+                    onAtras = { navController.popBackStack() },
                 )
             }
             // Spec 08 · Nueva meta. Al guardar se abre una pantalla Metas nueva, que vuelve a leer
