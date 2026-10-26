@@ -124,7 +124,7 @@ fun MetasScreen(
                     when (val estado = viewModel.estado) {
                         EstadoMetas.Cargando -> Cargando()
                         is EstadoMetas.Error -> ErrorCarga(estado.mensaje, onReintentar = viewModel::cargar)
-                        is EstadoMetas.Listo -> Contenido(estado.metas, hoy())
+                        is EstadoMetas.Listo -> Contenido(estado.metas, hoy(), viewModel)
                     }
                     Spacer(Modifier.height(24.dp))
                 }
@@ -224,7 +224,7 @@ private fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
 }
 
 @Composable
-private fun Contenido(metas: List<Meta>, hoy: LocalDate) {
+private fun Contenido(metas: List<Meta>, hoy: LocalDate, viewModel: MetasViewModel) {
     Spacer(Modifier.height(20.dp))
     TarjetaAhorroAcumulado(metas, hoy)
     Spacer(Modifier.height(24.dp))
@@ -244,7 +244,7 @@ private fun Contenido(metas: List<Meta>, hoy: LocalDate) {
     } else {
         metas.forEach {
             Spacer(Modifier.height(14.dp))
-            TarjetaMeta(it, hoy)
+            TarjetaMeta(it, hoy, viewModel)
         }
     }
 }
@@ -392,7 +392,7 @@ fun textoConsejo(consejo: ConsejoMetas?) = buildAnnotatedString {
 }
 
 @Composable
-private fun TarjetaMeta(meta: Meta, hoy: LocalDate) {
+private fun TarjetaMeta(meta: Meta, hoy: LocalDate, viewModel: MetasViewModel) {
     val falta = CalculosMetas.falta(meta)
     val porcentaje = CalculosMetas.porcentaje(meta.ahorrado, meta.montoObjetivo)
     Box(Modifier.testTag(Etiquetas.TARJETA_META)) {
@@ -492,13 +492,28 @@ private fun TarjetaMeta(meta: Meta, hoy: LocalDate) {
             Spacer(Modifier.height(14.dp))
             RecuadroProximoAporte(meta, hoy)
             Spacer(Modifier.height(12.dp))
-            // "+ Aportar": sin acción por ahora (spec 07).
+            // "+ Aportar" abre, dentro de la tarjeta, el recuadro para escribir el monto (spec 07).
+            if (viewModel.aportandoA == meta.id) {
+                FormularioMonto(
+                    titulo = "¿Cuánto vas a aportar?",
+                    monto = viewModel.montoAporte,
+                    error = viewModel.errorAporte,
+                    guardando = viewModel.guardandoAporte,
+                    textoGuardar = "Guardar aporte",
+                    onCambio = viewModel::cambiarMontoAporte,
+                    onGuardar = viewModel::guardarAporte,
+                    onCancelar = viewModel::cerrarAporte,
+                )
+                return@Tarjeta
+            }
             Row(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 46.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(AzulBotonOscuro)
+                    .clickable(role = Role.Button) { viewModel.abrirAporte(meta.id) }
+                    .testTag(EtiquetasAportes.BOTON_APORTAR)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

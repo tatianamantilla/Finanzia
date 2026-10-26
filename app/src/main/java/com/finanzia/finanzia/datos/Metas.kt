@@ -33,7 +33,8 @@ enum class FrecuenciaAporte(val valor: String, val opcion: String, val texto: St
     }
 }
 
-data class AporteMeta(val monto: Double, val fecha: LocalDate)
+/** Un aporte a una meta (tabla aportes). [id] es id_aporte: sirve para editarlo (spec 09). */
+data class AporteMeta(val monto: Double, val fecha: LocalDate, val id: Long = 0)
 
 /** Una meta activa del usuario con sus aportes. */
 data class Meta(
@@ -67,6 +68,9 @@ interface MetasRepository {
     suspend fun cargar(): Result<List<Meta>>
 
     suspend fun crear(meta: NuevaMeta): Result<Unit>
+
+    /** Guarda un aporte de [monto] pesos a la meta [idMeta], desde la cuenta Principal (spec 07). */
+    suspend fun aportar(idMeta: Long, monto: Long): Result<Unit>
 }
 
 /** Versión simulada para tests y Previews: guarda en memoria. */
@@ -96,6 +100,16 @@ class MetasSimuladas(
             frecuencia = meta.frecuencia,
             aportes = emptyList(),
         )
+        return Result.success(Unit)
+    }
+
+    override suspend fun aportar(idMeta: Long, monto: Long): Result<Unit> {
+        error?.let { return Result.failure(it) }
+        val i = metas.indexOfFirst { it.id == idMeta }
+        if (i < 0) return Result.failure(IllegalStateException("No se encontró la meta."))
+        val idAporte = (metas.flatMap { it.aportes }.maxOfOrNull { it.id } ?: 0) + 1
+        val hoy = ahora().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        metas[i] = metas[i].copy(aportes = metas[i].aportes + AporteMeta(monto.toDouble(), hoy, idAporte))
         return Result.success(Unit)
     }
 }

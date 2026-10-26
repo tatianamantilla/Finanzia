@@ -51,7 +51,7 @@ class SupabaseMetasRepository(
                 fechaCreacion = aInstante(fila.fechaCreacion),
                 categoria = CategoriaMeta.desde(fila.categoria),
                 frecuencia = FrecuenciaAporte.desde(fila.frecuenciaAporte),
-                aportes = aportes[fila.idMeta].orEmpty().map { AporteMeta(it.monto, aFecha(it.fecha)) },
+                aportes = aportes[fila.idMeta].orEmpty().map { AporteMeta(it.monto, aFecha(it.fecha), it.idAporte) },
             )
         }
     }
@@ -67,6 +67,20 @@ class SupabaseMetasRepository(
                 fechaCreacion = OffsetDateTime.now().toString(),
                 categoria = meta.categoria.valor,
                 frecuenciaAporte = meta.frecuencia.valor,
+            ),
+        )
+        Unit
+    }
+
+    override suspend fun aportar(idMeta: Long, monto: Long): Result<Unit> = conErroresClaros {
+        // El aporte sale de la cuenta Principal: RLS exige que la meta y la cuenta sean del usuario.
+        val ids = DatosInicialesSupabase.asegurar(cliente)
+        cliente.from("aportes").insert(
+            FilaNuevoAporte(
+                idMeta = idMeta,
+                idCuenta = ids.idCuentaPrincipal,
+                monto = monto,
+                fecha = OffsetDateTime.now().toString(),
             ),
         )
         Unit
@@ -94,8 +108,17 @@ class SupabaseMetasRepository(
 
     @Serializable
     private data class FilaAporte(
+        @SerialName("id_aporte") val idAporte: Long,
         @SerialName("id_meta") val idMeta: Long,
         val monto: Double,
+        val fecha: String,
+    )
+
+    @Serializable
+    private data class FilaNuevoAporte(
+        @SerialName("id_meta") val idMeta: Long,
+        @SerialName("id_cuenta") val idCuenta: Long,
+        val monto: Long,
         val fecha: String,
     )
 

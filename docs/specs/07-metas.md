@@ -85,7 +85,8 @@ Se **mantienen**, con sus datos reales o con el mensaje de "sin datos": el conse
 - **Pestaña Metas:** abre esta pantalla y queda seleccionada. **Inicio** vuelve al Dashboard.
 - **Flecha atrás:** vuelve al Dashboard.
 - **"+ Nueva Meta":** abre la pantalla Nueva Meta (spec 08). Al guardar una meta, vuelve aquí y la meta nueva aparece de primera.
-- **Menú de tres puntos y "+ Aportar":** se muestran como en el diseño pero **no tienen acción por ahora**, hasta que el equipo defina qué hacen.
+- **"+ Aportar" (Valentina, 2026-10-26):** abre, dentro de la misma tarjeta, un recuadro "¿Cuánto vas a aportar?" para escribir el monto con el teclado numérico, con los botones "Cancelar" y "Guardar aporte". El monto debe ser mayor que 0; si no, el error va en rojo dentro del recuadro. Al guardar, se crea una fila en `aportes` (la meta, la cuenta Principal del usuario, el monto y la fecha actual), el recuadro se cierra y la pantalla se recarga: lo ahorrado, lo que falta, el porcentaje y el ahorro acumulado ya incluyen el aporte.
+- **Menú de tres puntos:** se muestra como en el diseño pero **no tiene acción por ahora**.
 - Los datos se cargan al entrar a la pantalla. Mientras carga, muestra un estado de carga simple que no cambie el diseño; si falla la lectura, muestra un texto de error en rojo dentro de la pantalla (sin Snackbar) con la opción de reintentar.
 
 ## Adaptable a cualquier dispositivo
@@ -102,6 +103,7 @@ Se **mantienen**, con sus datos reales o con el mensaje de "sin datos": el conse
 - [ ] Cada meta muestra su nombre, mes límite, ahorrado, objetivo, lo que falta y el porcentaje correctos.
 - [ ] El ahorro acumulado y "[X]% completado" coinciden con la suma de todas las metas activas.
 - [ ] Una meta recién creada aparece de primera al volver.
+- [ ] "+ Aportar" guarda el aporte y la meta suma el monto de inmediato; un monto vacío o 0 muestra el error en rojo.
 - [ ] Un usuario sin metas ve el estado vacío.
 - [ ] No hay ningún dato inventado: no aparecen "Vacaciones San Andrés", "$14.850.000" ni "$200.000 COP quincenal" si el usuario no los registró.
 - [ ] No aparecen la tarjeta "¡Vas con paso firme!", "Ordenar" ni "Ajustar regla".
@@ -121,6 +123,6 @@ Se **mantienen**, con sus datos reales o con el mensaje de "sin datos": el conse
 1. **Imagen en alta resolución:** se necesita la imagen original completa (título completo, segunda meta y barra de navegación).
 2. **Título:** ¿el título completo es "Metas Financieras"? ¿Qué dice completo el subtítulo "Tu copiloto IA proyect…"?
 3. **Categoría y frecuencia de la meta:** ver spec 08, decisiones pendientes 2 y 3.
-4. **Acciones:** qué hacen el menú de tres puntos y "+ Aportar" (¿registra un aporte desde una cuenta?).
+4. **Acciones:** qué hace el menú de tres puntos. ¿El aporte debe registrarse también como un movimiento que baje el saldo de la cuenta? (Por ahora solo se guarda en `aportes`.)
 5. **Metas cumplidas:** cuando una meta llega al 100 %, ¿sigue en "Metas Activas" o pasa a otra sección?
 6. **Formato de montos:** las pantallas nuevas usan `$14.850.000 COP` y el Dashboard usa `$12,450.00`. Debe ser el mismo en toda la app.
