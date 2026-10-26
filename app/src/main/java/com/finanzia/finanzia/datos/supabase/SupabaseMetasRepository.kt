@@ -86,6 +86,14 @@ class SupabaseMetasRepository(
         Unit
     }
 
+    override suspend fun editarAporte(idAporte: Long, monto: Long): Result<Unit> = conErroresClaros {
+        // RLS solo deja cambiar aportes de metas del usuario que inició sesión.
+        cliente.from("aportes").update(CambioMontoAporte(monto)) {
+            filter { eq("id_aporte", idAporte) }
+        }
+        Unit
+    }
+
     /** "2026-11-30" o "2026-11-30T05:00:00+00:00" → 2026-11-30 (sirve si la columna es date o timestamp). */
     private fun aFecha(texto: String): LocalDate = LocalDate.parse(texto.take(10))
 
@@ -113,6 +121,9 @@ class SupabaseMetasRepository(
         val monto: Double,
         val fecha: String,
     )
+
+    @Serializable
+    private data class CambioMontoAporte(val monto: Long)
 
     @Serializable
     private data class FilaNuevoAporte(

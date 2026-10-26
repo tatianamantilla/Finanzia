@@ -71,6 +71,9 @@ interface MetasRepository {
 
     /** Guarda un aporte de [monto] pesos a la meta [idMeta], desde la cuenta Principal (spec 07). */
     suspend fun aportar(idMeta: Long, monto: Long): Result<Unit>
+
+    /** Cambia el monto de un aporte ya hecho (spec 09, "Editar aportes"). */
+    suspend fun editarAporte(idAporte: Long, monto: Long): Result<Unit>
 }
 
 /** Versión simulada para tests y Previews: guarda en memoria. */
@@ -110,6 +113,16 @@ class MetasSimuladas(
         val idAporte = (metas.flatMap { it.aportes }.maxOfOrNull { it.id } ?: 0) + 1
         val hoy = ahora().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
         metas[i] = metas[i].copy(aportes = metas[i].aportes + AporteMeta(monto.toDouble(), hoy, idAporte))
+        return Result.success(Unit)
+    }
+
+    override suspend fun editarAporte(idAporte: Long, monto: Long): Result<Unit> {
+        error?.let { return Result.failure(it) }
+        val i = metas.indexOfFirst { meta -> meta.aportes.any { it.id == idAporte } }
+        if (i < 0) return Result.failure(IllegalStateException("No se encontró el aporte."))
+        metas[i] = metas[i].copy(
+            aportes = metas[i].aportes.map { if (it.id == idAporte) it.copy(monto = monto.toDouble()) else it },
+        )
         return Result.success(Unit)
     }
 }

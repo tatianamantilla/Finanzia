@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.CircularProgressIndicator
@@ -89,7 +90,7 @@ fun DetalleMetaScreen(viewModel: DetalleMetaViewModel, onAtras: () -> Unit) {
                     Spacer(Modifier.height(16.dp))
                     TarjetaResumen(estado.meta, viewModel.zona)
                     Spacer(Modifier.height(24.dp))
-                    ListaAportes(estado.meta.aportes.sortedWith(compareByDescending<AporteMeta> { it.fecha }.thenByDescending { it.id }))
+                    ListaAportes(estado.meta.aportes.sortedWith(compareByDescending<AporteMeta> { it.fecha }.thenByDescending { it.id }), viewModel)
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -240,7 +241,7 @@ private fun Linea(icono: ImageVector, titulo: String, valor: String) {
 }
 
 @Composable
-private fun ListaAportes(aportes: List<AporteMeta>) {
+private fun ListaAportes(aportes: List<AporteMeta>, viewModel: DetalleMetaViewModel) {
     Text("Aportes (${aportes.size})", style = estilo(18, FontWeight.Bold))
     Spacer(Modifier.height(12.dp))
     Tarjeta {
@@ -260,6 +261,32 @@ private fun ListaAportes(aportes: List<AporteMeta>) {
                 Spacer(Modifier.width(10.dp))
                 Text(fechaCortaMeta(aporte.fecha), style = estilo(14, color = GrisTexto), modifier = Modifier.weight(1f))
                 Text("+${FormatosDashboard.monto(aporte.monto)}", style = estilo(15, FontWeight.Bold, VerdePorcentaje))
+                Spacer(Modifier.width(6.dp))
+                // Editar el aporte (spec 09): abre el recuadro debajo de la fila.
+                Icon(
+                    Icons.Outlined.Edit,
+                    contentDescription = "Editar aporte del ${fechaCortaMeta(aporte.fecha)}",
+                    tint = AzulAhorrado,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button) { viewModel.abrirEdicion(aporte) }
+                        .testTag(EtiquetasAportes.BOTON_EDITAR_APORTE)
+                        .padding(6.dp)
+                        .size(20.dp),
+                )
+            }
+            if (viewModel.editando == aporte.id) {
+                Spacer(Modifier.height(10.dp))
+                FormularioMonto(
+                    titulo = "Editar aporte del ${fechaCortaMeta(aporte.fecha)}",
+                    monto = viewModel.montoEdicion,
+                    error = viewModel.errorEdicion,
+                    guardando = viewModel.guardandoEdicion,
+                    textoGuardar = "Guardar cambios",
+                    onCambio = viewModel::cambiarMontoEdicion,
+                    onGuardar = viewModel::guardarEdicion,
+                    onCancelar = viewModel::cerrarEdicion,
+                )
             }
         }
     }

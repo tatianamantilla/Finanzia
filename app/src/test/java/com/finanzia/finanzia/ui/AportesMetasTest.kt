@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.finanzia.finanzia.datos.AporteMeta
 import com.finanzia.finanzia.datos.CategoriaMeta
@@ -139,6 +140,24 @@ class AportesMetasTest {
         val antiguo = compose.onNodeWithText("05 Oct 2026").fetchSemanticsNode().positionInRoot.y
         assertTrue(reciente < antiguo)
         seVe("+$500,000.00")
+    }
+
+    @Test
+    fun editarUnAporteCambiaLosTotales() {
+        mostrarDetalle(meta(listOf(AporteMeta(1_000_000.0, LocalDate.of(2026, 10, 5), 1))))
+        seVe("Faltan $2,000,000.00 COP")
+        compose.onNodeWithTag(EtiquetasAportes.BOTON_EDITAR_APORTE).performScrollTo().performClick()
+        seVe("Editar aporte del 05 Oct 2026")
+        // El recuadro empieza con el monto actual; se borra y se escribe uno nuevo.
+        compose.onNodeWithTag(EtiquetasAportes.CAMPO_MONTO).performScrollTo().performTextReplacement("")
+        compose.onNodeWithTag(EtiquetasAportes.BOTON_GUARDAR).performScrollTo().performClick()
+        seVe(ERROR_MONTO_APORTE)
+        compose.onNodeWithTag(EtiquetasAportes.CAMPO_MONTO).performScrollTo().performTextInput("1500000")
+        compose.onNodeWithTag(EtiquetasAportes.BOTON_GUARDAR).performScrollTo().performClick()
+        compose.waitForIdle()
+        seVe("Faltan $1,500,000.00 COP")
+        seVe("+$1,500,000.00")
+        noAparece("Guardar cambios")
     }
 
     @Test

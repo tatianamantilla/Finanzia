@@ -32,6 +32,14 @@ Se llega con el botón **"Detalle de meta"** de cada tarjeta en la pantalla Meta
 3. **Aportes ([N]):** título en negrita y una tarjeta blanca con la lista de aportes, del más reciente al más antiguo. Cada fila tiene un ícono de alcancía, la fecha ("14 Oct 2026") y el monto en verde con "+" ("+$500,000.00").
    - Sin aportes: "Aún no tienes aportes en esta meta." en gris.
 
+## Editar aportes
+
+- Cada fila de aporte tiene, a la derecha del monto, un ícono de lápiz azul ("Editar aporte del [fecha]").
+- Al tocarlo se abre, debajo de esa fila, el recuadro "Editar aporte del [fecha]" con el monto actual ya escrito, el teclado numérico y los botones "Cancelar" y "Guardar cambios". Es el mismo recuadro de "+ Aportar" en la pantalla Metas.
+- El monto debe ser mayor que 0; si no, el error va en rojo dentro del recuadro.
+- Al guardar se actualiza el `monto` de esa fila en `aportes`, el recuadro se cierra y la pantalla se recarga: lo ahorrado, lo que falta y el porcentaje ya reflejan el cambio. Al volver a Metas, también.
+- La fecha del aporte no se cambia.
+
 ## Datos reales (Supabase)
 
 | Elemento | Fuente |
@@ -60,6 +68,7 @@ Se llega con el botón **"Detalle de meta"** de cada tarjeta en la pantalla Meta
 - [ ] Se ven el nombre, el ahorrado, el objetivo, lo que falta, el porcentaje, la fecha límite y la fecha de creación reales.
 - [ ] La lista muestra todos los aportes de la meta, del más reciente al más antiguo, con su fecha y monto.
 - [ ] Una meta sin aportes muestra "Aún no tienes aportes en esta meta.".
+- [ ] El lápiz de un aporte permite cambiar su monto; al guardar, los totales cambian de inmediato. Un monto vacío o 0 muestra el error en rojo.
 - [ ] No hay datos inventados.
 
 ## Decisiones tomadas por defecto (confirmar con el equipo)
