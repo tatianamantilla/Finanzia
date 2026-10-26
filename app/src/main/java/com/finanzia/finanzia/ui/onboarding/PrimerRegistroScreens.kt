@@ -178,26 +178,28 @@ fun PrimerIngresoScreen(
                 }
             }
         }
-        // La frecuencia solo se elige en el onboarding.
+        // La frecuencia se elige siempre, también desde el botón "+": es la categoría del ingreso,
+        // como la categoría de los gastos (Valentina, 2026-10-26).
+        Spacer(Modifier.height(24.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("TIPO / FRECUENCIA DE INGRESO", style = estilo(14, FontWeight.Bold, GrisEtiqueta, espaciado = 0.6))
+            Text("Selecciona uno", style = estilo(13, FontWeight.Bold, VerdeTexto))
+        }
+        Spacer(Modifier.height(14.dp))
+        CuadriculaOpciones(
+            opciones = opcionesIngreso,
+            seleccionada = viewModel.opcion,
+            onSeleccionar = viewModel::seleccionar,
+            colorSeleccion = VerdeMarca,
+            fondoSeleccion = FondoSeleccionIngreso,
+        )
+        // El consejo sobre la frecuencia solo aplica en el onboarding.
         if (!desdeDashboard) {
-            Spacer(Modifier.height(24.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("TIPO / FRECUENCIA DE INGRESO", style = estilo(14, FontWeight.Bold, GrisEtiqueta, espaciado = 0.6))
-                Text("Selecciona uno", style = estilo(13, FontWeight.Bold, VerdeTexto))
-            }
-            Spacer(Modifier.height(14.dp))
-            CuadriculaOpciones(
-                opciones = opcionesIngreso,
-                seleccionada = viewModel.opcion,
-                onSeleccionar = viewModel::seleccionar,
-                colorSeleccion = VerdeMarca,
-                fondoSeleccion = FondoSeleccionIngreso,
-            )
             Spacer(Modifier.height(18.dp))
             RecuadroConsejo(
                 texto = buildAnnotatedString {

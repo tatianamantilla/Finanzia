@@ -6,12 +6,12 @@ interface OnboardingRepository {
     suspend fun guardarPrimerGasto(gasto: PrimerGasto): Result<Unit>
 
     /**
-     * Ingreso registrado desde el botón "+" del Dashboard: guarda solo el movimiento y **no**
-     * cambia la frecuencia del usuario (esa se elige en el onboarding).
-     * Por defecto se guarda como un ingreso del onboarding (para los repositorios simulados).
+     * Ingreso registrado desde el botón "+" del Dashboard: guarda solo el movimiento, en la
+     * categoría de su [frecuencia], y **no** cambia la frecuencia del usuario (esa se elige en el
+     * onboarding). Por defecto se guarda como un ingreso del onboarding (para los repositorios simulados).
      */
-    suspend fun guardarIngreso(monto: Long, descripcion: String): Result<Unit> =
-        guardarPrimerIngreso(PrimerIngreso(monto, FrecuenciaIngreso.MENSUAL, descripcion))
+    suspend fun guardarIngreso(monto: Long, descripcion: String, frecuencia: FrecuenciaIngreso): Result<Unit> =
+        guardarPrimerIngreso(PrimerIngreso(monto, frecuencia, descripcion))
 }
 
 /** Versión simulada: guarda en memoria y se pierde al cerrar la app. */

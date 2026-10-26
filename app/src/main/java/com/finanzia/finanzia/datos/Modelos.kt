@@ -34,5 +34,17 @@ val CategoriaGasto.nombreVisible: String
         CategoriaGasto.TRANSPORTE -> "Transporte"
     }
 
-/** Categoría donde se guardan los ingresos. */
+/** Categoría de los ingresos guardados antes de que cada ingreso tuviera su frecuencia como categoría. */
 const val CATEGORIA_INGRESOS = "Ingresos"
+
+/**
+ * Categoría donde se guarda cada ingreso según su frecuencia, igual que los gastos se guardan en su
+ * categoría. Se ve en "Movimientos recientes" del Dashboard.
+ */
+val FrecuenciaIngreso.nombreVisible: String
+    get() = when (this) {
+        FrecuenciaIngreso.MENSUAL -> "Mensual"
+        FrecuenciaIngreso.QUINCENAL -> "Quincenal"
+        FrecuenciaIngreso.SEMANAL -> "Semanal"
+        FrecuenciaIngreso.DIARIO -> "Diario"
+    }

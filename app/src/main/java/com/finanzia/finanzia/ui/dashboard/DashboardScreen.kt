@@ -747,7 +747,7 @@ private fun iconoDeCategoria(categoria: String?): ImageVector = when (categoria)
     "Comida" -> Icons.Filled.ShoppingCart
     "Diversión" -> Icons.Filled.MusicNote
     "Transporte" -> Icons.Filled.DirectionsCar
-    CATEGORIA_INGRESOS -> Icons.Filled.Payments
+    CATEGORIA_INGRESOS, "Mensual", "Quincenal", "Semanal", "Diario" -> Icons.Filled.Payments
     else -> Icons.Filled.ReceiptLong
 }
 

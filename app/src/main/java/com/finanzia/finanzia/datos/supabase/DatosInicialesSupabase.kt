@@ -3,6 +3,7 @@ package com.finanzia.finanzia.datos.supabase
 import com.finanzia.finanzia.datos.CATEGORIA_INGRESOS
 import com.finanzia.finanzia.datos.CUENTA_PRINCIPAL
 import com.finanzia.finanzia.datos.CategoriaGasto
+import com.finanzia.finanzia.datos.FrecuenciaIngreso
 import com.finanzia.finanzia.datos.SesionTerminadaException
 import com.finanzia.finanzia.datos.nombreVisible
 import io.github.jan.supabase.SupabaseClient
@@ -22,7 +23,8 @@ internal data class IdsUsuario(
 
 /**
  * Datos que todo usuario necesita para registrar movimientos: la cuenta "Principal" y las
- * categorías Gastos Fijos, Comida, Diversión, Transporte e Ingresos, cada una con un color de la
+ * categorías Gastos Fijos, Comida, Diversión, Transporte, Ingresos y las de frecuencia de ingreso
+ * (Mensual, Quincenal, Semanal y Diario), cada una con un color de la
  * tabla `colores`.
  *
  * La fila de `usuarios`, la cuenta y las 4 categorías de gasto ya las crea el trigger del registro
@@ -33,7 +35,8 @@ internal object DatosInicialesSupabase {
 
     /** Categorías por defecto, en el orden en que reciben los colores de la tabla colores. */
     val categoriasPorDefecto: List<Pair<String, String>> =
-        CategoriaGasto.entries.map { it.nombreVisible to "gasto" } + (CATEGORIA_INGRESOS to "ingreso")
+        CategoriaGasto.entries.map { it.nombreVisible to "gasto" } + (CATEGORIA_INGRESOS to "ingreso") +
+            FrecuenciaIngreso.entries.map { it.nombreVisible to "ingreso" }
 
     suspend fun asegurar(cliente: SupabaseClient): IdsUsuario {
         val idUsuario = idUsuarioActual(cliente)

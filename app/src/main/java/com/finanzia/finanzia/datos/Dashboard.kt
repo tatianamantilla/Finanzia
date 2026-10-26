@@ -55,7 +55,7 @@ class DashboardSimulado(
         var id = 0L
         val movimientos = buildList {
             simulado?.ingresos?.forEach {
-                add(MovimientoDashboard(++id, TipoMovimiento.INGRESO, it.monto.toDouble(), it.descripcion, ahora(), CUENTA_PRINCIPAL, CATEGORIA_INGRESOS, null))
+                add(MovimientoDashboard(++id, TipoMovimiento.INGRESO, it.monto.toDouble(), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.frecuencia.nombreVisible, null))
             }
             simulado?.gastos?.forEach {
                 add(MovimientoDashboard(++id, TipoMovimiento.GASTO, it.monto.toDouble(), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.categoria.nombreVisible, null))

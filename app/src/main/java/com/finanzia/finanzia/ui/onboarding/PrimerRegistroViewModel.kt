@@ -58,7 +58,7 @@ abstract class PrimerRegistroViewModel<T>(opcionInicial: T) : ViewModel() {
 
 /**
  * [desdeDashboard] = true cuando se abre desde el botón "+" del Dashboard: el movimiento se
- * llama "Ingreso" y no se cambia la frecuencia del usuario.
+ * llama "Ingreso", queda en la categoría de la frecuencia elegida y no se cambia la frecuencia del usuario.
  */
 class PrimerIngresoViewModel(
     private val repositorio: OnboardingRepository,
@@ -66,7 +66,7 @@ class PrimerIngresoViewModel(
 ) : PrimerRegistroViewModel<FrecuenciaIngreso>(FrecuenciaIngreso.MENSUAL) {
     override suspend fun persistir(monto: Long, opcion: FrecuenciaIngreso) =
         if (desdeDashboard) {
-            repositorio.guardarIngreso(monto, descripcion = "Ingreso")
+            repositorio.guardarIngreso(monto, descripcion = "Ingreso", frecuencia = opcion)
         } else {
             repositorio.guardarPrimerIngreso(PrimerIngreso(monto, opcion))
         }
