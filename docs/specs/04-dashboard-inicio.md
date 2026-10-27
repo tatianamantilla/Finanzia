@@ -80,7 +80,8 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 
 - **Ojo del balance:** alterna entre mostrar el monto y ocultarlo (por ejemplo con `••••`). Por defecto está visible.
 - **Botón de persona (arriba a la derecha):** al tocarlo se abre un menú pequeño con una sola opción, "Cerrar sesión". Al elegirla se cierra la sesión de Supabase y se vuelve a la pantalla de inicio de sesión. *Es una excepción aprobada al diseño: el menú solo aparece al tocar y no cambia la pantalla en reposo.*
-- **Campana, "Ver todos", "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Billetera, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos.
+- **Movimientos (spec 10):** cada fila de "Movimientos recientes" se puede tocar para editar ese movimiento, sin cambiar el diseño de la fila, y "Ver todos" abre la lista completa de movimientos (`10-editar-movimientos.md`). Después de editar, el Dashboard muestra de inmediato los datos nuevos.
+- **Campana, "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Billetera, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos.
 - **Pestaña Inicio:** queda seleccionada.
 - Si faltan los datos de alguna sección (sin cuentas, sin gastos, sin metas, sin movimientos), esa sección muestra su estado vacío descrito en esta spec; nunca valores de ejemplo.
 - Mientras carga, muestra un estado de carga simple que no cambie el diseño de la pantalla; si falla la lectura, muestra un texto de error en rojo dentro de la pantalla (sin Snackbar) con la opción de reintentar.
@@ -108,6 +109,9 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 - [ ] Un usuario sin metas ve "Aún no tienes metas" y uno con metas ve su meta real con su progreso.
 - [x] El texto del consejo y la pastilla "Saludable" salen de los datos reales del usuario y cambian cuando cambian sus movimientos.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño (salvo el menú de cerrar sesión y los estados vacíos).
+- [ ] Tocar una fila de "Movimientos recientes" abre su edición y "Ver todos" abre la lista completa (spec 10).
+- [ ] Después de editar un movimiento, el balance, los ingresos, los gastos, la lista y el consejo se actualizan de inmediato (spec 10).
+- [ ] El balance nunca queda negativo por un movimiento nuevo o editado (spec 10).
 
 > Verificación: los criterios marcados se comprobaron con `CalculosDashboardTest`, `FormatosDashboardTest`,
 > `DashboardTest`, `DashboardNavegacionTest`, `DashboardPantallaPequenaTest`, la prueba manual contra Supabase real
@@ -120,7 +124,7 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 ## Decisiones tomadas por defecto (confirmar con el equipo)
 
 - Pendiente 1: pastilla "Saludable" = ahorro del mes; consejo = categoría con más gasto del mes (porcentaje redondeado a entero).
-- Pendiente 2: campana, "Ver todos", "+", "Conversar con Finanzia IA", chevron y pestañas se ven pero no tienen acción.
+- Pendiente 2: campana, "+", "Conversar con Finanzia IA", chevron y pestañas se ven pero no tienen acción. (Desde entonces "+" y la campana ya tienen pantalla; "Ver todos" abre la lista de la spec 10.)
 - Pendiente 3: los recuadros Ingresos y Gastos muestran el **mes actual** (zona horaria del teléfono).
 - Pendiente 4: "Cuenta …" muestra la primera cuenta activa (la "Principal").
 - Pendiente 5: la frecuencia se guarda en `usuarios.frecuencia_ingreso` (columna de `docs/supabase/01-usuarios-y-auth.sql`).
@@ -132,7 +136,7 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
 1. Reglas aprobadas por defecto: pastilla "Saludable" = ahorro del mes; consejo = categoría con más gasto del mes. ¿El equipo las aprueba o prefiere otras? La IA real de Finanzia queda para una fase posterior.
-2. Destino de la campana, "Ver todos", "+", "Conversar con Finanzia IA" y las pestañas inferiores (quedan sin acción por ahora).
+2. Destino de "Conversar con Finanzia IA" y de las pestañas inferiores sin pantalla todavía. ("Ver todos" ya está definido en la spec 10.)
 3. "Ingresos" y "Gastos" del recuadro: ¿es el total histórico o solo el del mes actual? (Por defecto, el mes actual, como sugiere el diseño. Confirmar.)
 4. Si el usuario tiene varias cuentas, ¿qué nombre se muestra en "Cuenta …"? (Por defecto, la primera cuenta activa.)
 5. La frecuencia del ingreso elegida en el onboarding no tiene dónde guardarse en el esquema actual; ver `docs/supabase/` y la spec 03.

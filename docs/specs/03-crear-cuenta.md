@@ -117,6 +117,7 @@ Permitir que una persona nueva cree su cuenta y pase por un onboarding corto don
 - [x] En las pantallas 4 y 5 solo se puede seleccionar una opción a la vez.
 - [x] "Omitir este paso por ahora" no guarda nada.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño.
+- [ ] El primer gasto no puede dejar el saldo por debajo de cero: si no hay saldo suficiente (por ejemplo, se omitió el ingreso), se bloquea con el error en rojo en el campo del monto y un texto que pide registrar primero un ingreso (spec 10).
 
 > Verificación (fase 2, Supabase real): la creación de cuenta se comprobó con la prueba manual
 > `integracion/manual/DemoMateoMarinTest` (registro en Auth, fila en `usuarios`, cuenta "Principal",
@@ -136,6 +137,11 @@ Permitir que una persona nueva cree su cuenta y pase por un onboarding corto don
 - "Iniciar sesión" lleva a una pantalla provisional hasta que se construya el módulo 01.
 - Los enlaces de Términos y Política se ven, pero no tienen acción (punto 6 de las decisiones pendientes).
 - Tipografía: Manrope (Google Fonts), incluida en la app.
+
+## Saldo nunca negativo (spec 10)
+
+- El primer gasto (Pantalla 5) sigue la regla del saldo de `10-editar-movimientos.md`: no puede dejar la cuenta en negativo.
+- El monto debe ser un número válido mayor que cero; los errores van en rojo en el campo del monto.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
