@@ -13,18 +13,27 @@ import java.time.ZoneId
 import java.util.Locale
 
 /** Categoría con más gasto del mes, para el "Consejo inteligente". */
-data class MayorGasto(val categoria: String, val monto: Double, val porcentaje: Int)
+data class MayorGasto(val categoria: String, val monto: BigDecimal, val porcentaje: Int)
 
 /** Cálculos del Dashboard (spec 04). Todo sale de los datos reales; nada es de muestra. */
 object CalculosDashboard {
 
-    /** Saldo inicial de las cuentas + ingresos − gastos (de todos los movimientos activos). */
-    fun balance(datos: DatosDashboard): Double =
-        datos.cuentas.sumOf { it.saldoInicial } + total(datos.movimientos, TipoMovimiento.INGRESO) -
-            total(datos.movimientos, TipoMovimiento.GASTO)
+    /**
+     * Saldo disponible (spec 10): saldo inicial de las cuentas + ingresos − gastos − aportes a metas.
+     * Es el mismo número que muestran el Dashboard y Acceso autorizado, y el que usa la regla del saldo.
+     */
+    fun balance(datos: DatosDashboard): BigDecimal =
+        ReglaSaldo.saldoDisponible(
+            saldoInicial = suma(datos.cuentas.map { it.saldoInicial }),
+            ingresos = total(datos.movimientos, TipoMovimiento.INGRESO),
+            gastos = total(datos.movimientos, TipoMovimiento.GASTO),
+            aportes = suma(datos.aportes.map { it.monto }),
+        )
 
-    fun total(movimientos: List<MovimientoDashboard>, tipo: TipoMovimiento): Double =
-        movimientos.filter { it.tipo == tipo }.sumOf { it.monto }
+    fun total(movimientos: List<MovimientoDashboard>, tipo: TipoMovimiento): BigDecimal =
+        suma(movimientos.filter { it.tipo == tipo }.map { it.monto })
+
+    fun suma(montos: List<BigDecimal>): BigDecimal = montos.fold(BigDecimal.ZERO, BigDecimal::add)
 
     /** Movimientos del mes calendario de [hoy] (en la zona horaria del teléfono). */
     fun delMes(movimientos: List<MovimientoDashboard>, hoy: LocalDate, zona: ZoneId): List<MovimientoDashboard> =
@@ -37,22 +46,24 @@ object CalculosDashboard {
      * Pastilla "Saludable +X%": (ingresos del mes − gastos del mes) ÷ ingresos del mes × 100,
      * a un decimal. `null` (no se muestra) si no hay ingresos en el mes o el resultado es negativo.
      */
-    fun ahorroDelMes(ingresosMes: Double, gastosMes: Double): Double? {
-        if (ingresosMes <= 0.0) return null
-        val ahorro = BigDecimal((ingresosMes - gastosMes) / ingresosMes * 100).setScale(1, RoundingMode.HALF_UP).toDouble()
-        return ahorro.takeIf { it >= 0.0 }
+    fun ahorroDelMes(ingresosMes: BigDecimal, gastosMes: BigDecimal): Double? {
+        if (ingresosMes.signum() <= 0) return null
+        val ahorro = (ingresosMes - gastosMes).multiply(CIEN).divide(ingresosMes, 1, RoundingMode.HALF_UP)
+        return ahorro.takeIf { it.signum() >= 0 }?.toDouble()
     }
+
+    private val CIEN = BigDecimal(100)
 
     /** Categoría con más gasto en [gastosDelMes], o `null` si no hubo gastos. */
     fun mayorGasto(gastosDelMes: List<MovimientoDashboard>): MayorGasto? {
         val gastos = gastosDelMes.filter { it.tipo == TipoMovimiento.GASTO }
-        val totalGastos = gastos.sumOf { it.monto }
-        if (gastos.isEmpty() || totalGastos <= 0.0) return null
+        val totalGastos = suma(gastos.map { it.monto })
+        if (gastos.isEmpty() || totalGastos.signum() <= 0) return null
         val (categoria, monto) = gastos
             .groupBy { it.nombreCategoria ?: "Sin categoría" }
-            .mapValues { (_, lista) -> lista.sumOf { it.monto } }
+            .mapValues { (_, lista) -> suma(lista.map { it.monto }) }
             .maxBy { it.value }
-        val porcentaje = BigDecimal(monto / totalGastos * 100).setScale(0, RoundingMode.HALF_UP).toInt()
+        val porcentaje = monto.multiply(CIEN).divide(totalGastos, 0, RoundingMode.HALF_UP).toInt()
         return MayorGasto(categoria, monto, porcentaje)
     }
 
@@ -60,10 +71,13 @@ object CalculosDashboard {
      * Puntos de la línea de tendencia: el balance acumulado después de cada movimiento,
      * del más antiguo al más reciente. Con menos de dos puntos la línea no se dibuja.
      */
-    fun puntosTendencia(datos: DatosDashboard): List<Double> {
-        var acumulado = datos.cuentas.sumOf { it.saldoInicial }
-        return datos.movimientos.sortedWith(compareBy({ it.fecha }, { it.id })).map {
-            acumulado += if (it.tipo == TipoMovimiento.INGRESO) it.monto else -it.monto
+    fun puntosTendencia(datos: DatosDashboard): List<BigDecimal> {
+        // Cada movimiento y cada aporte a una meta es un punto; los aportes restan, como en el saldo.
+        val cambios = datos.movimientos.map { Triple(it.fecha, it.id, if (it.tipo == TipoMovimiento.INGRESO) it.monto else it.monto.negate()) } +
+            datos.aportes.mapIndexed { i, aporte -> Triple(aporte.fecha, Long.MAX_VALUE - i, aporte.monto.negate()) }
+        var acumulado = suma(datos.cuentas.map { it.saldoInicial })
+        return cambios.sortedWith(compareBy({ it.first }, { it.second })).map {
+            acumulado += it.third
             acumulado
         }
     }
@@ -79,21 +93,26 @@ object FormatosDashboard {
     private val simbolos = DecimalFormatSymbols(Locale.US)
     private val meses = listOf("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
 
-    fun monto(valor: Double): String {
-        val formato = DecimalFormat("#,##0.00", simbolos).apply { roundingMode = RoundingMode.HALF_UP }
-        val texto = formato.format(kotlin.math.abs(valor))
-        return if (valor < 0 && texto != "0.00") "-$$texto" else "$$texto"
+    /** "$12,450.00" con el monto exacto. */
+    fun monto(valor: BigDecimal): String {
+        val texto = valor.abs().setScale(2, RoundingMode.HALF_UP).let {
+            DecimalFormat("#,##0.00", simbolos).apply { roundingMode = RoundingMode.HALF_UP }.format(it)
+        }
+        return if (valor.signum() < 0 && texto != "0.00") "-$$texto" else "$$texto"
     }
 
+    /** Para las pantallas de metas, que todavía guardan sus montos como Double (solo para mostrarlos). */
+    fun monto(valor: Double): String = monto(BigDecimal.valueOf(valor))
+
     /** Monto sin decimales, como en la tarjeta de meta ("Llevas $1,800 de $2,500"). */
-    fun montoSinDecimales(valor: Double): String {
+    fun montoSinDecimales(valor: BigDecimal): String {
         val formato = DecimalFormat("#,##0", simbolos).apply { roundingMode = RoundingMode.HALF_UP }
         return "$" + formato.format(valor)
     }
 
-    fun ingreso(valor: Double) = "+" + monto(valor)
+    fun ingreso(valor: BigDecimal) = "+" + monto(valor)
 
-    fun gasto(valor: Double) = "-" + monto(valor)
+    fun gasto(valor: BigDecimal) = "-" + monto(valor)
 
     fun conSigno(movimiento: MovimientoDashboard) =
         if (movimiento.tipo == TipoMovimiento.INGRESO) ingreso(movimiento.monto) else gasto(movimiento.monto)

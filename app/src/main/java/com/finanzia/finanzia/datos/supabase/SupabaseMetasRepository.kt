@@ -6,6 +6,8 @@ import com.finanzia.finanzia.datos.FrecuenciaAporte
 import com.finanzia.finanzia.datos.Meta
 import com.finanzia.finanzia.datos.MetasRepository
 import com.finanzia.finanzia.datos.NuevaMeta
+import com.finanzia.finanzia.datos.exigirPermitido
+import com.finanzia.finanzia.validacion.ReglaSaldo
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
@@ -75,6 +77,9 @@ class SupabaseMetasRepository(
     override suspend fun aportar(idMeta: Long, monto: Long): Result<Unit> = conErroresClaros {
         // El aporte sale de la cuenta Principal: RLS exige que la meta y la cuenta sean del usuario.
         val ids = DatosInicialesSupabase.asegurar(cliente)
+        // Un aporte es un ahorro: sale del saldo disponible y no puede dejarlo en negativo (spec 10).
+        ReglaSaldo.validarSalida(SaldoSupabase.disponible(cliente, ids.idCuentaPrincipal), java.math.BigDecimal.valueOf(monto))
+            .exigirPermitido()
         cliente.from("aportes").insert(
             FilaNuevoAporte(
                 idMeta = idMeta,
@@ -88,6 +93,14 @@ class SupabaseMetasRepository(
 
     override suspend fun editarAporte(idAporte: Long, monto: Long): Result<Unit> = conErroresClaros {
         // RLS solo deja cambiar aportes de metas del usuario que inició sesión.
+        // Regla del saldo (spec 10): se cuenta lo que este aporte ya había descontado.
+        val actual = cliente.from("aportes").select { filter { eq("id_aporte", idAporte) } }
+            .decodeSingle<AporteActual>()
+        ReglaSaldo.validarEdicionSalida(
+            SaldoSupabase.disponible(cliente, actual.idCuenta),
+            actual.monto,
+            java.math.BigDecimal.valueOf(monto),
+        ).exigirPermitido()
         cliente.from("aportes").update(CambioMontoAporte(monto)) {
             filter { eq("id_aporte", idAporte) }
         }
@@ -124,6 +137,12 @@ class SupabaseMetasRepository(
 
     @Serializable
     private data class CambioMontoAporte(val monto: Long)
+
+    @Serializable
+    private data class AporteActual(
+        @SerialName("id_cuenta") val idCuenta: Long,
+        val monto: Dinero,
+    )
 
     @Serializable
     private data class FilaNuevoAporte(

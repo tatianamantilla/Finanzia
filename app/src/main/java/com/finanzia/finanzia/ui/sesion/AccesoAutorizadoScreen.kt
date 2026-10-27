@@ -87,7 +87,7 @@ object DatosMuestraAcceso {
     const val SALDO = "$14,250.00"
     const val VARIACION = "+4.8%"
     val RESUMEN = ResumenAcceso(
-        saldo = 14_250.0,
+        saldo = java.math.BigDecimal("14250.00"),
         variacion = 4.8,
         insight = InsightAcceso.ComparacionMesAnterior(porcentaje = -12),
     )
