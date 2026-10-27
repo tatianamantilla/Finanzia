@@ -48,7 +48,7 @@ Son la **misma pantalla**; la primera muestra todo el contenido y la segunda un 
 |---|---|
 | Primer nombre en el saludo | Campo `Nombre` de `Usuarios` (solo la primera palabra) |
 | Nombre de la cuenta en "Cuenta …" | Campo `Nombre` de `Cuentas` (la cuenta "Principal" por defecto) |
-| Balance total | Suma, por cada cuenta activa del usuario, de `Saldo inicial` + ingresos − gastos de sus `Movimientos` activos |
+| Balance total | Suma, por cada cuenta activa del usuario, de `Saldo inicial` + ingresos − gastos de sus `Movimientos` activos − sus `Aportes` a metas (spec 10) |
 | Ingresos | Suma de los `Movimientos` activos de tipo ingreso |
 | Gastos | Suma de los `Movimientos` activos de tipo gasto |
 | Lista de movimientos | Últimos 4 `Movimientos` activos del usuario, del más reciente al más antiguo |
@@ -109,9 +109,9 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 - [ ] Un usuario sin metas ve "Aún no tienes metas" y uno con metas ve su meta real con su progreso.
 - [x] El texto del consejo y la pastilla "Saludable" salen de los datos reales del usuario y cambian cuando cambian sus movimientos.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño (salvo el menú de cerrar sesión y los estados vacíos).
-- [ ] Tocar una fila de "Movimientos recientes" abre su edición y "Ver todos" abre la lista completa (spec 10).
-- [ ] Después de editar un movimiento, el balance, los ingresos, los gastos, la lista y el consejo se actualizan de inmediato (spec 10).
-- [ ] El balance nunca queda negativo por un movimiento nuevo o editado (spec 10).
+- [x] Tocar una fila de "Movimientos recientes" abre su edición y "Ver todos" abre la lista completa (spec 10).
+- [x] Después de editar un movimiento, el balance, los ingresos, los gastos, la lista y el consejo se actualizan de inmediato (spec 10).
+- [x] El balance nunca queda negativo por un movimiento nuevo o editado (spec 10).
 
 > Verificación: los criterios marcados se comprobaron con `CalculosDashboardTest`, `FormatosDashboardTest`,
 > `DashboardTest`, `DashboardNavegacionTest`, `DashboardPantallaPequenaTest`, la prueba manual contra Supabase real

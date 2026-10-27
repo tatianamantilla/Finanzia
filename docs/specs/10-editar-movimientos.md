@@ -18,7 +18,7 @@ Lee antes `README.md`, `CLAUDE.md`, `03-crear-cuenta.md` y `04-dashboard-inicio.
 
 ## Regla del saldo
 
-- **Saldo disponible de una cuenta** = `Saldo inicial` + ingresos − gastos de sus `Movimientos` activos.
+- **Saldo disponible de una cuenta** = `Saldo inicial` + ingresos − gastos de sus `Movimientos` activos − aportes a metas (`Aportes`) desde esa cuenta.
 - Ningún movimiento **nuevo** ni **editado** puede dejar el saldo disponible de su cuenta por debajo de **$0.00**.
 - Un gasto **exactamente igual** al saldo disponible sí se permite (el saldo queda en `$0.00`).
 - El monto debe ser un número válido **mayor que cero**.
@@ -28,7 +28,7 @@ Lee antes `README.md`, `CLAUDE.md`, `03-crear-cuenta.md` y `04-dashboard-inicio.
   El error desaparece cuando el usuario cambia el monto.
 - **Onboarding (`crear_cuenta_5`):** si el usuario no tiene saldo suficiente para su primer gasto (por ejemplo, omitió el ingreso), se bloquea con el mismo error y un texto que le indica que primero registre un ingreso. El diseño de la pantalla no cambia.
 - **Cuentas que ya están en negativo** (datos de pruebas anteriores): no se corrigen solas. Se muestran tal cual y solo se permiten ediciones que **no empeoren** el saldo (lo dejan en cero o más, o lo suben).
-- **Dónde se aplica:** el primer gasto del onboarding, el gasto nuevo del botón "+" del Dashboard, y la edición de ingresos y gastos.
+- **Dónde se aplica:** el primer gasto del onboarding, el gasto nuevo del botón "+" del Dashboard, la edición de ingresos y gastos, y los aportes a metas ("+ Aportar" y editar un aporte).
 - **Al editar:** el saldo disponible se calcula **sin** el movimiento que se edita y luego se aplica su nuevo valor. Así, al editar un gasto se cuenta lo que ese gasto ya había descontado, y al reducir un ingreso el resultado no puede quedar negativo.
 - Además de la validación en la app, se propone un trigger en Supabase que rechace lo mismo: `docs/supabase/08-saldo-no-negativo.sql` (lo revisa y lo ejecuta el equipo).
 
@@ -69,23 +69,47 @@ Es la pantalla `crear_cuenta_4` (ingreso) o `crear_cuenta_5` (gasto) con estos c
 
 ## Criterios de aceptación
 
-- [ ] Un gasto que deja el saldo por debajo de cero no se guarda y muestra el error en rojo en el campo del monto.
-- [ ] Un gasto igual al saldo disponible se guarda y el saldo queda en `$0.00`.
-- [ ] Un monto vacío, en cero o inválido no se guarda y muestra el error en rojo.
-- [ ] El error desaparece al corregir el monto.
-- [ ] En el onboarding, el primer gasto sin saldo suficiente se bloquea y pide registrar primero un ingreso.
-- [ ] Tocar un movimiento del Dashboard abre su edición con el monto y la opción cargados.
-- [ ] "Ver todos" abre la lista completa, del más reciente al más antiguo, con las mismas filas del Dashboard, y su estado vacío.
-- [ ] Editar un gasto o un ingreso respeta la regla del saldo (incluido lo que el gasto ya había descontado).
-- [ ] Al guardar se actualiza el mismo movimiento en Supabase, sin duplicarlo.
-- [ ] El Dashboard muestra de inmediato el balance, ingresos, gastos, movimientos y consejo actualizados.
-- [ ] En una cuenta ya negativa solo se permiten ediciones que no empeoran el saldo.
+- [x] Un gasto que deja el saldo por debajo de cero no se guarda y muestra el error en rojo en el campo del monto.
+- [x] Un gasto igual al saldo disponible se guarda y el saldo queda en `$0.00`.
+- [x] Un monto vacío, en cero o inválido no se guarda y muestra el error en rojo.
+- [x] El error desaparece al corregir el monto.
+- [x] En el onboarding, el primer gasto sin saldo suficiente se bloquea y pide registrar primero un ingreso.
+- [x] Tocar un movimiento del Dashboard abre su edición con el monto y la opción cargados.
+- [x] "Ver todos" abre la lista completa, del más reciente al más antiguo, con las mismas filas del Dashboard, y su estado vacío.
+- [x] Editar un gasto o un ingreso respeta la regla del saldo (incluido lo que el gasto ya había descontado).
+- [x] Al guardar se actualiza el mismo movimiento en Supabase, sin duplicarlo.
+- [x] El Dashboard muestra de inmediato el balance, ingresos, gastos, movimientos y consejo actualizados.
+- [x] En una cuenta ya negativa solo se permiten ediciones que no empeoran el saldo.
 - [ ] Solo se pueden editar los movimientos propios.
 - [ ] No se agregó ningún elemento ni color fuera de lo descrito en esta spec.
+
+> Verificación: los criterios marcados se comprobaron con `ReglaSaldoTest`, `EditarMovimientosTest`,
+> `CalculosDashboardTest` y la prueba manual contra Supabase real `integracion/manual/DemoMateoMarinTest`
+> (gasto mayor al saldo rechazado y no guardado; gasto de Mateo editado con UPDATE del mismo registro y balance
+> actualizado en Supabase). La regla en cuentas ya negativas se comprobó con tests unitarios (no hay cuentas
+> negativas de prueba). Sin marcar: "solo se pueden editar los movimientos propios" (lo exige la política RLS y la
+> consulta filtra por usuario, pero falta una prueba con dos usuarios reales) y "ningún elemento ni color nuevo"
+> (revisión a ojo del equipo).
+
+## Decisiones tomadas con el equipo
+
+- La spec se numera 10 (05 a 09 ya estaban usados).
+- **Los aportes a metas descuentan del saldo** (son un ahorro) y siguen la misma regla: "+ Aportar" y editar un aporte
+  no pueden dejar el saldo en negativo.
+- **El balance del Dashboard y el saldo de Acceso autorizado restan los aportes**: muestran el saldo disponible.
+- Cambiar la frecuencia de un ingreso al editarlo solo cambia su categoría; no cambia la frecuencia del perfil.
+
+## Decisiones tomadas por defecto (confirmar con el equipo)
+
+- En la edición, la pastilla de arriba dice "Ingreso" o "Gasto" (en vez de "Paso 2 • …"); el texto de descripción,
+  el consejo y el dato de Finanzia se mantienen como en crear_cuenta_4 y crear_cuenta_5.
+- El aviso "Registra primero un ingreso." se agrega solo en el onboarding; desde el botón "+" se muestra solo el saldo disponible.
+- En una edición de gasto, el "saldo disponible" del mensaje incluye lo que ese gasto ya había descontado.
+- El trigger de `docs/supabase/08-saldo-no-negativo.sql` está propuesto, no ejecutado.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
 1. **Eliminar movimientos:** no se incluye. Podría hacerse marcando `activo = false` (el movimiento deja de contar en el saldo). ¿Se agrega más adelante?
-2. **Aportes a metas:** hoy el saldo del Dashboard **no** resta los aportes a metas. ¿Un aporte debe contar como salida de dinero de la cuenta (y entonces también aplicarle la regla del saldo)?
+2. ~~Aportes a metas~~: resuelto, ver "Decisiones tomadas con el equipo".
 3. **Descripción y fecha:** ¿se pueden editar? Por ahora solo el monto y la frecuencia o categoría, como en el diseño.
 4. **Varias cuentas:** hoy cada usuario tiene una sola cuenta ("Principal"). Si en el futuro hay varias, la regla se aplica por cuenta.
