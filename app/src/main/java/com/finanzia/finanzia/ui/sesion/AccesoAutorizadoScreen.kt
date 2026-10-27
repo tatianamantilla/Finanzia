@@ -1,6 +1,7 @@
 package com.finanzia.finanzia.ui.sesion
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Shield
@@ -23,9 +25,14 @@ import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,12 +42,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.PreviewsFinanzia
 import com.finanzia.finanzia.ui.componentes.BotonPrincipal
 import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
@@ -55,7 +66,12 @@ import com.finanzia.finanzia.ui.theme.DegradadoPrincipal
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
 import com.finanzia.finanzia.ui.theme.GrisTexto
+import com.finanzia.finanzia.ui.theme.RojoOscuro
+import com.finanzia.finanzia.ui.theme.RosaClaro
 import com.finanzia.finanzia.ui.theme.VerdeTexto
+import com.finanzia.finanzia.validacion.FormatosDashboard
+import com.finanzia.finanzia.validacion.InsightAcceso
+import com.finanzia.finanzia.validacion.ResumenAcceso
 
 private val MentaPastilla = Color(0xFFD5F8E8)
 private val VerdePastilla = Color(0xFF065F46)
@@ -63,21 +79,35 @@ private val AzulIconoClaro = Color(0xFFDCE7FA)
 private val GrisIcono = Color(0xFF6B7280)
 
 /**
- * Datos de muestra del diseño. No vienen del usuario ("Decisiones pendientes" 3 de la spec 01).
+ * Datos de muestra del diseño. En la app, saldo, variación e insight salen de los datos reales del
+ * usuario (ver FinanziaApp y CalculosAcceso). Esto solo se usa en la Preview, para que se vea como
+ * la imagen del diseño.
  */
-// TODO(Supabase): calcular saldo, variación e insight con las tablas Cuentas y Movimientos, si el equipo lo decide.
 object DatosMuestraAcceso {
     const val SALDO = "$14,250.00"
     const val VARIACION = "+4.8%"
+    val RESUMEN = ResumenAcceso(
+        saldo = 14_250.0,
+        variacion = 4.8,
+        insight = InsightAcceso.ComparacionMesAnterior(porcentaje = -12),
+    )
 }
+
+/** Lo que se muestra mientras se calcula el saldo, o si no se pudo leer. */
+const val SALDO_SIN_DATO = "—"
 
 /** Solo el primer nombre: "Paula Gómez" → "Paula". */
 fun primerNombre(nombreCompleto: String): String =
     nombreCompleto.trim().split(Regex("\\s+")).firstOrNull().orEmpty()
 
-/** Pantalla 2 · Acceso autorizado (docs/design/olvidar_contraseña_3.jpeg). */
+/**
+ * Pantalla 2 · Acceso autorizado (docs/design/olvidar_contraseña_3.jpeg).
+ *
+ * [resumen] trae el saldo (el mismo balance del Dashboard), la variación del mes y el insight,
+ * calculados con los datos reales. `null` mientras se calculan.
+ */
 @Composable
-fun AccesoAutorizadoScreen(nombre: String, onContinuar: () -> Unit) {
+fun AccesoAutorizadoScreen(nombre: String, resumen: ResumenAcceso? = null, onContinuar: () -> Unit) {
     PantallaBase(fondo = Modifier.background(FondoPantalla)) {
         ContenidoDesplazable(margenHorizontal = 22.dp, alineacion = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(8.dp))
@@ -94,7 +124,7 @@ fun AccesoAutorizadoScreen(nombre: String, onContinuar: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
             Spacer(Modifier.height(30.dp))
-            TarjetaSaldo()
+            TarjetaSaldo(resumen)
             Spacer(Modifier.height(38.dp))
             BotonPrincipal(
                 texto = "Continuar al Dashboard",
@@ -131,7 +161,8 @@ private fun PastillaAcceso() {
 }
 
 @Composable
-private fun TarjetaSaldo() {
+private fun TarjetaSaldo(resumen: ResumenAcceso?) {
+    val saldo = resumen?.saldo?.let { FormatosDashboard.monto(it) } ?: SALDO_SIN_DATO
     val forma = RoundedCornerShape(22.dp)
     Column(
         modifier = Modifier
@@ -151,9 +182,9 @@ private fun TarjetaSaldo() {
             }
             .padding(18.dp),
     ) {
-        EncabezadoSaldo()
+        EncabezadoSaldo(saldo, resumen?.variacion)
         Spacer(Modifier.height(22.dp))
-        RecuadroInsight()
+        RecuadroInsight(resumen?.insight)
         Spacer(Modifier.height(22.dp))
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
@@ -180,7 +211,7 @@ private fun TarjetaSaldo() {
 }
 
 @Composable
-private fun EncabezadoSaldo() {
+private fun EncabezadoSaldo(saldo: String, variacion: Double?) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         // Con letra muy grande en pantalla angosta, la pastilla de variación pasa debajo del saldo.
         val compacto = esCompacto(maxWidth, minimo = 300.dp)
@@ -190,18 +221,20 @@ private fun EncabezadoSaldo() {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconoBilletera()
                     Spacer(Modifier.weight(1f))
-                    PastillaVariacion()
+                    variacion?.let { PastillaVariacion(it) }
                 }
                 Spacer(Modifier.height(12.dp))
-                TextosSaldo(compacto = true)
+                TextosSaldo(saldo, compacto = true)
             }
         } else {
             Row(verticalAlignment = Alignment.Top) {
                 IconoBilletera(Modifier.padding(top = 12.dp))
                 Spacer(Modifier.width(14.dp))
-                TextosSaldo(compacto = false, modifier = Modifier.weight(1f))
-                Spacer(Modifier.width(8.dp))
-                PastillaVariacion()
+                TextosSaldo(saldo, compacto = false, modifier = Modifier.weight(1f))
+                variacion?.let {
+                    Spacer(Modifier.width(8.dp))
+                    PastillaVariacion(it)
+                }
             }
         }
     }
@@ -221,42 +254,73 @@ private fun IconoBilletera(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TextosSaldo(compacto: Boolean, modifier: Modifier = Modifier) {
+private fun TextosSaldo(saldo: String, compacto: Boolean, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("SALDO TOTAL DISPONIBLE", style = estilo(12, FontWeight.Medium, GrisTexto, espaciado = 0.6))
         Spacer(Modifier.height(4.dp))
         // En modo compacto el monto se mide en dp (no crece con la letra del sistema) para que quepa
         // completo. Con letra normal mide lo mismo que en el diseño.
         val tamanoMonto = if (compacto) with(LocalDensity.current) { 30.dp.toSp().value } else 30f
+        // El ojo funciona igual que en el Dashboard: por defecto se ve el monto y al tocarlo se
+        // cambia por "••••••". rememberSaveable lo mantiene si se gira el teléfono.
+        var visible by rememberSaveable { mutableStateOf(true) }
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(
-                DatosMuestraAcceso.SALDO,
+                if (visible) saldo else "••••••",
                 style = estilo(tamanoMonto, FontWeight.ExtraBold, altoLinea = tamanoMonto * 1.2f, espaciado = -0.5),
+                modifier = Modifier.testTag(Etiquetas.MONTO_SALDO_ACCESO),
             )
-            Spacer(Modifier.width(12.dp))
-            // TODO: el ojo se ve pero la spec 01 no define su acción.
-            Icon(Icons.Outlined.Visibility, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(4.dp))
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button) { visible = !visible }
+                    .testTag(Etiquetas.BOTON_OJO_SALDO_ACCESO),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                    contentDescription = if (visible) "Ocultar saldo" else "Mostrar saldo",
+                    tint = GrisIcono,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
         }
     }
 }
 
+
+/** "+4.8%" en verde si el saldo subió (o quedó igual) en el mes; "-3.1%" en rojo si bajó. */
 @Composable
-private fun PastillaVariacion() {
+private fun PastillaVariacion(variacion: Double) {
+    val sube = variacion >= 0.0
+    val fondo = if (sube) MentaPastilla else RosaClaro
+    val color = if (sube) VerdePastilla else RojoOscuro
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(MentaPastilla)
+            .background(fondo)
             .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = VerdePastilla, modifier = Modifier.size(16.dp))
+        Icon(
+            if (sube) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(16.dp),
+        )
         Spacer(Modifier.width(6.dp))
-        Text(DatosMuestraAcceso.VARIACION, style = estilo(14, FontWeight.SemiBold, VerdePastilla))
+        Text(textoVariacion(variacion), style = estilo(14, FontWeight.SemiBold, color))
     }
 }
 
+/** 4.8 → "+4.8%", -3.1 → "-3.1%". */
+fun textoVariacion(variacion: Double): String =
+    (if (variacion >= 0.0) "+" else "-") + FormatosDashboard.porcentaje(kotlin.math.abs(variacion)) + "%"
+
 @Composable
-private fun RecuadroInsight() {
+private fun RecuadroInsight(insight: InsightAcceso?) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -269,13 +333,13 @@ private fun RecuadroInsight() {
             Column {
                 IconoInsight()
                 Spacer(Modifier.height(10.dp))
-                TextosInsight()
+                TextosInsight(insight)
             }
         } else {
             Row(verticalAlignment = Alignment.Top) {
                 IconoInsight()
                 Spacer(Modifier.width(14.dp))
-                TextosInsight(Modifier.weight(1f))
+                TextosInsight(insight, Modifier.weight(1f))
             }
         }
     }
@@ -295,19 +359,45 @@ private fun IconoInsight() {
 }
 
 @Composable
-private fun TextosInsight(modifier: Modifier = Modifier) {
+private fun TextosInsight(insight: InsightAcceso?, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text("Insight Inteligente de Hoy", style = estilo(15, FontWeight.SemiBold, AzulEnlace))
         Spacer(Modifier.height(2.dp))
-        // TODO(Supabase): texto de muestra del diseño ("Decisiones pendientes" 3 de la spec 01).
-        Text(
-            buildAnnotatedString {
-                append("Mantuviste tus gastos un ")
-                withStyle(SpanStyle(color = AzulMarino, fontWeight = FontWeight.SemiBold)) { append("12% por debajo") }
-                append(" del presupuesto semanal proyectado.")
-            },
-            style = estilo(16, color = GrisTexto, altoLinea = 22),
-        )
+        Text(textoInsight(insight), style = estilo(16, color = GrisTexto, altoLinea = 22))
+    }
+}
+
+/** Frase del insight con la parte importante resaltada, como en el diseño. `null` = aún se calcula. */
+fun textoInsight(insight: InsightAcceso?): AnnotatedString = buildAnnotatedString {
+    val resaltado = SpanStyle(color = AzulMarino, fontWeight = FontWeight.SemiBold)
+    when (insight) {
+        null -> append("Analizando tus movimientos…")
+        is InsightAcceso.ComparacionMesAnterior -> {
+            val p = insight.porcentaje
+            if (p == 0) {
+                append("Llevas tus gastos ")
+                withStyle(resaltado) { append("igual") }
+                append(" que el mes pasado.")
+            } else {
+                append("Llevas tus gastos un ")
+                withStyle(resaltado) { append("${kotlin.math.abs(p)}% " + if (p < 0) "por debajo" else "por encima") }
+                append(" del mes pasado.")
+            }
+        }
+        is InsightAcceso.MayorGasto -> {
+            append("Este mes, ")
+            withStyle(resaltado) { append(insight.categoria) }
+            append(" es tu mayor gasto: ")
+            withStyle(resaltado) { append("${insight.porcentaje}%") }
+            append(" de lo que has gastado.")
+        }
+        InsightAcceso.AhorroCompleto -> {
+            append("Has ahorrado el ")
+            withStyle(resaltado) { append("100%") }
+            append(" de tus ingresos este mes.")
+        }
+        InsightAcceso.SinDatos ->
+            append("Aún no hay suficiente información para darte un consejo. Registra tus ingresos y gastos para empezar.")
     }
 }
 
@@ -336,5 +426,5 @@ private fun PieProteccion() {
 @PreviewsFinanzia
 @Composable
 private fun AccesoAutorizadoPreview() {
-    FinanziaTheme { AccesoAutorizadoScreen(nombre = "Paula Gómez", onContinuar = {}) }
+    FinanziaTheme { AccesoAutorizadoScreen(nombre = "Paula Gómez", resumen = DatosMuestraAcceso.RESUMEN, onContinuar = {}) }
 }

@@ -56,14 +56,31 @@ abstract class PrimerRegistroViewModel<T>(opcionInicial: T) : ViewModel() {
     }
 }
 
-class PrimerIngresoViewModel(private val repositorio: OnboardingRepository) :
-    PrimerRegistroViewModel<FrecuenciaIngreso>(FrecuenciaIngreso.MENSUAL) {
+/**
+ * [desdeDashboard] = true cuando se abre desde el botón "+" del Dashboard: el movimiento se
+ * llama "Ingreso", queda en la categoría de la frecuencia elegida y no se cambia la frecuencia del usuario.
+ */
+class PrimerIngresoViewModel(
+    private val repositorio: OnboardingRepository,
+    private val desdeDashboard: Boolean = false,
+) : PrimerRegistroViewModel<FrecuenciaIngreso>(FrecuenciaIngreso.MENSUAL) {
     override suspend fun persistir(monto: Long, opcion: FrecuenciaIngreso) =
-        repositorio.guardarPrimerIngreso(PrimerIngreso(monto, opcion))
+        if (desdeDashboard) {
+            repositorio.guardarIngreso(monto, descripcion = "Ingreso", frecuencia = opcion)
+        } else {
+            repositorio.guardarPrimerIngreso(PrimerIngreso(monto, opcion))
+        }
 }
 
-class PrimerGastoViewModel(private val repositorio: OnboardingRepository) :
-    PrimerRegistroViewModel<CategoriaGasto>(CategoriaGasto.GASTOS_FIJOS) {
+/** [desdeDashboard] = true cuando se abre desde el botón "+" del Dashboard: el movimiento se llama "Gasto". */
+class PrimerGastoViewModel(
+    private val repositorio: OnboardingRepository,
+    private val desdeDashboard: Boolean = false,
+) : PrimerRegistroViewModel<CategoriaGasto>(CategoriaGasto.GASTOS_FIJOS) {
     override suspend fun persistir(monto: Long, opcion: CategoriaGasto) =
-        repositorio.guardarPrimerGasto(PrimerGasto(monto, opcion))
+        if (desdeDashboard) {
+            repositorio.guardarPrimerGasto(PrimerGasto(monto, opcion, descripcion = "Gasto"))
+        } else {
+            repositorio.guardarPrimerGasto(PrimerGasto(monto, opcion))
+        }
 }

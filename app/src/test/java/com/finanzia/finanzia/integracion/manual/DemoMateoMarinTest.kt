@@ -121,7 +121,7 @@ class DemoMateoMarinTest {
             val colores = cliente.from("colores").select().decodeList<FilaColor>()
             println("DEMO: categorías = ${categorias.map { "${it.nombre} (${it.tipo}, color ${it.idColor})" }}")
             println("DEMO: filas en la tabla colores = ${colores.size}")
-            listOf("Gastos Fijos", "Comida", "Diversión", "Transporte", "Ingresos").forEach { nombre ->
+            listOf("Gastos Fijos", "Comida", "Diversión", "Transporte", "Ingresos", "Mensual", "Quincenal", "Semanal", "Diario").forEach { nombre ->
                 assertEquals("La categoría $nombre debe existir una sola vez", 1, categorias.count { it.nombre == nombre })
             }
             if (colores.isNotEmpty()) {
@@ -157,7 +157,8 @@ class DemoMateoMarinTest {
         assertEquals("El gasto de demostración no debe duplicarse", 1, gastos.size)
         assertEquals(TipoMovimiento.INGRESO, ingresos.single().tipo)
         assertEquals(MONTO_INGRESO.toDouble(), ingresos.single().monto, 0.0)
-        assertEquals("Ingresos", ingresos.single().nombreCategoria)
+        // El ingreso queda en la categoría de su frecuencia (Mensual).
+        assertEquals("Mensual", ingresos.single().nombreCategoria)
         assertEquals(TipoMovimiento.GASTO, gastos.single().tipo)
         assertEquals(MONTO_GASTO.toDouble(), gastos.single().monto, 0.0)
         assertEquals("Comida", gastos.single().nombreCategoria)

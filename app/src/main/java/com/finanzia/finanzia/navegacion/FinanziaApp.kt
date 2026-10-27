@@ -21,9 +21,21 @@ import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.datos.AuthRepository
 import com.finanzia.finanzia.datos.DashboardRepository
 import com.finanzia.finanzia.datos.DashboardSimulado
+import com.finanzia.finanzia.datos.MetasRepository
+import com.finanzia.finanzia.datos.MetasSimuladas
+import com.finanzia.finanzia.datos.NotificacionesRepository
+import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
 import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
+import com.finanzia.finanzia.ui.metas.DetalleMetaScreen
+import com.finanzia.finanzia.ui.metas.DetalleMetaViewModel
+import com.finanzia.finanzia.ui.metas.MetasScreen
+import com.finanzia.finanzia.ui.metas.MetasViewModel
+import com.finanzia.finanzia.ui.metas.NuevaMetaScreen
+import com.finanzia.finanzia.ui.metas.NuevaMetaViewModel
+import com.finanzia.finanzia.ui.notificaciones.NotificacionesScreen
+import com.finanzia.finanzia.ui.notificaciones.NotificacionesViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -41,6 +53,10 @@ import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import com.finanzia.finanzia.ui.theme.FondoPantalla
+import com.finanzia.finanzia.validacion.CalculosAcceso
+import com.finanzia.finanzia.validacion.ResumenAcceso
+import java.time.Instant
+import java.time.ZoneId
 
 object Rutas {
     const val CREAR_CUENTA = "crear_cuenta"
@@ -49,6 +65,13 @@ object Rutas {
     const val PRIMER_INGRESO = "primer_ingreso"
     const val PRIMER_GASTO = "primer_gasto"
     const val DASHBOARD = "dashboard"
+    const val NUEVO_INGRESO = "nuevo_ingreso"
+    const val NUEVO_GASTO = "nuevo_gasto"
+    const val NOTIFICACIONES = "notificaciones"
+    const val METAS = "metas"
+    const val NUEVA_META = "nueva_meta"
+    const val ARG_ID_META = "idMeta"
+    const val DETALLE_META = "detalle_meta/{$ARG_ID_META}"
     const val INICIAR_SESION = "iniciar_sesion"
     const val ACCESO_AUTORIZADO = "acceso_autorizado"
     const val OLVIDE_CONTRASENA = "olvide_contrasena"
@@ -57,6 +80,9 @@ object Rutas {
 
     /** Ruta del Paso 2 con el correo ya verificado en el Paso 1. */
     fun nuevaContrasena(correo: String) = "nueva_contrasena/${Uri.encode(correo)}"
+
+    /** Ruta del detalle de una meta (spec 09). */
+    fun detalleMeta(idMeta: Long) = "detalle_meta/$idMeta"
 }
 
 /** Punto de entrada de las pantallas. Recibe los repositorios para que los tests usen los suyos. */
@@ -65,6 +91,10 @@ fun FinanziaApp(
     auth: AuthRepository,
     onboarding: OnboardingRepository,
     dashboard: DashboardRepository = remember(auth, onboarding) { DashboardSimulado(auth, onboarding) },
+    // La app real pasa Repositorios.notificaciones (Supabase); los tests usan los simulados.
+    notificaciones: NotificacionesRepository = remember { NotificacionesSinDatos() },
+    // La app real pasa Repositorios.metas (Supabase); los tests usan la versión en memoria.
+    metas: MetasRepository = remember { MetasSimuladas() },
     navController: NavHostController = rememberNavController(),
 ) {
     // Al llegar al Dashboard se borra el historial: "atrás" ya no vuelve al onboarding.
@@ -72,6 +102,15 @@ fun FinanziaApp(
         navController.navigate(Rutas.DASHBOARD) {
             popUpTo(navController.graph.id) { inclusive = true }
         }
+    }
+
+    // Pestaña Metas: desde Inicio o Notificaciones. Sin copias repetidas en el historial.
+    val irAMetas: () -> Unit = {
+        navController.navigate(Rutas.METAS) { launchSingleTop = true }
+    }
+    // Flecha atrás o "Inicio" desde Notificaciones y Metas: vuelve al Dashboard que ya estaba abierto.
+    val volverAlDashboard: () -> Unit = {
+        if (!navController.popBackStack(Rutas.DASHBOARD, inclusive = false)) irAlDashboard()
     }
 
     // Pantalla inicial: si el teléfono tiene una sesión guardada, "Acceso autorizado"; si no, Crear cuenta.
@@ -150,8 +189,18 @@ fun FinanziaApp(
                 )
             }
             composable(Rutas.ACCESO_AUTORIZADO) {
+                // Saldo, variación del mes e insight con los datos reales del usuario
+                // (los mismos movimientos que lee el Dashboard; ver CalculosAcceso).
+                var resumen by remember { mutableStateOf<ResumenAcceso?>(null) }
+                LaunchedEffect(dashboard) {
+                    resumen = dashboard.cargar().fold(
+                        onSuccess = { CalculosAcceso.resumir(it, Instant.now(), ZoneId.systemDefault()) },
+                        onFailure = { ResumenAcceso.SIN_DATOS },
+                    )
+                }
                 AccesoAutorizadoScreen(
                     nombre = auth.usuarioActual?.nombre.orEmpty(),
+                    resumen = resumen,
                     onContinuar = irAlDashboard,
                 )
             }
@@ -183,12 +232,78 @@ fun FinanziaApp(
             composable(Rutas.DASHBOARD) {
                 DashboardScreen(
                     viewModel = viewModel { DashboardViewModel(dashboard, auth) },
+                    onIngreso = { navController.navigate(Rutas.NUEVO_INGRESO) },
+                    onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
+                    onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
+                    onMetas = irAMetas,
                     onSesionCerrada = {
                         // Sin sesión no se puede volver a ninguna pantalla anterior.
                         navController.navigate(Rutas.INICIAR_SESION) {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
                     },
+                )
+            }
+            // Spec 05 · Notificaciones: se abre con la campana; la flecha (o "Inicio") vuelve al Dashboard.
+            composable(Rutas.NOTIFICACIONES) {
+                NotificacionesScreen(
+                    viewModel = viewModel { NotificacionesViewModel(notificaciones) },
+                    onAtras = volverAlDashboard,
+                    onMetas = irAMetas,
+                )
+            }
+            // Spec 07 · Metas: pestaña Metas de la barra inferior.
+            composable(Rutas.METAS) {
+                val metasViewModel = viewModel { MetasViewModel(metas) }
+                // Al volver del detalle (donde se pueden editar aportes) se leen de nuevo los totales.
+                LaunchedEffect(Unit) { metasViewModel.refrescar() }
+                MetasScreen(
+                    viewModel = metasViewModel,
+                    onAtras = volverAlDashboard,
+                    onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
+                    onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
+                )
+            }
+            // Spec 09 · Detalle de meta: botón "Detalle de meta" de cada tarjeta.
+            composable(
+                Rutas.DETALLE_META,
+                arguments = listOf(navArgument(Rutas.ARG_ID_META) { type = NavType.LongType }),
+            ) { entrada ->
+                val idMeta = entrada.arguments?.getLong(Rutas.ARG_ID_META) ?: 0L
+                DetalleMetaScreen(
+                    viewModel = viewModel { DetalleMetaViewModel(metas, idMeta) },
+                    onAtras = { navController.popBackStack() },
+                )
+            }
+            // Spec 08 · Nueva meta. Al guardar se abre una pantalla Metas nueva, que vuelve a leer
+            // los datos: la meta recién creada aparece de primera.
+            composable(Rutas.NUEVA_META) {
+                NuevaMetaScreen(
+                    viewModel = viewModel { NuevaMetaViewModel(metas) },
+                    onAtras = { navController.popBackStack() },
+                    onGuardada = {
+                        navController.navigate(Rutas.METAS) {
+                            popUpTo(Rutas.METAS) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            // Botón "+" del Dashboard: mismas pantallas del onboarding, en modo "Nuevo ingreso/gasto".
+            // Al guardar se vuelve a un Dashboard nuevo, que lee otra vez los datos (saldo y movimientos al día).
+            composable(Rutas.NUEVO_INGRESO) {
+                PrimerIngresoScreen(
+                    viewModel = viewModel { PrimerIngresoViewModel(onboarding, desdeDashboard = true) },
+                    desdeDashboard = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = irAlDashboard,
+                )
+            }
+            composable(Rutas.NUEVO_GASTO) {
+                PrimerGastoScreen(
+                    viewModel = viewModel { PrimerGastoViewModel(onboarding, desdeDashboard = true) },
+                    desdeDashboard = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = irAlDashboard,
                 )
             }
         }
