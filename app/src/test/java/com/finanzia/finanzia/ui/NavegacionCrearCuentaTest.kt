@@ -298,6 +298,8 @@ class NavegacionCrearCuentaTest {
 
     @Test
     fun guardarGastoGuardaYLlevaAlDashboard() {
+        // Spec 10: el usuario ya tiene saldo (si no, la regla del saldo bloquea el primer gasto).
+        onboarding.ingresos += com.finanzia.finanzia.datos.PrimerIngreso(1_000_000, com.finanzia.finanzia.datos.FrecuenciaIngreso.MENSUAL, "Saldo previo")
         irAPrimerosPasos()
         clic("Quiero registrar mi primer gasto")
         escribir(Etiquetas.CAMPO_MONTO, "3200")
