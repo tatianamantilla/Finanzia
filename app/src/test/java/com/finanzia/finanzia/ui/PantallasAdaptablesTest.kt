@@ -250,7 +250,8 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
         var terminado = 0
         mostrar {
             PrimerGastoScreen(
-                PrimerGastoViewModel(FakeOnboardingRepository()),
+                // Spec 10: con saldo previo, para que la regla del saldo permita el gasto.
+                PrimerGastoViewModel(FakeOnboardingRepository().apply { ingresos += com.finanzia.finanzia.datos.PrimerIngreso(1_000_000, com.finanzia.finanzia.datos.FrecuenciaIngreso.MENSUAL) }),
                 onAtras = { atras = true },
                 onTerminar = { terminado++ },
             )

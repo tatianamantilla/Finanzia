@@ -53,15 +53,15 @@ private val AHORA = Instant.parse("2026-10-13T20:00:00Z")
 
 private val datosConMovimientos = DatosDashboard(
     nombreUsuario = "Mateo Marin",
-    cuentas = listOf(CuentaDashboard("Principal", 0.0)),
+    cuentas = listOf(CuentaDashboard("Principal", java.math.BigDecimal.ZERO)),
     movimientos = listOf(
-        MovimientoDashboard(2, TipoMovimiento.GASTO, 350_000.0, "Primer gasto", Instant.parse("2026-10-13T19:32:00Z"), "Principal", "Comida", "#F59E0B"),
-        MovimientoDashboard(1, TipoMovimiento.INGRESO, 2_500_000.0, "Primer ingreso", Instant.parse("2026-10-12T14:00:00Z"), "Principal", "Ingresos", "#22C55E"),
+        MovimientoDashboard(2, TipoMovimiento.GASTO, java.math.BigDecimal("350000"), "Primer gasto", Instant.parse("2026-10-13T19:32:00Z"), "Principal", "Comida", "#F59E0B"),
+        MovimientoDashboard(1, TipoMovimiento.INGRESO, java.math.BigDecimal("2500000"), "Primer ingreso", Instant.parse("2026-10-12T14:00:00Z"), "Principal", "Ingresos", "#22C55E"),
     ),
     meta = null,
 )
 
-private val datosVacios = DatosDashboard("Mateo Marin", listOf(CuentaDashboard("Principal", 0.0)), emptyList(), null)
+private val datosVacios = DatosDashboard("Mateo Marin", listOf(CuentaDashboard("Principal", java.math.BigDecimal.ZERO)), emptyList(), null)
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -157,7 +157,7 @@ class DashboardTest {
 
     @Test
     fun conMetaMuestraSuProgresoReal() {
-        mostrar(Result.success(datosVacios.copy(meta = MetaDashboard("Viaje a la costa", 2000.0, 500.0))))
+        mostrar(Result.success(datosVacios.copy(meta = MetaDashboard("Viaje a la costa", java.math.BigDecimal("2000"), java.math.BigDecimal("500")))))
         seVe("Meta: Viaje a la costa")
         seVe("Llevas $500 de $2,000")
         seVe("¡A solo $1,500 de lograr tu objetivo!")

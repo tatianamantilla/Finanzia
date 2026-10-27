@@ -1,6 +1,8 @@
 package com.finanzia.finanzia.datos.supabase
 
 import com.finanzia.finanzia.datos.FrecuenciaIngreso
+import com.finanzia.finanzia.datos.exigirPermitido
+import com.finanzia.finanzia.validacion.ReglaSaldo
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.datos.PrimerGasto
 import com.finanzia.finanzia.datos.PrimerIngreso
@@ -60,6 +62,9 @@ class SupabaseOnboardingRepository(
 
     override suspend fun guardarPrimerGasto(gasto: PrimerGasto): Result<Unit> = conErroresClaros {
         val ids = DatosInicialesSupabase.asegurar(cliente)
+        // Regla del saldo (spec 10): el gasto no puede dejar la cuenta por debajo de $0.00.
+        ReglaSaldo.validarSalida(SaldoSupabase.disponible(cliente, ids.idCuentaPrincipal), java.math.BigDecimal.valueOf(gasto.monto))
+            .exigirPermitido()
         val nombreCategoria = gasto.categoria.nombreVisible
         cliente.from("movimientos").insert(
             NuevoMovimiento(

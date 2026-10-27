@@ -110,6 +110,7 @@ Necesita `DEMO_PASSWORD` en `local.properties` (nunca en el código). En Android
   2. `01-usuarios-y-auth.sql`: quita `contrasena`, une `usuarios` con Auth y agrega la frecuencia del ingreso. Crea el trigger que, al registrarse, crea la fila en `usuarios`, la cuenta "Principal" y las categorías.
   3. `02-permisos-y-rls.sql`: quita los permisos al rol anónimo y activa RLS para que cada persona vea solo sus datos.
   4. `03-limpieza-pruebas.sql` (opcional): permite que los usuarios de prueba de los tests de integración se borren solos.
+  - `08-saldo-no-negativo.sql` (spec 10): triggers que rechazan cualquier movimiento o aporte que deje el saldo de una cuenta en negativo.
 - En Supabase está **desactivada** la confirmación por correo (Authentication → Sign In / Providers → Confirm email).
 
 ## Pantallas adaptables

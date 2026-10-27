@@ -30,7 +30,7 @@ sealed interface InsightAcceso {
 /** Lo que muestra la tarjeta de Acceso autorizado, calculado con los datos reales del usuario. */
 data class ResumenAcceso(
     /** Saldo total disponible (el mismo balance del Dashboard), o null si no se pudo leer. */
-    val saldo: Double?,
+    val saldo: BigDecimal?,
     /** Pastilla de variación del saldo en el mes, en %. null = no se muestra. */
     val variacion: Double?,
     val insight: InsightAcceso,
@@ -53,12 +53,19 @@ object CalculosAcceso {
         )
     }
 
-    /** Saldo justo antes del día [dia]: saldo inicial de las cuentas + movimientos anteriores a ese día. */
-    fun saldoAntesDe(datos: DatosDashboard, dia: LocalDate, zona: ZoneId): Double {
+    /**
+     * Saldo justo antes del día [dia]: saldo inicial de las cuentas + movimientos anteriores a ese día
+     * − aportes a metas anteriores a ese día (los aportes descuentan del saldo, spec 10).
+     */
+    fun saldoAntesDe(datos: DatosDashboard, dia: LocalDate, zona: ZoneId): BigDecimal {
         val anteriores = datos.movimientos.filter { it.fecha.atZone(zona).toLocalDate() < dia }
-        return datos.cuentas.sumOf { it.saldoInicial } +
-            CalculosDashboard.total(anteriores, TipoMovimiento.INGRESO) -
-            CalculosDashboard.total(anteriores, TipoMovimiento.GASTO)
+        val aportesAnteriores = datos.aportes.filter { it.fecha.atZone(zona).toLocalDate() < dia }
+        return ReglaSaldo.saldoDisponible(
+            saldoInicial = CalculosDashboard.suma(datos.cuentas.map { it.saldoInicial }),
+            ingresos = CalculosDashboard.total(anteriores, TipoMovimiento.INGRESO),
+            gastos = CalculosDashboard.total(anteriores, TipoMovimiento.GASTO),
+            aportes = CalculosDashboard.suma(aportesAnteriores.map { it.monto }),
+        )
     }
 
     /**
@@ -68,9 +75,9 @@ object CalculosAcceso {
      */
     fun variacionDelMes(datos: DatosDashboard, hoy: LocalDate, zona: ZoneId): Double? {
         val inicioMes = saldoAntesDe(datos, hoy.withDayOfMonth(1), zona)
-        if (inicioMes <= 0.0) return null
+        if (inicioMes.signum() <= 0) return null
         val actual = CalculosDashboard.balance(datos)
-        return BigDecimal((actual - inicioMes) / inicioMes * 100).setScale(1, RoundingMode.HALF_UP).toDouble()
+        return (actual - inicioMes).multiply(BigDecimal(100)).divide(inicioMes, 1, RoundingMode.HALF_UP).toDouble()
     }
 
     /**
@@ -86,7 +93,7 @@ object CalculosAcceso {
 
         comparacionMesAnterior(movimientos, hoy, zona)?.let { return InsightAcceso.ComparacionMesAnterior(it) }
         CalculosDashboard.mayorGasto(delMes)?.let { return InsightAcceso.MayorGasto(it.categoria, it.porcentaje) }
-        if (gastosMes <= 0.0 && CalculosDashboard.total(delMes, TipoMovimiento.INGRESO) > 0.0) {
+        if (gastosMes.signum() <= 0 && CalculosDashboard.total(delMes, TipoMovimiento.INGRESO).signum() > 0) {
             return InsightAcceso.AhorroCompleto
         }
         return InsightAcceso.SinDatos
@@ -104,18 +111,18 @@ object CalculosAcceso {
 
         val gastoActual = gastosEntre(movimientos, inicioActual, hoy, zona)
         val gastoAnterior = gastosEntre(movimientos, inicioAnterior, finAnterior, zona)
-        if (gastoActual <= 0.0 || gastoAnterior <= 0.0) return null
+        if (gastoActual.signum() <= 0 || gastoAnterior.signum() <= 0) return null
 
-        return BigDecimal((gastoActual - gastoAnterior) / gastoAnterior * 100).setScale(0, RoundingMode.HALF_UP).toInt()
+        return (gastoActual - gastoAnterior).multiply(BigDecimal(100)).divide(gastoAnterior, 0, RoundingMode.HALF_UP).toInt()
     }
 
     /** Suma de gastos con fecha entre [desde] y [hasta], ambos incluidos. */
-    private fun gastosEntre(movimientos: List<MovimientoDashboard>, desde: LocalDate, hasta: LocalDate, zona: ZoneId): Double =
-        movimientos
+    private fun gastosEntre(movimientos: List<MovimientoDashboard>, desde: LocalDate, hasta: LocalDate, zona: ZoneId): BigDecimal =
+        CalculosDashboard.suma(movimientos
             .filter { it.tipo == TipoMovimiento.GASTO }
             .filter {
                 val fecha = it.fecha.atZone(zona).toLocalDate()
                 fecha >= desde && fecha <= hasta
             }
-            .sumOf { it.monto }
+            .map { it.monto })
 }

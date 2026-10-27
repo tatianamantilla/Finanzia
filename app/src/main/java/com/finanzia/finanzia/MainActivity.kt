@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
                 dashboard = Repositorios.dashboard,
                 notificaciones = Repositorios.notificaciones,
                 metas = Repositorios.metas,
+                movimientos = Repositorios.movimientos,
             )
         }
     }

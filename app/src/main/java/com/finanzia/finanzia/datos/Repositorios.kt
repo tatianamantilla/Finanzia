@@ -14,6 +14,7 @@ object Repositorios {
     val auth: AuthRepository by lazy { SupabaseAuthRepository() }
     val onboarding: OnboardingRepository by lazy { SupabaseOnboardingRepository() }
     val dashboard: DashboardRepository by lazy { SupabaseDashboardRepository() }
+    val movimientos: MovimientosRepository by lazy { com.finanzia.finanzia.datos.supabase.SupabaseMovimientosRepository() }
     val notificaciones: NotificacionesRepository by lazy { SupabaseNotificacionesRepository() }
     val metas: MetasRepository by lazy { SupabaseMetasRepository() }
 }

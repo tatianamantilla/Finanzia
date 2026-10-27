@@ -1,5 +1,6 @@
 package com.finanzia.finanzia.datos
 
+import java.math.BigDecimal
 import java.time.Instant
 
 enum class TipoMovimiento { INGRESO, GASTO }
@@ -8,7 +9,8 @@ enum class TipoMovimiento { INGRESO, GASTO }
 data class MovimientoDashboard(
     val id: Long,
     val tipo: TipoMovimiento,
-    val monto: Double,
+    /** Monto exacto (BigDecimal): el dinero nunca se calcula con Double (spec 10). */
+    val monto: BigDecimal,
     val descripcion: String,
     val fecha: Instant,
     val nombreCuenta: String,
@@ -17,10 +19,13 @@ data class MovimientoDashboard(
     val colorCategoria: String?,
 )
 
-data class CuentaDashboard(val nombre: String, val saldoInicial: Double)
+data class CuentaDashboard(val nombre: String, val saldoInicial: BigDecimal)
+
+/** Un aporte a una meta: descuenta del saldo disponible de la cuenta (spec 10). */
+data class AporteDashboard(val monto: BigDecimal, val fecha: Instant)
 
 /** La meta activa más reciente con la suma de sus aportes. */
-data class MetaDashboard(val nombre: String, val montoObjetivo: Double, val aportado: Double)
+data class MetaDashboard(val nombre: String, val montoObjetivo: BigDecimal, val aportado: BigDecimal)
 
 /** Todo lo que necesita el Dashboard, leído de los datos reales del usuario. */
 data class DatosDashboard(
@@ -28,6 +33,8 @@ data class DatosDashboard(
     val cuentas: List<CuentaDashboard>,
     val movimientos: List<MovimientoDashboard>,
     val meta: MetaDashboard?,
+    /** Aportes a metas desde las cuentas activas: también descuentan del saldo (spec 10). */
+    val aportes: List<AporteDashboard> = emptyList(),
 )
 
 /** Lee los datos del Dashboard del usuario que inició sesión. */
@@ -55,16 +62,16 @@ class DashboardSimulado(
         var id = 0L
         val movimientos = buildList {
             simulado?.ingresos?.forEach {
-                add(MovimientoDashboard(++id, TipoMovimiento.INGRESO, it.monto.toDouble(), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.frecuencia.nombreVisible, null))
+                add(MovimientoDashboard(++id, TipoMovimiento.INGRESO, BigDecimal.valueOf(it.monto), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.frecuencia.nombreVisible, null))
             }
             simulado?.gastos?.forEach {
-                add(MovimientoDashboard(++id, TipoMovimiento.GASTO, it.monto.toDouble(), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.categoria.nombreVisible, null))
+                add(MovimientoDashboard(++id, TipoMovimiento.GASTO, BigDecimal.valueOf(it.monto), it.descripcion, ahora(), CUENTA_PRINCIPAL, it.categoria.nombreVisible, null))
             }
         }
         return Result.success(
             DatosDashboard(
                 nombreUsuario = usuario.nombre,
-                cuentas = listOf(CuentaDashboard(CUENTA_PRINCIPAL, 0.0)),
+                cuentas = listOf(CuentaDashboard(CUENTA_PRINCIPAL, BigDecimal.ZERO)),
                 movimientos = movimientos.sortedByDescending { it.id },
                 meta = null,
             ),

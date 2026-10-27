@@ -21,12 +21,18 @@ import androidx.navigation.compose.rememberNavController
 import com.finanzia.finanzia.datos.AuthRepository
 import com.finanzia.finanzia.datos.DashboardRepository
 import com.finanzia.finanzia.datos.DashboardSimulado
+import com.finanzia.finanzia.datos.FakeOnboardingRepository
+import com.finanzia.finanzia.datos.MovimientosRepository
+import com.finanzia.finanzia.datos.MovimientosSimulados
 import com.finanzia.finanzia.datos.MetasRepository
 import com.finanzia.finanzia.datos.MetasSimuladas
 import com.finanzia.finanzia.datos.NotificacionesRepository
 import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
+import com.finanzia.finanzia.ui.dashboard.FilaMovimiento
+import com.finanzia.finanzia.ui.dashboard.MovimientosScreen
+import com.finanzia.finanzia.ui.dashboard.MovimientosViewModel
 import com.finanzia.finanzia.ui.dashboard.DashboardViewModel
 import com.finanzia.finanzia.ui.metas.DetalleMetaScreen
 import com.finanzia.finanzia.ui.metas.DetalleMetaViewModel
@@ -36,6 +42,7 @@ import com.finanzia.finanzia.ui.metas.NuevaMetaScreen
 import com.finanzia.finanzia.ui.metas.NuevaMetaViewModel
 import com.finanzia.finanzia.ui.notificaciones.NotificacionesScreen
 import com.finanzia.finanzia.ui.notificaciones.NotificacionesViewModel
+import com.finanzia.finanzia.ui.onboarding.EdicionMovimiento
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoScreen
 import com.finanzia.finanzia.ui.onboarding.PrimerGastoViewModel
 import com.finanzia.finanzia.ui.onboarding.PrimerIngresoScreen
@@ -83,6 +90,15 @@ object Rutas {
 
     /** Ruta del detalle de una meta (spec 09). */
     fun detalleMeta(idMeta: Long) = "detalle_meta/$idMeta"
+
+    // Spec 10 · Lista de movimientos y edición.
+    const val MOVIMIENTOS = "movimientos"
+    const val ARG_ID_MOVIMIENTO = "idMovimiento"
+    const val EDITAR_INGRESO = "editar_ingreso/{$ARG_ID_MOVIMIENTO}"
+    const val EDITAR_GASTO = "editar_gasto/{$ARG_ID_MOVIMIENTO}"
+
+    fun editarIngreso(id: Long) = "editar_ingreso/$id"
+    fun editarGasto(id: Long) = "editar_gasto/$id"
 }
 
 /** Punto de entrada de las pantallas. Recibe los repositorios para que los tests usen los suyos. */
@@ -95,8 +111,16 @@ fun FinanziaApp(
     notificaciones: NotificacionesRepository = remember { NotificacionesSinDatos() },
     // La app real pasa Repositorios.metas (Supabase); los tests usan la versión en memoria.
     metas: MetasRepository = remember { MetasSimuladas() },
+    // La app real pasa Repositorios.movimientos (Supabase); los tests editan el onboarding simulado.
+    movimientos: MovimientosRepository = remember(onboarding) {
+        (onboarding as? FakeOnboardingRepository)?.let(::MovimientosSimulados) ?: SinEdicionDeMovimientos
+    },
     navController: NavHostController = rememberNavController(),
 ) {
+    // Tocar un movimiento abre "Editar ingreso" o "Editar gasto" según su tipo (spec 10).
+    val editarMovimiento: (FilaMovimiento) -> Unit = { fila ->
+        navController.navigate(if (fila.esIngreso) Rutas.editarIngreso(fila.id) else Rutas.editarGasto(fila.id))
+    }
     // Al llegar al Dashboard se borra el historial: "atrás" ya no vuelve al onboarding.
     val irAlDashboard: () -> Unit = {
         navController.navigate(Rutas.DASHBOARD) {
@@ -236,6 +260,8 @@ fun FinanziaApp(
                     onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     onMetas = irAMetas,
+                    onVerTodos = { navController.navigate(Rutas.MOVIMIENTOS) },
+                    onEditarMovimiento = editarMovimiento,
                     onSesionCerrada = {
                         // Sin sesión no se puede volver a ninguna pantalla anterior.
                         navController.navigate(Rutas.INICIAR_SESION) {
@@ -306,6 +332,45 @@ fun FinanziaApp(
                     onTerminar = irAlDashboard,
                 )
             }
+            // Spec 10 · "Ver todos" y edición de movimientos. Al guardar se vuelve a la pantalla
+            // anterior, que lee otra vez los datos (balance, lista y consejo al día).
+            composable(Rutas.MOVIMIENTOS) {
+                MovimientosScreen(
+                    viewModel = viewModel { MovimientosViewModel(dashboard) },
+                    onAtras = { navController.popBackStack() },
+                    onEditarMovimiento = editarMovimiento,
+                )
+            }
+            composable(
+                Rutas.EDITAR_INGRESO,
+                arguments = listOf(navArgument(Rutas.ARG_ID_MOVIMIENTO) { type = NavType.LongType }),
+            ) { entrada ->
+                val id = entrada.arguments?.getLong(Rutas.ARG_ID_MOVIMIENTO) ?: 0L
+                PrimerIngresoScreen(
+                    viewModel = viewModel { PrimerIngresoViewModel(onboarding, edicion = EdicionMovimiento(id, movimientos, dashboard)) },
+                    edicion = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = { navController.popBackStack() },
+                )
+            }
+            composable(
+                Rutas.EDITAR_GASTO,
+                arguments = listOf(navArgument(Rutas.ARG_ID_MOVIMIENTO) { type = NavType.LongType }),
+            ) { entrada ->
+                val id = entrada.arguments?.getLong(Rutas.ARG_ID_MOVIMIENTO) ?: 0L
+                PrimerGastoScreen(
+                    viewModel = viewModel { PrimerGastoViewModel(onboarding, edicion = EdicionMovimiento(id, movimientos, dashboard)) },
+                    edicion = true,
+                    onAtras = { navController.popBackStack() },
+                    onTerminar = { navController.popBackStack() },
+                )
+            }
         }
     }
+}
+
+/** Para un onboarding que no es el simulado ni Supabase: editar no está disponible. */
+private object SinEdicionDeMovimientos : MovimientosRepository {
+    override suspend fun editar(idMovimiento: Long, monto: Long, categoria: String) =
+        Result.failure<Unit>(IllegalStateException("No se pueden editar movimientos en este modo."))
 }

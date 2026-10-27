@@ -1,5 +1,6 @@
 package com.finanzia.finanzia.datos.supabase
 
+import com.finanzia.finanzia.datos.AporteDashboard
 import com.finanzia.finanzia.datos.CuentaDashboard
 import com.finanzia.finanzia.datos.DashboardRepository
 import com.finanzia.finanzia.datos.DatosDashboard
@@ -79,17 +80,29 @@ class SupabaseDashboardRepository(
             limit(1)
         }.decodeList<FilaMeta>().firstOrNull()?.let { fila ->
             val aportado = cliente.from("aportes").select { filter { eq("id_meta", fila.idMeta) } }
-                .decodeList<FilaAporte>().sumOf { it.monto }
+                .decodeList<FilaAporte>().fold(java.math.BigDecimal.ZERO) { suma, it -> suma + it.monto }
             MetaDashboard(fila.nombre, fila.montoObjetivo, aportado)
         }
 
+        // Aportes a metas (RLS: solo de metas propias) desde las cuentas activas: descuentan del saldo (spec 10).
+        val aportes = cliente.from("aportes").select().decodeList<FilaAporte>()
+            .filter { it.idCuenta in nombreCuenta }
+            .map { AporteDashboard(it.monto, it.fecha?.let(::aInstante) ?: java.time.Instant.EPOCH) }
+
         DatosDashboard(
+            aportes = aportes,
             nombreUsuario = usuario.nombre,
             cuentas = cuentas.map { CuentaDashboard(it.nombre, it.saldoInicial) },
             movimientos = movimientos,
             meta = meta,
         )
     }
+
+    /** La fecha del aporte puede venir con o sin hora (según el tipo de la columna). */
+    private fun aInstante(texto: String): java.time.Instant =
+        runCatching { OffsetDateTime.parse(texto).toInstant() }
+            .recoverCatching { java.time.LocalDateTime.parse(texto).toInstant(java.time.ZoneOffset.UTC) }
+            .getOrElse { java.time.LocalDate.parse(texto.take(10)).atStartOfDay(java.time.ZoneOffset.UTC).toInstant() }
 
     @Serializable
     private data class FilaUsuario(@SerialName("id_usuario") val idUsuario: Long, val nombre: String)
@@ -98,7 +111,7 @@ class SupabaseDashboardRepository(
     private data class FilaCuenta(
         @SerialName("id_cuenta") val idCuenta: Long,
         val nombre: String,
-        @SerialName("saldo_inicial") val saldoInicial: Double,
+        @SerialName("saldo_inicial") val saldoInicial: Dinero,
     )
 
     @Serializable
@@ -117,7 +130,7 @@ class SupabaseDashboardRepository(
         @SerialName("id_cuenta") val idCuenta: Long,
         @SerialName("id_categoria") val idCategoria: Long? = null,
         val tipo: String,
-        val monto: Double,
+        val monto: Dinero,
         val descripcion: String? = null,
         val fecha: String,
     )
@@ -126,9 +139,13 @@ class SupabaseDashboardRepository(
     private data class FilaMeta(
         @SerialName("id_meta") val idMeta: Long,
         val nombre: String,
-        @SerialName("monto_objetivo") val montoObjetivo: Double,
+        @SerialName("monto_objetivo") val montoObjetivo: Dinero,
     )
 
     @Serializable
-    private data class FilaAporte(val monto: Double)
+    private data class FilaAporte(
+        val monto: Dinero,
+        @SerialName("id_cuenta") val idCuenta: Long? = null,
+        val fecha: String? = null,
+    )
 }

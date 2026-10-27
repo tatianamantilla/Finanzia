@@ -125,22 +125,37 @@ private val opcionesGasto = listOf(
  *
  * Con [desdeDashboard] = true es "Nuevo ingreso" (botón "+" del Dashboard): sin "Paso 2", sin
  * "Omitir" y sin la sección de frecuencia (la frecuencia se elige solo en el onboarding).
+ *
+ * Con [edicion] = true es "Editar ingreso" (spec 10): el monto y la frecuencia vienen cargados,
+ * el botón dice "Guardar cambios" y no hay "Omitir"; la flecha atrás vuelve sin guardar.
  */
 @Composable
 fun PrimerIngresoScreen(
     viewModel: PrimerIngresoViewModel,
     desdeDashboard: Boolean = false,
+    edicion: Boolean = false,
     onAtras: () -> Unit,
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
         pastilla = {
-            Pastilla(if (desdeDashboard) "Nuevo ingreso" else "Paso 2 • Ingresos", VerdeClaro, VerdeBordeClaro, VerdeTexto)
+            Pastilla(
+                when {
+                    edicion -> "Ingreso"
+                    desdeDashboard -> "Nuevo ingreso"
+                    else -> "Paso 2 • Ingresos"
+                },
+                VerdeClaro, VerdeBordeClaro, VerdeTexto,
+            )
         },
         icono = Icons.Filled.ArrowDownward,
         colorIcono = VerdeMarca,
         fondoIcono = Color(0xFFDDF6EA),
-        titulo = if (desdeDashboard) "Registra un ingreso" else "Registra tu primer ingreso",
+        titulo = when {
+            edicion -> "Editar ingreso"
+            desdeDashboard -> "Registra un ingreso"
+            else -> "Registra tu primer ingreso"
+        },
         tamanoTitulo = 28,
         descripcion = if (desdeDashboard) {
             "Anota el monto que recibiste. Se sumará a tu saldo."
@@ -148,7 +163,7 @@ fun PrimerIngresoScreen(
             "Indica la frecuencia con la que recibes dinero y el monto aproximado para proyectar tus metas."
         },
         onAtras = onAtras,
-        onOmitir = if (desdeDashboard) null else onTerminar,
+        onOmitir = if (desdeDashboard || edicion) null else onTerminar,
     ) {
         TarjetaMonto(
             error = viewModel.errorMonto,
@@ -214,7 +229,11 @@ fun PrimerIngresoScreen(
         Spacer(Modifier.height(22.dp))
         viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
-            texto = if (desdeDashboard) "Guardar ingreso" else "Guardar y continuar",
+            texto = when {
+                edicion -> "Guardar cambios"
+                desdeDashboard -> "Guardar ingreso"
+                else -> "Guardar y continuar"
+            },
             fondo = DegradadoIngreso,
             onClick = { viewModel.guardar(onTerminar) },
             cargando = viewModel.guardando,
@@ -229,22 +248,37 @@ fun PrimerIngresoScreen(
  * Pantalla 5 · Paso 2 • Gastos (docs/design/crear_cuenta_5.jpeg).
  *
  * Con [desdeDashboard] = true es "Nuevo gasto" (botón "+" del Dashboard): sin "Paso 2" ni "Omitir".
+ *
+ * Con [edicion] = true es "Editar gasto" (spec 10): el monto y la categoría vienen cargados,
+ * el botón dice "Guardar cambios" y no hay "Omitir"; la flecha atrás vuelve sin guardar.
  */
 @Composable
 fun PrimerGastoScreen(
     viewModel: PrimerGastoViewModel,
     desdeDashboard: Boolean = false,
+    edicion: Boolean = false,
     onAtras: () -> Unit,
     onTerminar: () -> Unit,
 ) {
     EstructuraPaso2(
         pastilla = {
-            Pastilla(if (desdeDashboard) "Nuevo gasto" else "Paso 2 • Gastos", RosaClaro, RosaBorde, RojoTexto, tamano = 16)
+            Pastilla(
+                when {
+                    edicion -> "Gasto"
+                    desdeDashboard -> "Nuevo gasto"
+                    else -> "Paso 2 • Gastos"
+                },
+                RosaClaro, RosaBorde, RojoTexto, tamano = 16,
+            )
         },
         icono = Icons.Filled.ArrowUpward,
         colorIcono = RojoGasto,
         fondoIcono = Color(0xFFFDE2E6),
-        titulo = if (desdeDashboard) "Registra un gasto" else "Registra tu primer gasto",
+        titulo = when {
+            edicion -> "Editar gasto"
+            desdeDashboard -> "Registra un gasto"
+            else -> "Registra tu primer gasto"
+        },
         tamanoTitulo = 24,
         descripcion = if (desdeDashboard) {
             "Anota el monto y elige la categoría del gasto. Se restará de tu saldo."
@@ -252,11 +286,11 @@ fun PrimerGastoScreen(
             "Selecciona la categoría principal y anota cuánto sueles destinar para comenzar a optimizar."
         },
         onAtras = onAtras,
-        onOmitir = if (desdeDashboard) null else onTerminar,
+        onOmitir = if (desdeDashboard || edicion) null else onTerminar,
     ) {
         TarjetaMonto(
             error = viewModel.errorMonto,
-            etiqueta = if (desdeDashboard) "MONTO DEL GASTO (COP)" else "MONTO ESTIMADO DEL GASTO (COP)",
+            etiqueta = if (desdeDashboard || edicion) "MONTO DEL GASTO (COP)" else "MONTO ESTIMADO DEL GASTO (COP)",
             ayuda = "Finanzia detectará oportunidades de ahorro en esta categoría.",
             iconoAyuda = Icons.Outlined.Info,
             colorAyuda = RojoGasto,
@@ -318,7 +352,11 @@ fun PrimerGastoScreen(
         Spacer(Modifier.height(30.dp))
         viewModel.errorGeneral?.let { MensajeError(it, Modifier.padding(start = 4.dp, bottom = 12.dp)) }
         BotonPrincipal(
-            texto = if (desdeDashboard) "Guardar gasto" else "Guardar gasto y finalizar",
+            texto = when {
+                edicion -> "Guardar cambios"
+                desdeDashboard -> "Guardar gasto"
+                else -> "Guardar gasto y finalizar"
+            },
             fondo = SolidColor(AzulIntenso),
             onClick = { viewModel.guardar(onTerminar) },
             cargando = viewModel.guardando,

@@ -22,13 +22,25 @@ class FakeOnboardingRepository : OnboardingRepository {
     val ingresos = mutableListOf<PrimerIngreso>()
     val gastos = mutableListOf<PrimerGasto>()
 
+    /** Saldo disponible simulado: ingresos − gastos (la cuenta simulada empieza en $0.00). */
+    fun saldoDisponible(): java.math.BigDecimal =
+        com.finanzia.finanzia.validacion.ReglaSaldo.saldoDisponible(
+            saldoInicial = java.math.BigDecimal.ZERO,
+            ingresos = ingresos.fold(java.math.BigDecimal.ZERO) { suma, it -> suma + java.math.BigDecimal.valueOf(it.monto) },
+            gastos = gastos.fold(java.math.BigDecimal.ZERO) { suma, it -> suma + java.math.BigDecimal.valueOf(it.monto) },
+            aportes = java.math.BigDecimal.ZERO,
+        )
+
     override suspend fun guardarPrimerIngreso(ingreso: PrimerIngreso): Result<Unit> {
         ingresos += ingreso
         return Result.success(Unit)
     }
 
-    override suspend fun guardarPrimerGasto(gasto: PrimerGasto): Result<Unit> {
+    /** Aplica la regla del saldo (spec 10), como la versión real. */
+    override suspend fun guardarPrimerGasto(gasto: PrimerGasto): Result<Unit> = runCatching {
+        com.finanzia.finanzia.validacion.ReglaSaldo
+            .validarSalida(saldoDisponible(), java.math.BigDecimal.valueOf(gasto.monto))
+            .exigirPermitido()
         gastos += gasto
-        return Result.success(Unit)
     }
 }

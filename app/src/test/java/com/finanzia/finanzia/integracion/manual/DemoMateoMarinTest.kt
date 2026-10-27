@@ -16,9 +16,12 @@ import com.finanzia.finanzia.datos.FakeAuthRepository
 import com.finanzia.finanzia.datos.FrecuenciaIngreso
 import com.finanzia.finanzia.datos.PrimerGasto
 import com.finanzia.finanzia.datos.PrimerIngreso
+import com.finanzia.finanzia.datos.SaldoInsuficienteException
 import com.finanzia.finanzia.datos.TipoMovimiento
+import com.finanzia.finanzia.datos.nombreVisible
 import com.finanzia.finanzia.datos.supabase.SupabaseAuthRepository
 import com.finanzia.finanzia.datos.supabase.SupabaseDashboardRepository
+import com.finanzia.finanzia.datos.supabase.SupabaseMovimientosRepository
 import com.finanzia.finanzia.datos.supabase.SupabaseOnboardingRepository
 import com.finanzia.finanzia.datos.supabase.crearClienteSupabase
 import com.finanzia.finanzia.ui.DATOS_DE_EJEMPLO
@@ -44,6 +47,8 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Properties
@@ -73,6 +78,9 @@ class DemoMateoMarinTest {
         const val CORREO = "mateo.marin@example.com"
         const val MONTO_INGRESO = 2_500_000L
         const val MONTO_GASTO = 350_000L
+        /** Spec 10: la prueba alterna el gasto entre estos dos valores en cada ejecución. */
+        const val MONTO_GASTO_EDITADO = 420_000L
+        const val DESCRIPCION_INTENTO = "Intento sin saldo · DEMO Mateo Marin"
         const val DESCRIPCION_INGRESO = "Primer ingreso · DEMO Mateo Marin"
         const val DESCRIPCION_GASTO = "Primer gasto · DEMO Mateo Marin"
     }
@@ -101,6 +109,8 @@ class DemoMateoMarinTest {
         val auth = SupabaseAuthRepository(cliente)
         val onboarding = SupabaseOnboardingRepository(cliente)
         val dashboard = SupabaseDashboardRepository(cliente)
+        val movimientos = SupabaseMovimientosRepository(cliente)
+        var montoGastoEsperado = MONTO_GASTO
 
         val datos: DatosDashboard = runBlocking {
             // 1. Si Mateo ya existe, entra; si no, se registra (sin duplicar).
@@ -141,6 +151,47 @@ class DemoMateoMarinTest {
             val frecuencia = cliente.from("usuarios").select().decodeSingle<FilaFrecuencia>().frecuenciaIngreso
             assertEquals("mensual", frecuencia)
 
+            // 3b. Spec 10 · un gasto mayor que el saldo disponible NO se guarda.
+            val conGasto = dashboard.cargar().getOrThrow()
+            val saldo = CalculosDashboard.balance(conGasto)
+            assertTrue("El saldo de Mateo no debe estar en negativo antes de empezar", saldo.signum() >= 0)
+            val masQueElSaldo = saldo.setScale(0, RoundingMode.FLOOR).longValueExact() + 1
+            val intento = onboarding.guardarPrimerGasto(PrimerGasto(masQueElSaldo, CategoriaGasto.COMIDA, DESCRIPCION_INTENTO))
+            assertTrue("Un gasto mayor que el saldo debe rechazarse", intento.exceptionOrNull() is SaldoInsuficienteException)
+            assertTrue(
+                "El gasto rechazado no debe quedar guardado",
+                dashboard.cargar().getOrThrow().movimientos.none { it.descripcion == DESCRIPCION_INTENTO },
+            )
+            println("DEMO: gasto de ${FormatosDashboard.monto(BigDecimal.valueOf(masQueElSaldo))} rechazado (saldo ${FormatosDashboard.monto(saldo)}).")
+
+            // 3c. Spec 10 · editar el gasto de demostración (UPDATE del mismo registro).
+            val gasto = conGasto.movimientos.single { it.descripcion == DESCRIPCION_GASTO }
+            // Editarlo a más que el saldo + lo que ya había descontado → rechazado y sin cambios.
+            val imposible = (saldo + gasto.monto).setScale(0, RoundingMode.FLOOR).longValueExact() + 1
+            assertTrue(
+                "Editar el gasto por encima del saldo disponible debe rechazarse",
+                movimientos.editar(gasto.id, imposible, "Comida").exceptionOrNull() is SaldoInsuficienteException,
+            )
+            val nuevoMonto = if (gasto.monto.compareTo(BigDecimal.valueOf(MONTO_GASTO)) == 0) MONTO_GASTO_EDITADO else MONTO_GASTO
+            movimientos.editar(gasto.id, nuevoMonto, "Comida").getOrThrow()
+            val despues = dashboard.cargar().getOrThrow()
+            val gastoEditado = despues.movimientos.single { it.descripcion == DESCRIPCION_GASTO }
+            assertEquals("Se edita el mismo registro", gasto.id, gastoEditado.id)
+            assertEquals(0, BigDecimal.valueOf(nuevoMonto).compareTo(gastoEditado.monto))
+            assertEquals("Editar no crea movimientos nuevos", conGasto.movimientos.size, despues.movimientos.size)
+            val balanceEsperado = saldo + gasto.monto - BigDecimal.valueOf(nuevoMonto)
+            assertEquals("El balance en Supabase refleja la edición", 0, balanceEsperado.compareTo(CalculosDashboard.balance(despues)))
+            montoGastoEsperado = nuevoMonto
+
+            // 3d. El ingreso de Mateo se creó antes de que la frecuencia fuera su categoría
+            // (cambio del 2026-10-26): se corrige a "Mensual" con la edición, sin cambiar el monto.
+            val ingreso = despues.movimientos.single { it.descripcion == DESCRIPCION_INGRESO }
+            if (ingreso.nombreCategoria != FrecuenciaIngreso.MENSUAL.nombreVisible) {
+                movimientos.editar(ingreso.id, ingreso.monto.longValueExact(), FrecuenciaIngreso.MENSUAL.nombreVisible).getOrThrow()
+                println("DEMO: categoría del ingreso corregida de ${ingreso.nombreCategoria} a Mensual.")
+            }
+            println("DEMO: gasto editado de ${FormatosDashboard.monto(gasto.monto)} a ${FormatosDashboard.monto(BigDecimal.valueOf(nuevoMonto))}; balance ${FormatosDashboard.monto(CalculosDashboard.balance(despues))}.")
+
             // 4. Cerrar sesión y volver a entrar con las mismas credenciales.
             auth.cerrarSesion().getOrThrow()
             assertNull("La sesión debe quedar cerrada", cliente.auth.currentUserOrNull())
@@ -156,16 +207,19 @@ class DemoMateoMarinTest {
         assertEquals("El ingreso de demostración no debe duplicarse", 1, ingresos.size)
         assertEquals("El gasto de demostración no debe duplicarse", 1, gastos.size)
         assertEquals(TipoMovimiento.INGRESO, ingresos.single().tipo)
-        assertEquals(MONTO_INGRESO.toDouble(), ingresos.single().monto, 0.0)
+        assertEquals(0, java.math.BigDecimal.valueOf(MONTO_INGRESO).compareTo(ingresos.single().monto))
         // El ingreso queda en la categoría de su frecuencia (Mensual).
         assertEquals("Mensual", ingresos.single().nombreCategoria)
         assertEquals(TipoMovimiento.GASTO, gastos.single().tipo)
-        assertEquals(MONTO_GASTO.toDouble(), gastos.single().monto, 0.0)
+        assertEquals(0, java.math.BigDecimal.valueOf(montoGastoEsperado).compareTo(gastos.single().monto))
         assertEquals("Comida", gastos.single().nombreCategoria)
-        val saldoInicial = datos.cuentas.sumOf { it.saldoInicial }
-        val balanceEsperado = saldoInicial + datos.movimientos.filter { it.tipo == TipoMovimiento.INGRESO }.sumOf { it.monto } -
-            datos.movimientos.filter { it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
-        assertEquals(balanceEsperado, CalculosDashboard.balance(datos), 0.001)
+        // Saldo inicial + ingresos − gastos − aportes, todo con BigDecimal (spec 10).
+        val balanceEsperado = CalculosDashboard.suma(datos.cuentas.map { it.saldoInicial }) +
+            CalculosDashboard.total(datos.movimientos, TipoMovimiento.INGRESO) -
+            CalculosDashboard.total(datos.movimientos, TipoMovimiento.GASTO) -
+            CalculosDashboard.suma(datos.aportes.map { it.monto })
+        assertEquals(0, balanceEsperado.compareTo(CalculosDashboard.balance(datos)))
+        assertTrue("El saldo de Mateo nunca debe quedar negativo", CalculosDashboard.balance(datos).signum() >= 0)
         assertNull("Mateo no tiene metas", datos.meta)
         println("DEMO: balance = ${FormatosDashboard.monto(CalculosDashboard.balance(datos))}")
 
