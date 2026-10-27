@@ -67,6 +67,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -169,8 +171,14 @@ fun DashboardScreen(
     onNotificaciones: () -> Unit = {},
     /** Pestaña Metas de la barra inferior (spec 07). */
     onMetas: () -> Unit = {},
+    /** "Ver todos": lista completa de movimientos (spec 10). */
+    onVerTodos: () -> Unit = {},
+    /** Tocar una fila de "Movimientos recientes": abre su edición (spec 10). */
+    onEditarMovimiento: (FilaMovimiento) -> Unit = {},
     onSesionCerrada: () -> Unit,
 ) {
+    // Al volver de editar (o de registrar con "+"), los datos se leen otra vez (spec 10).
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.alVolverALaPantalla() }
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_DASHBOARD)) {
         Column(Modifier.fillMaxSize()) {
             Box(
@@ -194,6 +202,8 @@ fun DashboardScreen(
                             resumen = estado.resumen,
                             balanceVisible = viewModel.balanceVisible,
                             onOjo = viewModel::alternarBalance,
+                            onVerTodos = onVerTodos,
+                            onEditarMovimiento = onEditarMovimiento,
                         )
                     }
                     // Espacio para que el botón "+" flotante no tape lo último.
@@ -303,7 +313,7 @@ private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNo
 }
 
 @Composable
-private fun Cargando() {
+internal fun Cargando() {
     Box(
         Modifier
             .fillMaxWidth()
@@ -315,7 +325,7 @@ private fun Cargando() {
 }
 
 @Composable
-private fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
+internal fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
     Column(Modifier.padding(top = 24.dp)) {
         MensajeError(mensaje)
         Spacer(Modifier.height(12.dp))
@@ -335,7 +345,13 @@ private fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
 }
 
 @Composable
-private fun ColumnScope.Contenido(resumen: ResumenDashboard, balanceVisible: Boolean, onOjo: () -> Unit) {
+private fun ColumnScope.Contenido(
+    resumen: ResumenDashboard,
+    balanceVisible: Boolean,
+    onOjo: () -> Unit,
+    onVerTodos: () -> Unit,
+    onEditarMovimiento: (FilaMovimiento) -> Unit,
+) {
     Spacer(Modifier.height(16.dp))
     Saludo(resumen)
     Spacer(Modifier.height(20.dp))
@@ -345,7 +361,7 @@ private fun ColumnScope.Contenido(resumen: ResumenDashboard, balanceVisible: Boo
     Spacer(Modifier.height(18.dp))
     TarjetaMeta(resumen.meta)
     Spacer(Modifier.height(24.dp))
-    MovimientosRecientes(resumen.recientes)
+    MovimientosRecientes(resumen.recientes, onVerTodos, onEditarMovimiento)
     Spacer(Modifier.height(20.dp))
     BotonConversar()
 }
@@ -451,7 +467,9 @@ private fun TarjetaBalance(resumen: ResumenDashboard, visible: Boolean, onOjo: (
 }
 
 @Composable
-private fun LineaTendencia(puntos: List<Double>, modifier: Modifier) {
+private fun LineaTendencia(puntosExactos: List<java.math.BigDecimal>, modifier: Modifier) {
+    // Solo para dibujar (posición en pantalla): los montos se calculan exactos antes de llegar aquí.
+    val puntos = puntosExactos.map { it.toDouble() }
     Canvas(modifier.testTag(Etiquetas.LINEA_TENDENCIA)) {
         val minimo = puntos.min()
         val maximo = puntos.max()
@@ -603,8 +621,13 @@ private fun TarjetaMeta(meta: MetaDashboard?) {
         }
         return
     }
-    val falta = (meta.montoObjetivo - meta.aportado).coerceAtLeast(0.0)
-    val progreso = if (meta.montoObjetivo > 0) (meta.aportado / meta.montoObjetivo).coerceIn(0.0, 1.0).toFloat() else 0f
+    val falta = (meta.montoObjetivo - meta.aportado).max(java.math.BigDecimal.ZERO)
+    // La barra solo necesita una proporción (0 a 1) para dibujarse; los montos siguen exactos.
+    val progreso = if (meta.montoObjetivo.signum() > 0) {
+        meta.aportado.divide(meta.montoObjetivo, 4, java.math.RoundingMode.HALF_UP).toFloat().coerceIn(0f, 1f)
+    } else {
+        0f
+    }
     Row(modificador, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(
@@ -669,13 +692,26 @@ private fun TarjetaMeta(meta: MetaDashboard?) {
 }
 
 @Composable
-private fun MovimientosRecientes(filas: List<FilaMovimiento>) {
+private fun MovimientosRecientes(filas: List<FilaMovimiento>, onVerTodos: () -> Unit, onEditar: (FilaMovimiento) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Movimientos recientes", style = estilo(20, FontWeight.SemiBold), modifier = Modifier.weight(1f))
-        // "Ver todos" sin acción por ahora (spec 04).
-        Text("Ver todos", style = estilo(15, FontWeight.SemiBold, Color(0xFF1E4FBF)))
+        // "Ver todos" abre la lista completa (spec 10).
+        Text(
+            "Ver todos",
+            style = estilo(15, FontWeight.SemiBold, Color(0xFF1E4FBF)),
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(role = Role.Button, onClick = onVerTodos)
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+        )
     }
     Spacer(Modifier.height(12.dp))
+    TarjetaMovimientos(filas, onEditar)
+}
+
+/** Tarjeta blanca con las filas de movimientos (la usan el Dashboard y "Ver todos"). */
+@Composable
+internal fun TarjetaMovimientos(filas: List<FilaMovimiento>, onEditar: (FilaMovimiento) -> Unit) {
     val forma = RoundedCornerShape(22.dp)
     Column(
         Modifier
@@ -692,16 +728,19 @@ private fun MovimientosRecientes(filas: List<FilaMovimiento>) {
                 modifier = Modifier.padding(vertical = 18.dp),
             )
         } else {
-            filas.forEach { FilaMovimientoReciente(it) }
+            filas.forEach { fila -> FilaMovimientoReciente(fila, onClick = { onEditar(fila) }) }
         }
     }
 }
 
 @Composable
-private fun FilaMovimientoReciente(fila: FilaMovimiento) {
+private fun FilaMovimientoReciente(fila: FilaMovimiento, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // Tocar la fila abre su edición; el diseño de la fila no cambia (spec 10).
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = 12.dp)
             .testTag(Etiquetas.FILA_MOVIMIENTO),
         verticalAlignment = Alignment.CenterVertically,
@@ -903,7 +942,7 @@ private fun OpcionMas(
 
 private val datosVistaPrevia = DatosDashboard(
     nombreUsuario = "Vista Previa",
-    cuentas = listOf(CuentaDashboard(CUENTA_PRINCIPAL, 0.0)),
+    cuentas = listOf(CuentaDashboard(CUENTA_PRINCIPAL, java.math.BigDecimal.ZERO)),
     movimientos = emptyList(),
     meta = null,
 )

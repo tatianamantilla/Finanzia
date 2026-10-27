@@ -14,11 +14,14 @@ import com.finanzia.finanzia.validacion.CalculosDashboard
 import com.finanzia.finanzia.validacion.FormatosDashboard
 import com.finanzia.finanzia.validacion.MayorGasto
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.ZoneId
 
 /** Una fila de "Movimientos recientes", con los textos ya formateados. */
 data class FilaMovimiento(
+    /** id_movimiento: para abrir su edición al tocar la fila (spec 10). */
+    val id: Long,
     val titulo: String,
     /** "Hoy, 14:32 • Principal" */
     val subtitulo: String,
@@ -34,13 +37,13 @@ data class ResumenDashboard(
     val primerNombre: String,
     /** Nombre de la primera cuenta activa, o null si no tiene cuentas. */
     val nombreCuenta: String?,
-    val balance: Double,
-    val ingresosMes: Double,
-    val gastosMes: Double,
+    val balance: BigDecimal,
+    val ingresosMes: BigDecimal,
+    val gastosMes: BigDecimal,
     /** Pastilla "Saludable +X%": null = no se muestra. */
     val ahorroMes: Double?,
     /** Línea de tendencia: con menos de dos puntos no se dibuja. */
-    val tendencia: List<Double>,
+    val tendencia: List<BigDecimal>,
     /** Consejo: null = "Aún no hay suficiente información…". */
     val mayorGasto: MayorGasto?,
     val recientes: List<FilaMovimiento>,
@@ -62,8 +65,15 @@ object ResumidorDashboard {
             ahorroMes = CalculosDashboard.ahorroDelMes(ingresosMes, gastosMes),
             tendencia = CalculosDashboard.puntosTendencia(datos),
             mayorGasto = CalculosDashboard.mayorGasto(delMes),
-            recientes = CalculosDashboard.recientes(datos.movimientos).map {
+            recientes = CalculosDashboard.recientes(datos.movimientos).map { filaDe(it, ahora, zona) },
+            meta = datos.meta,
+        )
+    }
+
+    /** Una fila con el mismo formato del Dashboard (la usa también la lista "Ver todos"). */
+    fun filaDe(it: com.finanzia.finanzia.datos.MovimientoDashboard, ahora: Instant, zona: ZoneId) =
                 FilaMovimiento(
+                    id = it.id,
                     titulo = it.descripcion,
                     subtitulo = FormatosDashboard.fecha(it.fecha, ahora, zona) + " • " + it.nombreCuenta,
                     monto = FormatosDashboard.conSigno(it),
@@ -71,10 +81,6 @@ object ResumidorDashboard {
                     esIngreso = it.tipo == TipoMovimiento.INGRESO,
                     colorCategoria = it.colorCategoria,
                 )
-            },
-            meta = datos.meta,
-        )
-    }
 }
 
 sealed interface EstadoDashboard {
@@ -104,6 +110,26 @@ class DashboardViewModel(
 
     init {
         cargar()
+    }
+
+    private var yaSeMostro = false
+
+    /** Cada vez que la pantalla vuelve a verse (después de editar o registrar), lee otra vez los datos. */
+    fun alVolverALaPantalla() {
+        if (!yaSeMostro) {
+            yaSeMostro = true
+            return
+        }
+        recargarSinParpadeo()
+    }
+
+    /** Vuelve a leer sin mostrar el estado de carga: los números cambian directamente. */
+    private fun recargarSinParpadeo() {
+        viewModelScope.launch {
+            repositorio.cargar()
+                .onSuccess { estado = EstadoDashboard.Listo(ResumidorDashboard.resumir(it, ahora(), zona)) }
+                .onFailure { if (estado !is EstadoDashboard.Listo) estado = EstadoDashboard.Error(it.message ?: "No se pudo cargar tu información.") }
+        }
     }
 
     fun cargar() {
