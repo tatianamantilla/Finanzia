@@ -26,6 +26,10 @@ import com.finanzia.finanzia.datos.MovimientosRepository
 import com.finanzia.finanzia.datos.MovimientosSimulados
 import com.finanzia.finanzia.datos.MetasRepository
 import com.finanzia.finanzia.datos.MetasSimuladas
+import com.finanzia.finanzia.datos.AsistenteRepository
+import com.finanzia.finanzia.datos.AsistenteSimulado
+import com.finanzia.finanzia.ui.asistente.AsistenteScreen
+import com.finanzia.finanzia.ui.asistente.AsistenteViewModel
 import com.finanzia.finanzia.datos.NotificacionesRepository
 import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
@@ -93,6 +97,9 @@ object Rutas {
 
     // Spec 10 · Lista de movimientos y edición.
     const val MOVIMIENTOS = "movimientos"
+
+    // Spec 11 · Asistente Finanzia IA.
+    const val ASISTENTE = "asistente"
     const val ARG_ID_MOVIMIENTO = "idMovimiento"
     const val EDITAR_INGRESO = "editar_ingreso/{$ARG_ID_MOVIMIENTO}"
     const val EDITAR_GASTO = "editar_gasto/{$ARG_ID_MOVIMIENTO}"
@@ -115,6 +122,8 @@ fun FinanziaApp(
     movimientos: MovimientosRepository = remember(onboarding) {
         (onboarding as? FakeOnboardingRepository)?.let(::MovimientosSimulados) ?: SinEdicionDeMovimientos
     },
+    // La app real pasa Repositorios.asistente (Supabase + Edge Function); los tests usan el simulado.
+    asistente: AsistenteRepository = remember { AsistenteSimulado() },
     navController: NavHostController = rememberNavController(),
 ) {
     // Tocar un movimiento abre "Editar ingreso" o "Editar gasto" según su tipo (spec 10).
@@ -131,6 +140,10 @@ fun FinanziaApp(
     // Pestaña Metas: desde Inicio o Notificaciones. Sin copias repetidas en el historial.
     val irAMetas: () -> Unit = {
         navController.navigate(Rutas.METAS) { launchSingleTop = true }
+    }
+    // Asistente Finanzia IA (spec 11): pestaña, botón "Conversar con Finanzia IA" y chevron.
+    val irAAsistente: () -> Unit = {
+        navController.navigate(Rutas.ASISTENTE) { launchSingleTop = true }
     }
     // Flecha atrás o "Inicio" desde Notificaciones y Metas: vuelve al Dashboard que ya estaba abierto.
     val volverAlDashboard: () -> Unit = {
@@ -260,6 +273,7 @@ fun FinanziaApp(
                     onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     onMetas = irAMetas,
+                    onAsistente = irAAsistente,
                     onVerTodos = { navController.navigate(Rutas.MOVIMIENTOS) },
                     onEditarMovimiento = editarMovimiento,
                     onSesionCerrada = {
@@ -276,9 +290,19 @@ fun FinanziaApp(
                     viewModel = viewModel { NotificacionesViewModel(notificaciones) },
                     onAtras = volverAlDashboard,
                     onMetas = irAMetas,
+                    onAsistente = irAAsistente,
                 )
             }
             // Spec 07 · Metas: pestaña Metas de la barra inferior.
+            // Spec 11 · Asistente Finanzia IA.
+            composable(Rutas.ASISTENTE) {
+                AsistenteScreen(
+                    viewModel = viewModel { AsistenteViewModel(asistente, auth.usuarioActual?.nombre.orEmpty()) },
+                    onAtras = { if (!navController.popBackStack()) irAlDashboard() },
+                    onInicio = volverAlDashboard,
+                    onMetas = irAMetas,
+                )
+            }
             composable(Rutas.METAS) {
                 val metasViewModel = viewModel { MetasViewModel(metas) }
                 // Al volver del detalle (donde se pueden editar aportes) se leen de nuevo los totales.
@@ -288,6 +312,7 @@ fun FinanziaApp(
                     onAtras = volverAlDashboard,
                     onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
                     onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
+                    onAsistente = irAAsistente,
                 )
             }
             // Spec 09 · Detalle de meta: botón "Detalle de meta" de cada tarjeta.

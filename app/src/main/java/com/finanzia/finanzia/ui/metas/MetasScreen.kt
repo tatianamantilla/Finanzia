@@ -110,6 +110,8 @@ fun MetasScreen(
     onNuevaMeta: () -> Unit,
     hoy: () -> LocalDate = { LocalDate.now() },
     onDetalle: (Long) -> Unit = {},
+    /** Pestaña Asistente (spec 11). */
+    onAsistente: () -> Unit = {},
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_METAS)) {
         Column(Modifier.fillMaxSize()) {
@@ -131,7 +133,7 @@ fun MetasScreen(
                 }
             }
             // "Inicio" vuelve al Dashboard (igual que la flecha).
-            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras)
+            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras, onAsistente = onAsistente)
         }
     }
 }

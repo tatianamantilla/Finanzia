@@ -43,12 +43,13 @@ private val GrisIconoBarra = Color(0xFF3A4255)
 private val AzulPestana = Color(0xFFDCE8FB)
 
 /** Pestañas que ya tienen pantalla. */
-enum class PestanaApp { INICIO, METAS }
+enum class PestanaApp { INICIO, METAS, ASISTENTE }
 
 /**
  * Barra de navegación inferior de toda la app: Inicio, Gráficos, Billetera, Metas y Asistente.
  * "Gráficos" se mantiene por decisión del equipo (entrará en función más adelante). Por ahora
- * Inicio y Metas tienen pantalla; las demás se ven pero no tienen acción hasta que exista la suya.
+ * Inicio, Metas y Asistente (spec 11) tienen pantalla; las demás se ven pero no tienen acción
+ * hasta que exista la suya.
  *
  * [seleccionada] es la pestaña de la pantalla actual. Un callback en null (por ejemplo [onInicio]
  * cuando ya se está en el Dashboard) hace que tocar esa pestaña no haga nada.
@@ -58,6 +59,7 @@ fun BarraNavegacion(
     seleccionada: PestanaApp = PestanaApp.INICIO,
     onInicio: (() -> Unit)? = null,
     onMetas: (() -> Unit)? = null,
+    onAsistente: (() -> Unit)? = null,
 ) {
     Row(
         Modifier
@@ -73,7 +75,7 @@ fun BarraNavegacion(
         Pestana("Gráficos", Icons.Filled.BarChart)
         Pestana("Billetera", Icons.Outlined.AccountBalanceWallet)
         Pestana("Metas", Icons.Outlined.Adjust, seleccionada = seleccionada == PestanaApp.METAS, onClick = onMetas)
-        Pestana("Asistente", Icons.Outlined.SmartToy)
+        Pestana("Asistente", Icons.Outlined.SmartToy, seleccionada = seleccionada == PestanaApp.ASISTENTE, onClick = onAsistente)
     }
 }
 

@@ -17,4 +17,5 @@ object Repositorios {
     val movimientos: MovimientosRepository by lazy { com.finanzia.finanzia.datos.supabase.SupabaseMovimientosRepository() }
     val notificaciones: NotificacionesRepository by lazy { SupabaseNotificacionesRepository() }
     val metas: MetasRepository by lazy { SupabaseMetasRepository() }
+    val asistente: AsistenteRepository by lazy { com.finanzia.finanzia.datos.supabase.SupabaseAsistenteRepository() }
 }

@@ -101,6 +101,8 @@ fun NotificacionesScreen(
     viewModel: NotificacionesViewModel,
     onAtras: () -> Unit,
     onMetas: () -> Unit = {},
+    /** Pestaña Asistente (spec 11). */
+    onAsistente: () -> Unit = {},
     ahora: () -> Instant = Instant::now,
     zona: ZoneId = ZoneId.systemDefault(),
 ) {
@@ -130,7 +132,7 @@ fun NotificacionesScreen(
                 }
             }
             // A esta pantalla se llega desde Inicio: "Inicio" queda seleccionada y vuelve al Dashboard.
-            BarraNavegacion(onInicio = onAtras, onMetas = onMetas)
+            BarraNavegacion(onInicio = onAtras, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
 }
