@@ -103,6 +103,8 @@ fun AsistenteScreen(
     onAtras: () -> Unit,
     onInicio: () -> Unit,
     onMetas: () -> Unit,
+    /** Pestaña Gráficos: abre Estadísticas. */
+    onGraficos: () -> Unit = {},
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(EtiquetasAsistente.PANTALLA)) {
         Column(Modifier.fillMaxSize()) {
@@ -139,7 +141,7 @@ fun AsistenteScreen(
                     BarraEscribir(viewModel)
                 }
             }
-            BarraNavegacion(seleccionada = PestanaApp.ASISTENTE, onInicio = onInicio, onMetas = onMetas)
+            BarraNavegacion(seleccionada = PestanaApp.ASISTENTE, onInicio = onInicio, onGraficos = onGraficos, onMetas = onMetas)
         }
     }
 }

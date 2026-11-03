@@ -34,6 +34,8 @@ import com.finanzia.finanzia.datos.NotificacionesRepository
 import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasScreen
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasViewModel
 import com.finanzia.finanzia.ui.dashboard.FilaMovimiento
 import com.finanzia.finanzia.ui.dashboard.MovimientosScreen
 import com.finanzia.finanzia.ui.dashboard.MovimientosViewModel
@@ -80,6 +82,7 @@ object Rutas {
     const val NUEVO_GASTO = "nuevo_gasto"
     const val NOTIFICACIONES = "notificaciones"
     const val METAS = "metas"
+    const val ESTADISTICAS = "estadisticas"
     const val NUEVA_META = "nueva_meta"
     const val ARG_ID_META = "idMeta"
     const val DETALLE_META = "detalle_meta/{$ARG_ID_META}"
@@ -137,10 +140,17 @@ fun FinanziaApp(
         }
     }
 
-    // Pestaña Metas: desde Inicio o Notificaciones. Sin copias repetidas en el historial.
-    val irAMetas: () -> Unit = {
-        navController.navigate(Rutas.METAS) { launchSingleTop = true }
+    // Pestañas Metas y Gráficos: el historial queda en "Dashboard → pestaña", sin copias repetidas
+    // aunque se salte entre pestañas; "atrás" siempre vuelve al Dashboard.
+    val irAPestana: (String) -> Unit = { ruta ->
+        navController.navigate(ruta) {
+            popUpTo(Rutas.DASHBOARD)
+            launchSingleTop = true
+        }
     }
+    val irAMetas: () -> Unit = { irAPestana(Rutas.METAS) }
+    // Spec 12: la pestaña Gráficos abre Estadísticas.
+    val irAEstadisticas: () -> Unit = { irAPestana(Rutas.ESTADISTICAS) }
     // Asistente Finanzia IA (spec 11): pestaña, botón "Conversar con Finanzia IA" y chevron.
     val irAAsistente: () -> Unit = {
         navController.navigate(Rutas.ASISTENTE) { launchSingleTop = true }
@@ -272,6 +282,7 @@ fun FinanziaApp(
                     onIngreso = { navController.navigate(Rutas.NUEVO_INGRESO) },
                     onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
+                    onGraficos = irAEstadisticas,
                     onMetas = irAMetas,
                     onAsistente = irAAsistente,
                     onVerTodos = { navController.navigate(Rutas.MOVIMIENTOS) },
@@ -290,7 +301,23 @@ fun FinanziaApp(
                     viewModel = viewModel { NotificacionesViewModel(notificaciones) },
                     onAtras = volverAlDashboard,
                     onMetas = irAMetas,
+                    onGraficos = irAEstadisticas,
                     onAsistente = irAAsistente,
+                )
+            }
+            // Spec 12 · Estadísticas: pestaña Gráficos. "Inicio" vuelve al Dashboard.
+            composable(Rutas.ESTADISTICAS) {
+                EstadisticasScreen(
+                    viewModel = viewModel { EstadisticasViewModel(dashboard, auth) },
+                    onInicio = volverAlDashboard,
+                    onMetas = irAMetas,
+                    onAsistente = irAAsistente,
+                    onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
+                    onSesionCerrada = {
+                        navController.navigate(Rutas.INICIAR_SESION) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
                 )
             }
             // Spec 07 · Metas: pestaña Metas de la barra inferior.
@@ -301,6 +328,7 @@ fun FinanziaApp(
                     onAtras = { if (!navController.popBackStack()) irAlDashboard() },
                     onInicio = volverAlDashboard,
                     onMetas = irAMetas,
+                    onGraficos = irAEstadisticas,
                 )
             }
             composable(Rutas.METAS) {
@@ -312,6 +340,7 @@ fun FinanziaApp(
                     onAtras = volverAlDashboard,
                     onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
                     onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
+                    onGraficos = irAEstadisticas,
                     onAsistente = irAAsistente,
                 )
             }

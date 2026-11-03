@@ -110,6 +110,8 @@ fun MetasScreen(
     onNuevaMeta: () -> Unit,
     hoy: () -> LocalDate = { LocalDate.now() },
     onDetalle: (Long) -> Unit = {},
+    /** Pestaña Gráficos: abre Estadísticas (spec 12). */
+    onGraficos: () -> Unit = {},
     /** Pestaña Asistente (spec 11). */
     onAsistente: () -> Unit = {},
 ) {
@@ -133,7 +135,7 @@ fun MetasScreen(
                 }
             }
             // "Inicio" vuelve al Dashboard (igual que la flecha).
-            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras, onAsistente = onAsistente)
+            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras, onGraficos = onGraficos, onAsistente = onAsistente)
         }
     }
 }

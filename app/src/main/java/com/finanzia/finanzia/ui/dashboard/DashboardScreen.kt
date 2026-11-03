@@ -169,6 +169,8 @@ fun DashboardScreen(
     onGasto: () -> Unit = {},
     /** Campana: abre Notificaciones (spec 05). */
     onNotificaciones: () -> Unit = {},
+    /** Pestaña Gráficos de la barra inferior: abre Estadísticas (spec 12). */
+    onGraficos: () -> Unit = {},
     /** Pestaña Metas de la barra inferior (spec 07). */
     onMetas: () -> Unit = {},
     /** Pestaña Asistente, "Conversar con Finanzia IA" y el chevron de la tarjeta Finanzia IA (spec 11). */
@@ -191,7 +193,7 @@ fun DashboardScreen(
                     .consumeWindowInsets(WindowInsets.navigationBars),
             ) {
                 ContenidoDesplazable(margenHorizontal = 20.dp) {
-                    Encabezado(
+                    EncabezadoInicio(
                         cerrandoSesion = viewModel.cerrandoSesion,
                         onCerrarSesion = { viewModel.cerrarSesion(onSesionCerrada) },
                         onNotificaciones = onNotificaciones,
@@ -239,13 +241,14 @@ fun DashboardScreen(
                 )
             }
             // Ya estamos en Inicio: tocar "Inicio" no hace nada.
-            BarraNavegacion(onMetas = onMetas, onAsistente = onAsistente)
+            BarraNavegacion(onGraficos = onGraficos, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
 }
 
+/** Encabezado de Inicio (también lo usa Estadísticas, spec 12): logo, campana y menú de perfil. */
 @Composable
-private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
+internal fun EncabezadoInicio(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
     var menuAbierto by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
@@ -264,8 +267,19 @@ private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNo
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Finanzia", style = estilo(21, FontWeight.SemiBold, altoLinea = 26))
-            Text("Copiloto IA", style = estilo(14, FontWeight.SemiBold, VerdeTexto, altoLinea = 18))
+            // Con letra muy grande en pantallas angostas, el texto se reduce lo justo para no cortarse.
+            BasicText(
+                "Finanzia",
+                style = estilo(21, FontWeight.SemiBold, altoLinea = 26),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 21.sp, stepSize = 0.5.sp),
+            )
+            BasicText(
+                "Copiloto IA",
+                style = estilo(14, FontWeight.SemiBold, VerdeTexto, altoLinea = 18),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
+            )
         }
         // Campana sin punto azul: no hay notificaciones reales (spec 04). Abre Notificaciones (spec 05).
         Box(

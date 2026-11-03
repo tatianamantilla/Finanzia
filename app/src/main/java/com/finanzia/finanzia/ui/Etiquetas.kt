@@ -45,6 +45,19 @@ object Etiquetas {
     const val CAMPO_MONTO_META = "campo_monto_meta"
     const val CAMPO_FECHA_META = "campo_fecha_meta"
     const val BOTON_GUARDAR_META = "boton_guardar_meta"
+    const val PANTALLA_ESTADISTICAS = "pantalla_estadisticas"
+    /** Seguida del nombre del periodo: "opcion_periodo_MES". */
+    const val OPCION_PERIODO = "opcion_periodo_"
+    const val MONTO_FLUJO_NETO = "monto_flujo_neto"
+    const val PASTILLA_VARIACION_NETO = "pastilla_variacion_neto"
+    const val MONTO_INGRESOS_ESTADISTICAS = "monto_ingresos_estadisticas"
+    const val MONTO_GASTOS_ESTADISTICAS = "monto_gastos_estadisticas"
+    const val PASTILLA_PROMEDIO = "pastilla_promedio"
+    /** Seguida del número del grupo: "grupo_grafica_0". */
+    const val GRUPO_GRAFICA = "grupo_grafica_"
+    const val ETIQUETA_GRUPO_SELECCIONADO = "etiqueta_grupo_seleccionado"
+    const val RECOMENDACION = "recomendacion"
+    const val BOTON_APLICAR_SUGERENCIA = "boton_aplicar_sugerencia"
 
     // Estado del botón principal mientras espera a Supabase.
     const val CARGANDO = "Cargando"

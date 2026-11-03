@@ -40,7 +40,7 @@ Son la **misma pantalla**; la primera muestra todo el contenido y la segunda un 
    - A la derecha: monto (rojo con `-` para gastos, verde con `+` para ingresos) y debajo la categoría (en verde para ingresos).
 7. **Botón "Conversar con Finanzia IA →"** de ancho completo, con ícono de burbuja de chat y degradado verde → azul.
 8. **Botón flotante "+"** circular verde-azulado, en la esquina inferior derecha, sobre el contenido.
-9. **Barra de navegación inferior** fija, con cuatro pestañas: **Inicio** (seleccionada, con fondo azul claro y texto azul), **Gráficos**, **Metas** y **Asistente**. (La pestaña Billetera se quitó: el equipo decidió no construir ese módulo.)
+9. **Barra de navegación inferior** fija, con cinco pestañas: **Inicio** (seleccionada, con fondo azul claro y texto azul), **Gráficos**, **Billetera**, **Metas** y **Asistente**.
 
 ## Datos reales (Supabase)
 
@@ -81,7 +81,8 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 - **Ojo del balance:** alterna entre mostrar el monto y ocultarlo (por ejemplo con `••••`). Por defecto está visible.
 - **Botón de persona (arriba a la derecha):** al tocarlo se abre un menú pequeño con una sola opción, "Cerrar sesión". Al elegirla se cierra la sesión de Supabase y se vuelve a la pantalla de inicio de sesión. *Es una excepción aprobada al diseño: el menú solo aparece al tocar y no cambia la pantalla en reposo.*
 - **Movimientos (spec 10):** cada fila de "Movimientos recientes" se puede tocar para editar ese movimiento, sin cambiar el diseño de la fila, y "Ver todos" abre la lista completa de movimientos (`10-editar-movimientos.md`). Después de editar, el Dashboard muestra de inmediato los datos nuevos.
-- **Campana, "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos.
+- **Campana, "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Billetera, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos. *(Actualización: la campana abre Notificaciones (spec 05), el "+" abre el registro, la pestaña Metas abre Metas (spec 07) y la pestaña **Gráficos abre Estadísticas** (spec 12); "Conversar con Finanzia IA", el chevron y la pestaña Asistente abren el Asistente (spec 11). Billetera sigue sin acción.)*
+- **Pestaña Gráficos (spec 12):** abre la pantalla de Estadísticas. Desde Estadísticas, la pestaña Inicio vuelve a este Dashboard. Funciona igual desde Metas y Notificaciones, y "atrás" siempre vuelve al Dashboard.
 - **Pestaña Inicio:** queda seleccionada.
 - Si faltan los datos de alguna sección (sin cuentas, sin gastos, sin metas, sin movimientos), esa sección muestra su estado vacío descrito en esta spec; nunca valores de ejemplo.
 - Mientras carga, muestra un estado de carga simple que no cambie el diseño de la pantalla; si falla la lectura, muestra un texto de error en rojo dentro de la pantalla (sin Snackbar) con la opción de reintentar.
@@ -136,7 +137,7 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
 1. Reglas aprobadas por defecto: pastilla "Saludable" = ahorro del mes; consejo = categoría con más gasto del mes. ¿El equipo las aprueba o prefiere otras? La IA real de Finanzia queda para una fase posterior.
-2. Destino de "Conversar con Finanzia IA" y de las pestañas inferiores sin pantalla todavía. ("Ver todos" ya está definido en la spec 10.)
+2. Destino de "Conversar con Finanzia IA" y de las pestañas Billetera y Asistente, que todavía no tienen pantalla. ("Ver todos" ya está definido en la spec 10; Gráficos, en la spec 12; el Asistente, en la spec 11.)
 3. "Ingresos" y "Gastos" del recuadro: ¿es el total histórico o solo el del mes actual? (Por defecto, el mes actual, como sugiere el diseño. Confirmar.)
 4. Si el usuario tiene varias cuentas, ¿qué nombre se muestra en "Cuenta …"? (Por defecto, la primera cuenta activa.)
 5. La frecuencia del ingreso elegida en el onboarding no tiene dónde guardarse en el esquema actual; ver `docs/supabase/` y la spec 03.
