@@ -1,3 +1,5 @@
+> **Módulo descartado:** el equipo decidió no construir Billetera y se quitó su pestaña de la barra inferior. Esta spec se conserva solo como referencia.
+
 # Spec 06 · Billetera
 
 Lee antes `README.md` y `CLAUDE.md`.

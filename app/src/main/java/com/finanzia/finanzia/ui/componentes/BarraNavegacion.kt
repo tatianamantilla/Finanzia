@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Adjust
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.Icon
@@ -46,10 +45,9 @@ private val AzulPestana = Color(0xFFDCE8FB)
 enum class PestanaApp { INICIO, METAS, ASISTENTE }
 
 /**
- * Barra de navegación inferior de toda la app: Inicio, Gráficos, Billetera, Metas y Asistente.
- * "Gráficos" se mantiene por decisión del equipo (entrará en función más adelante). Por ahora
- * Inicio, Metas y Asistente (spec 11) tienen pantalla; las demás se ven pero no tienen acción
- * hasta que exista la suya.
+ * Barra de navegación inferior de toda la app: Inicio, Gráficos, Metas y Asistente.
+ * "Gráficos" se mantiene por decisión del equipo (entrará en función más adelante); por ahora se
+ * ve pero no tiene acción. "Billetera" se quitó: el equipo decidió no construir ese módulo.
  *
  * [seleccionada] es la pestaña de la pantalla actual. Un callback en null (por ejemplo [onInicio]
  * cuando ya se está en el Dashboard) hace que tocar esa pestaña no haga nada.
@@ -73,7 +71,6 @@ fun BarraNavegacion(
     ) {
         Pestana("Inicio", Icons.Filled.Home, seleccionada = seleccionada == PestanaApp.INICIO, onClick = onInicio)
         Pestana("Gráficos", Icons.Filled.BarChart)
-        Pestana("Billetera", Icons.Outlined.AccountBalanceWallet)
         Pestana("Metas", Icons.Outlined.Adjust, seleccionada = seleccionada == PestanaApp.METAS, onClick = onMetas)
         Pestana("Asistente", Icons.Outlined.SmartToy, seleccionada = seleccionada == PestanaApp.ASISTENTE, onClick = onAsistente)
     }

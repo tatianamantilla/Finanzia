@@ -53,7 +53,7 @@ Mostrar al usuario, en una sola lista, los avisos importantes sobre su dinero: c
 
 - Se **quita la pestaña Gráficos**. La barra queda con cuatro pestañas: **Inicio**, **Billetera**, **Metas** y **Asistente**.
 - **Inicio** lleva al Dashboard (spec 04).
-- **Billetera** mostrará los saldos de las cuentas y de los ingresos registrados (spec propia, pendiente de recibir su diseño).
+- **Billetera** se quitó de la barra: el equipo decidió no construir ese módulo (ver spec 06).
 - **Metas** mostrará las metas por categorías (spec propia, pendiente de recibir su diseño).
 - **Asistente** lleva al Asistente de IA (spec propia, pendiente de recibir su diseño).
 - Mientras una pestaña no tenga su pantalla construida, se muestra pero no tiene acción.

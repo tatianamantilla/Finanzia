@@ -40,7 +40,7 @@ Son la **misma pantalla**; la primera muestra todo el contenido y la segunda un 
    - A la derecha: monto (rojo con `-` para gastos, verde con `+` para ingresos) y debajo la categoría (en verde para ingresos).
 7. **Botón "Conversar con Finanzia IA →"** de ancho completo, con ícono de burbuja de chat y degradado verde → azul.
 8. **Botón flotante "+"** circular verde-azulado, en la esquina inferior derecha, sobre el contenido.
-9. **Barra de navegación inferior** fija, con cinco pestañas: **Inicio** (seleccionada, con fondo azul claro y texto azul), **Gráficos**, **Billetera**, **Metas** y **Asistente**.
+9. **Barra de navegación inferior** fija, con cuatro pestañas: **Inicio** (seleccionada, con fondo azul claro y texto azul), **Gráficos**, **Metas** y **Asistente**. (La pestaña Billetera se quitó: el equipo decidió no construir ese módulo.)
 
 ## Datos reales (Supabase)
 
@@ -81,7 +81,7 @@ Ningún elemento puede mostrar valores inventados. Cada uno se calcula con los d
 - **Ojo del balance:** alterna entre mostrar el monto y ocultarlo (por ejemplo con `••••`). Por defecto está visible.
 - **Botón de persona (arriba a la derecha):** al tocarlo se abre un menú pequeño con una sola opción, "Cerrar sesión". Al elegirla se cierra la sesión de Supabase y se vuelve a la pantalla de inicio de sesión. *Es una excepción aprobada al diseño: el menú solo aparece al tocar y no cambia la pantalla en reposo.*
 - **Movimientos (spec 10):** cada fila de "Movimientos recientes" se puede tocar para editar ese movimiento, sin cambiar el diseño de la fila, y "Ver todos" abre la lista completa de movimientos (`10-editar-movimientos.md`). Después de editar, el Dashboard muestra de inmediato los datos nuevos.
-- **Campana, "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Billetera, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos.
+- **Campana, "Ver plan", chevron de Finanzia IA, botón "Conversar con Finanzia IA", botón "+" y pestañas Gráficos, Metas y Asistente:** se muestran como en el diseño pero **no tienen acción por ahora** (no hay pantallas definidas). No inventes pantallas para ellos.
 - **Pestaña Inicio:** queda seleccionada.
 - Si faltan los datos de alguna sección (sin cuentas, sin gastos, sin metas, sin movimientos), esa sección muestra su estado vacío descrito en esta spec; nunca valores de ejemplo.
 - Mientras carga, muestra un estado de carga simple que no cambie el diseño de la pantalla; si falla la lectura, muestra un texto de error en rojo dentro de la pantalla (sin Snackbar) con la opción de reintentar.
