@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -42,9 +43,15 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -116,17 +123,33 @@ fun NotificacionesScreen(
                     .consumeWindowInsets(WindowInsets.navigationBars),
             ) {
                 ContenidoDesplazable(margenHorizontal = 20.dp) {
-                    Encabezado(sinRevisar = viewModel.sinRevisar, onAtras = onAtras)
+                    Encabezado(
+                        sinRevisar = viewModel.sinRevisar,
+                        onAtras = onAtras,
+                        onMarcarTodas = viewModel::marcarTodasLeidas,
+                        filtroLectura = viewModel.filtroLectura,
+                        onElegirLectura = viewModel::elegirFiltroLectura,
+                    )
                     Spacer(Modifier.height(16.dp))
                     Filtros(
                         total = viewModel.todas.size,
                         seleccionado = viewModel.filtro,
                         onElegir = viewModel::elegirFiltro,
                     )
+                    viewModel.errorAccion?.let {
+                        Spacer(Modifier.height(16.dp))
+                        MensajeError(it, Modifier.testTag(Etiquetas.ERROR_NOTIFICACIONES))
+                    }
                     when (val estado = viewModel.estado) {
                         EstadoNotificaciones.Cargando -> Cargando()
                         is EstadoNotificaciones.Error -> ErrorCarga(estado.mensaje, onReintentar = viewModel::cargar)
-                        is EstadoNotificaciones.Listo -> Lista(viewModel.visibles, ahora(), zona)
+                        is EstadoNotificaciones.Listo -> Lista(
+                            notificaciones = viewModel.visibles,
+                            ahora = ahora(),
+                            zona = zona,
+                            textoVacio = textoVacio(viewModel.filtroLectura),
+                            onTocar = viewModel::marcarLeida,
+                        )
                     }
                     Spacer(Modifier.height(24.dp))
                 }
@@ -138,7 +161,13 @@ fun NotificacionesScreen(
 }
 
 @Composable
-private fun Encabezado(sinRevisar: Int, onAtras: () -> Unit) {
+private fun Encabezado(
+    sinRevisar: Int,
+    onAtras: () -> Unit,
+    onMarcarTodas: () -> Unit,
+    filtroLectura: FiltroLectura,
+    onElegirLectura: (FiltroLectura) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -166,23 +195,85 @@ private fun Encabezado(sinRevisar: Int, onAtras: () -> Unit) {
             )
         }
         Spacer(Modifier.width(8.dp))
-        // Doble check y ajustes: se ven como en el diseño, sin acción por ahora (spec 05).
-        BotonCuadrado(Icons.Filled.DoneAll, "Marcar todas como leídas")
+        // Doble check: marca todas como leídas.
+        BotonCuadrado(
+            Icons.Filled.DoneAll,
+            "Marcar todas como leídas",
+            onClick = onMarcarTodas,
+            etiqueta = Etiquetas.BOTON_MARCAR_TODAS_LEIDAS,
+        )
         Spacer(Modifier.width(10.dp))
-        BotonCuadrado(Icons.Filled.Tune, "Ajustes de notificaciones")
+        // Ajustes: menú para filtrar por visto (Todas, Sin leer, Leídas).
+        MenuFiltroLectura(filtroLectura, onElegirLectura)
     }
 }
 
 @Composable
-private fun BotonCuadrado(icono: ImageVector, descripcion: String) {
+private fun MenuFiltroLectura(seleccionado: FiltroLectura, onElegir: (FiltroLectura) -> Unit) {
+    var abierto by remember { mutableStateOf(false) }
+    Box {
+        BotonCuadrado(
+            Icons.Filled.Tune,
+            "Filtrar por visto",
+            onClick = { abierto = true },
+            etiqueta = Etiquetas.BOTON_FILTRO_LECTURA,
+            // Verde claro (como un filtro seleccionado) cuando no se están mostrando todas.
+            activo = seleccionado != FiltroLectura.TODAS,
+        )
+        DropdownMenu(
+            expanded = abierto,
+            onDismissRequest = { abierto = false },
+            containerColor = Blanco,
+        ) {
+            FiltroLectura.entries.forEach { opcion ->
+                val elegida = opcion == seleccionado
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            opcion.texto,
+                            style = estilo(15, if (elegida) FontWeight.SemiBold else FontWeight.Medium, if (elegida) VerdeFiltro else AzulMarino),
+                        )
+                    },
+                    trailingIcon = if (elegida) {
+                        { Icon(Icons.Filled.Check, contentDescription = "Seleccionado", tint = VerdeFiltro, modifier = Modifier.size(20.dp)) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        onElegir(opcion)
+                        abierto = false
+                    },
+                    modifier = Modifier.testTag(Etiquetas.OPCION_FILTRO_LECTURA),
+                )
+            }
+        }
+    }
+}
+
+private fun textoVacio(filtro: FiltroLectura): String = when (filtro) {
+    FiltroLectura.TODAS -> "No tienes notificaciones por ahora"
+    FiltroLectura.SIN_LEER -> "No tienes notificaciones sin leer"
+    FiltroLectura.LEIDAS -> "No tienes notificaciones leídas"
+}
+
+@Composable
+private fun BotonCuadrado(
+    icono: ImageVector,
+    descripcion: String,
+    onClick: () -> Unit,
+    etiqueta: String,
+    activo: Boolean = false,
+) {
     Box(
         Modifier
             .size(44.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(AzulBotonClaro),
+            .background(if (activo) MentaFiltro else AzulBotonClaro)
+            .clickable(role = Role.Button, onClickLabel = descripcion, onClick = onClick)
+            .testTag(etiqueta),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icono, contentDescription = descripcion, tint = AzulMarino, modifier = Modifier.size(22.dp))
+        Icon(icono, contentDescription = descripcion, tint = if (activo) VerdeFiltro else AzulMarino, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -262,11 +353,17 @@ private fun ErrorCarga(mensaje: String, onReintentar: () -> Unit) {
 }
 
 @Composable
-private fun Lista(notificaciones: List<Notificacion>, ahora: Instant, zona: ZoneId) {
+private fun Lista(
+    notificaciones: List<Notificacion>,
+    ahora: Instant,
+    zona: ZoneId,
+    textoVacio: String,
+    onTocar: (Notificacion) -> Unit,
+) {
     if (notificaciones.isEmpty()) {
         // Estado vacío (spec 05): texto breve y gris debajo de los filtros.
         Text(
-            "No tienes notificaciones por ahora",
+            textoVacio,
             style = estilo(15, color = GrisSuave),
             modifier = Modifier
                 .padding(top = 28.dp)
@@ -281,7 +378,7 @@ private fun Lista(notificaciones: List<Notificacion>, ahora: Instant, zona: Zone
         EncabezadoSeccion()
         deHoy.forEach {
             Spacer(Modifier.height(14.dp))
-            TarjetaNotificacion(it, ahora)
+            TarjetaNotificacion(it, ahora, onTocar = { onTocar(it) })
         }
     }
     // TODO: el diseño solo muestra "HOY". Falta definir si hay secciones como "AYER" o "ESTA SEMANA"
@@ -289,7 +386,7 @@ private fun Lista(notificaciones: List<Notificacion>, ahora: Instant, zona: Zone
     if (anteriores.isNotEmpty()) Spacer(Modifier.height(8.dp))
     anteriores.forEach {
         Spacer(Modifier.height(14.dp))
-        TarjetaNotificacion(it, ahora)
+        TarjetaNotificacion(it, ahora, onTocar = { onTocar(it) })
     }
 }
 
@@ -304,11 +401,11 @@ private fun EncabezadoSeccion() {
 }
 
 @Composable
-private fun TarjetaNotificacion(notificacion: Notificacion, ahora: Instant) {
+private fun TarjetaNotificacion(notificacion: Notificacion, ahora: Instant, onTocar: () -> Unit) {
     val hace = haceCuanto(notificacion.fecha, ahora)
     when (notificacion.tipo) {
         // Alertas de presupuesto: ícono azul sobre cuadro azul claro (como "Límite de…" del diseño).
-        TipoNotificacion.PRESUPUESTO -> Tarjeta {
+        TipoNotificacion.PRESUPUESTO -> Tarjeta(onClick = onTocar) {
             CabeceraTarjeta(
                 icono = iconoClase(notificacion.clase),
                 fondoIcono = AzulIconoClaro,
@@ -320,7 +417,7 @@ private fun TarjetaNotificacion(notificacion: Notificacion, ahora: Instant) {
             Mensaje(notificacion.mensaje)
         }
         // Recordatorios: ícono blanco sobre cuadro azul (como la tarjeta de vencimiento del diseño).
-        TipoNotificacion.PAGO -> Tarjeta {
+        TipoNotificacion.PAGO -> Tarjeta(onClick = onTocar) {
             CabeceraTarjeta(
                 icono = iconoClase(notificacion.clase),
                 fondoIcono = AzulTarjeta,
@@ -335,7 +432,7 @@ private fun TarjetaNotificacion(notificacion: Notificacion, ahora: Instant) {
         TipoNotificacion.SEGURIDAD_IA ->
             if (notificacion.clase == ClaseNotificacion.CONSEJO_IA) {
                 // Consejo de IA: tarjeta "Oportunidad de…" del diseño, con la pastilla "IA Alert".
-                Tarjeta(fondo = FondoTarjetaIA) {
+                Tarjeta(fondo = FondoTarjetaIA, onClick = onTocar) {
                     CabeceraTarjeta(
                         icono = Icons.Filled.AutoAwesome,
                         fondoIcono = VerdeIconoIA,
@@ -357,7 +454,7 @@ private fun TarjetaNotificacion(notificacion: Notificacion, ahora: Instant) {
                     Mensaje(notificacion.mensaje)
                 }
             } else {
-                Tarjeta {
+                Tarjeta(onClick = onTocar) {
                     CabeceraTarjeta(
                         icono = iconoClase(notificacion.clase),
                         fondoIcono = AzulIconoClaro,
@@ -421,9 +518,9 @@ private fun origenRecordatorio(clase: ClaseNotificacion): String = when (clase) 
     else -> "Recordatorio"
 }
 
-/** Contenedor blanco y redondeado de cada tarjeta. */
+/** Contenedor blanco y redondeado de cada tarjeta. Al tocarla se marca como leída. */
 @Composable
-private fun Tarjeta(fondo: Color = Blanco, contenido: @Composable () -> Unit) {
+private fun Tarjeta(fondo: Color = Blanco, onClick: () -> Unit, contenido: @Composable () -> Unit) {
     val forma = RoundedCornerShape(20.dp)
     Column(
         Modifier
@@ -431,6 +528,8 @@ private fun Tarjeta(fondo: Color = Blanco, contenido: @Composable () -> Unit) {
             .shadow(2.dp, forma, ambientColor = Color(0x14000000), spotColor = Color(0x14000000))
             .clip(forma)
             .background(fondo)
+            .clickable(role = Role.Button, onClickLabel = "Marcar como leída", onClick = onClick)
+            .testTag(Etiquetas.TARJETA_NOTIFICACION)
             .padding(16.dp),
     ) {
         contenido()

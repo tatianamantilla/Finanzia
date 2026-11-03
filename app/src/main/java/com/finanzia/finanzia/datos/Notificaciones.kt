@@ -52,14 +52,29 @@ data class Notificacion(
 /** Acceso a las notificaciones del usuario que inició sesión. */
 interface NotificacionesRepository {
     suspend fun cargar(): Result<List<Notificacion>>
+
+    /** Marca como leídas las notificaciones con esos ids (columna `leida` = true). */
+    suspend fun marcarLeidas(ids: List<Long>): Result<Unit>
 }
 
 /** Sin notificaciones (para tests): la pantalla muestra el estado vacío. */
 class NotificacionesSinDatos : NotificacionesRepository {
     override suspend fun cargar(): Result<List<Notificacion>> = Result.success(emptyList())
+    override suspend fun marcarLeidas(ids: List<Long>): Result<Unit> = Result.success(Unit)
 }
 
-/** Versión de prueba: devuelve lo que se le indique (para tests y Previews). */
-class NotificacionesFijas(private val resultado: Result<List<Notificacion>>) : NotificacionesRepository {
+/**
+ * Versión de prueba: devuelve lo que se le indique (para tests y Previews).
+ * [marcadas] guarda los ids que la pantalla pidió marcar como leídos.
+ */
+class NotificacionesFijas(
+    private val resultado: Result<List<Notificacion>>,
+    private val resultadoMarcar: Result<Unit> = Result.success(Unit),
+) : NotificacionesRepository {
+    val marcadas = mutableListOf<Long>()
+
     override suspend fun cargar(): Result<List<Notificacion>> = resultado
+
+    override suspend fun marcarLeidas(ids: List<Long>): Result<Unit> =
+        resultadoMarcar.onSuccess { marcadas += ids }
 }

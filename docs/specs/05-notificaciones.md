@@ -84,7 +84,11 @@ El esquema actual (ver `README.md` y `docs/supabase/`) **no tiene** dónde guard
 - **Campana del Dashboard:** abre esta pantalla.
 - **Flecha atrás:** vuelve al Dashboard.
 - **Filtros:** al tocar uno, queda seleccionado (pastilla verde clara) y la lista muestra solo las notificaciones de ese tipo. "Todas" muestra todas.
-- **Doble check, ajustes, menú de tres puntos, "Ajustar límite", "Posponer 6h" y "Ver detalle →":** se muestran como en el diseño pero **no tienen acción por ahora**, hasta que el equipo defina qué hacen.
+- **Tocar una notificación:** la marca como leída (el punto pasa de azul a gris y baja el contador "sin revisar"). Se guarda en Supabase (`leida = true`).
+- **Doble check:** marca todas como leídas.
+- **Ajustes (controles deslizantes):** abre un menú para filtrar por visto: **Todas** (por defecto), **Sin leer** y **Leídas**. Se combina con los filtros por tipo. Si el filtro no es "Todas", el botón se ve verde claro. Si no hay resultados: "No tienes notificaciones sin leer" / "No tienes notificaciones leídas".
+- Si no se puede guardar la marca de leída, la notificación vuelve a "sin leer" y se muestra el error en rojo debajo de los filtros.
+- **Menú de tres puntos, "Ajustar límite", "Posponer 6h" y "Ver detalle →":** se muestran como en el diseño pero **no tienen acción por ahora**, hasta que el equipo defina qué hacen.
 - **Pestaña Inicio:** queda seleccionada, porque a esta pantalla se llega desde Inicio.
 - Mientras carga, muestra un estado de carga simple que no cambie el diseño; si falla la lectura, muestra un texto de error en rojo dentro de la pantalla (sin Snackbar) con la opción de reintentar.
 
@@ -102,6 +106,8 @@ El esquema actual (ver `README.md` y `docs/supabase/`) **no tiene** dónde guard
 - [ ] La barra de navegación tiene cuatro pestañas (sin Gráficos) e Inicio lleva al Dashboard.
 - [ ] Un usuario sin notificaciones ve "No tienes notificaciones por ahora", "0 alertas activas sin revisar" y "Todas (0)".
 - [ ] Los filtros cambian de selección al tocarlos.
+- [ ] Tocar una notificación la marca como leída y el doble check marca todas; al volver a abrir la pantalla siguen leídas.
+- [ ] El botón de ajustes filtra por Todas / Sin leer / Leídas.
 - [ ] No hay ningún dato inventado: no aparecen "Restaurantes", "Bancolombia", "$180.000", "$450.000" ni "Vence mañana" si el usuario no tiene esos datos.
 - [ ] Un usuario solo ve sus propias notificaciones.
 - [ ] Se puede hacer scroll hasta el final en pantalla pequeña y la barra de navegación no tapa el contenido.
@@ -121,6 +127,6 @@ El esquema actual (ver `README.md` y `docs/supabase/`) **no tiene** dónde guard
 4. **Límite de presupuesto:** ¿dónde se guarda el límite mensual de cada categoría? (Por ejemplo, un campo `limite mensual` en `Categorias` o una tabla `Presupuestos`.) ¿A qué porcentaje se dispara la alerta?
 5. **Próximo vencimiento:** ¿qué cuentas tienen fecha de pago (tarjetas de crédito) y dónde se guardan esa fecha y el monto a pagar?
 6. **Oportunidad de Finanzia IA:** ¿qué texto muestra y de dónde sale mientras no exista la IA real?
-7. **Acciones:** qué hacen el doble check, ajustes, el menú de tres puntos, "Ajustar límite", "Posponer 6h" y "Ver detalle →".
+7. **Acciones:** (doble check y ajustes ya definidos: marcar todas como leídas y filtrar por visto). Qué hacen el menú de tres puntos, "Ajustar límite", "Posponer 6h" y "Ver detalle →".
 8. **Formato de montos:** ¿se usa el formato del Dashboard (`$180,000.00`) o el de la imagen (`$180.000 COP`)? Debe ser el mismo en toda la app.
 9. **Otras secciones:** además de "HOY", ¿hay secciones como "AYER" o "ESTA SEMANA"?

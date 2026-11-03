@@ -24,6 +24,7 @@ import java.time.ZoneId
  *    nuevos (nunca repite uno).
  * 2. Lee las notificaciones activas, de la más nueva a la más vieja. Las políticas RLS
  *    impiden ver las de otras personas.
+ * 3. Marca como leídas las que el usuario toca o todas con el doble check.
  */
 class SupabaseNotificacionesRepository(
     private val cliente: SupabaseClient = ClienteSupabase.cliente,
@@ -59,6 +60,18 @@ class SupabaseNotificacionesRepository(
             )
         }
     }
+
+    override suspend fun marcarLeidas(ids: List<Long>): Result<Unit> = conErroresClaros {
+        if (ids.isEmpty()) return@conErroresClaros
+        if (cliente.auth.currentUserOrNull() == null) throw SesionTerminadaException()
+        // RLS ("notificaciones: marcar las propias") solo deja cambiar las del usuario.
+        cliente.from("notificaciones").update(CambioLeida(leida = true)) {
+            filter { isIn("id_notificacion", ids) }
+        }
+    }
+
+    @Serializable
+    private data class CambioLeida(val leida: Boolean)
 
     @Serializable
     private data class FilaNotificacion(
