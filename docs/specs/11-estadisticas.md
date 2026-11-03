@@ -114,16 +114,40 @@ El diagnóstico se genera solo con datos reales, sin inteligencia artificial por
 ## Criterios de aceptación
 
 - [ ] La pantalla es visualmente idéntica a `estadisticas_1.jpeg` (colores, degradados, tipografía, íconos, textos y orden).
-- [ ] No aparece ningún dato de ejemplo ("2.350.000", "Mar 2026", "14.2%", "6.5%", "61.600", "98%", "Vacaciones San Andrés", "120.000", "6 días antes") si el usuario no lo generó con sus datos.
-- [ ] El flujo neto, los ingresos y los gastos coinciden con la suma de los movimientos del usuario en el periodo elegido.
-- [ ] Cambiar entre Semana, Mes, Año y Rango recalcula toda la pantalla; el texto de la opción "Mes" muestra el mes y año reales.
-- [ ] Las comparaciones "vs [periodo anterior]" se calculan con el periodo anterior y se ocultan cuando no hay datos para compararlas.
-- [ ] La gráfica muestra las barras con los valores reales, el grupo seleccionado se resalta y no hay proyecciones ni asterisco.
-- [ ] Un usuario sin movimientos ve montos en `$0`, el texto "Aún no tienes movimientos en este periodo" y el diagnóstico de falta de información.
+- [x] No aparece ningún dato de ejemplo ("2.350.000", "Mar 2026", "14.2%", "6.5%", "61.600", "98%", "Vacaciones San Andrés", "120.000", "6 días antes") si el usuario no lo generó con sus datos.
+- [x] El flujo neto, los ingresos y los gastos coinciden con la suma de los movimientos del usuario en el periodo elegido.
+- [x] Cambiar entre Semana, Mes, Año y Rango recalcula toda la pantalla; el texto de la opción "Mes" muestra el mes y año reales.
+- [x] Las comparaciones "vs [periodo anterior]" se calculan con el periodo anterior y se ocultan cuando no hay datos para compararlas.
+- [x] La gráfica muestra las barras con los valores reales, el grupo seleccionado se resalta y no hay proyecciones ni asterisco.
+- [x] Un usuario sin movimientos ve montos en `$0`, el texto "Aún no tienes movimientos en este periodo" y el diagnóstico de falta de información.
 - [ ] Un usuario solo ve sus propios datos.
-- [ ] La pestaña Gráficos abre esta pantalla y la pestaña Inicio vuelve al Dashboard.
-- [ ] Se puede hacer scroll hasta el final en pantalla pequeña y con letra grande.
+- [x] La pestaña Gráficos abre esta pantalla y la pestaña Inicio vuelve al Dashboard.
+- [x] Se puede hacer scroll hasta el final en pantalla pequeña y con letra grande.
 - [ ] No se agregó ningún elemento ni color que no esté en el diseño (salvo el selector de fechas del Rango, los estados vacíos, y los textos y pastillas en rojo descritos).
+
+> Verificación: los criterios marcados se comprobaron con `CalculosEstadisticasTest`, `FormatosEstadisticasTest`,
+> `EstadisticasTest`, `NavegacionEstadisticasTest`, `EstadisticasPantallaPequenaTest`, `PantallasAdaptablesTest`
+> (pantalla pequeña con letra normal y al 200 %) y la prueba manual contra Supabase real
+> `integracion/manual/DemoMateoMarinTest` (Mateo Marin: ingresos, gastos, neto y cada semana de octubre de 2026
+> coinciden con la tabla `movimientos`). El Rango se probó con las fechas que entrega el selector; el cuadro de
+> diálogo de fechas en sí no se probó con un test automático.
+> Sin marcar: la igualdad visual exacta y "ningún elemento ni color nuevo" (revisión a ojo del equipo en el emulador);
+> "un usuario solo ve sus propios datos" (se filtra por el usuario y las políticas RLS están activas, pero falta una
+> prueba con dos usuarios reales).
+
+## Decisiones tomadas por defecto (confirmar con el equipo)
+
+- Pendientes 1 a 6: se aplicaron tal como las propone esta spec (umbrales 20 % y 0 %; "Aplicar sugerencia IA" sin acción;
+  sin proyecciones; sin IA real; agrupación del Rango por días, semanas o meses; formato `$4.200.000` solo en esta pantalla).
+- Sin conexión con IA real por ahora: el diagnóstico se calcula con los datos.
+- La recomendación no se muestra si a la meta no le falta dinero.
+- Si se cancela el selector de fechas, queda el periodo que estaba.
+- Rango por días: cada grupo se nombra con el número del día. Rango de más de 120 días que cruza de año: el mes lleva el año corto ("Ene 27").
+  Si hay muchos grupos, se escribe una etiqueta de cada tantas (siempre la seleccionada).
+- Porcentajes de categoría y de reducción, sin decimales, como en el diseño ("44%", "18%"). Empate entre categorías: la primera en orden alfabético.
+- Signo negativo con guion normal ("-$510.000", "-3.0%"), igual que el Dashboard. Flujo neto en cero: "$0" sin signo.
+- Desde Estadísticas, la pestaña Metas abre Metas; Gráficos también funciona desde Metas y Notificaciones. "Atrás" siempre vuelve al Dashboard.
+- Pantallas angostas o letra grande: el selector de moneda, las pastillas y los recuadros pasan debajo y el selector de periodo usa dos filas; en un teléfono normal queda igual al diseño.
 
 ## Decisiones pendientes (preguntar al equipo, no inventar)
 
