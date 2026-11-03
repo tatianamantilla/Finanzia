@@ -2,7 +2,6 @@ package com.finanzia.finanzia.ui.sesion
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,10 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
@@ -68,7 +65,6 @@ import com.finanzia.finanzia.ui.theme.FondoPantalla
 import com.finanzia.finanzia.ui.theme.GrisTexto
 import com.finanzia.finanzia.ui.theme.RojoOscuro
 import com.finanzia.finanzia.ui.theme.RosaClaro
-import com.finanzia.finanzia.ui.theme.VerdeTexto
 import com.finanzia.finanzia.validacion.FormatosDashboard
 import com.finanzia.finanzia.validacion.InsightAcceso
 import com.finanzia.finanzia.validacion.ResumenAcceso
@@ -185,28 +181,6 @@ private fun TarjetaSaldo(resumen: ResumenAcceso?) {
         EncabezadoSaldo(saldo, resumen?.variacion)
         Spacer(Modifier.height(22.dp))
         RecuadroInsight(resumen?.insight)
-        Spacer(Modifier.height(22.dp))
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Lock, contentDescription = null, tint = VerdeTexto, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(10.dp))
-                Text("Cifrado AES-256 Activo", style = estilo(14, color = AzulMarino.copy(alpha = 0.85f)))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier
-                        .size(9.dp)
-                        .clip(CircleShape)
-                        .background(VerdeTexto),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Conexión Segura", style = estilo(14, color = AzulMarino.copy(alpha = 0.85f)))
-            }
-        }
     }
 }
 
@@ -403,19 +377,9 @@ fun textoInsight(insight: InsightAcceso?): AnnotatedString = buildAnnotatedStrin
 
 @Composable
 private fun PieProteccion() {
+    // Se quitaron los textos de seguridad ("Cifrado AES-256", "Conexión Segura" y
+    // "Protección de grado bancario") por decisión del equipo, para un diseño más limpio.
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        FlowRow(
-            horizontalArrangement = Arrangement.Center,
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Filled.Shield, contentDescription = null, tint = GrisIcono, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(10.dp))
-            Text(
-                "PROTECCIÓN DE GRADO BANCARIO INTERNACIONAL",
-                style = estilo(12, FontWeight.Medium, GrisTexto, espaciado = 0.4, alineacion = TextAlign.Center),
-            )
-        }
-        Spacer(Modifier.height(6.dp))
         Text(
             "Finanzia Mobile App v3.4.1 (Build 2049)",
             style = estilo(13, color = GrisTexto, alineacion = TextAlign.Center),

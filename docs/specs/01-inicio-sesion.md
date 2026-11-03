@@ -50,9 +50,9 @@ De arriba hacia abajo:
 4. Tarjeta blanca:
    - "SALDO TOTAL DISPONIBLE" con ícono de billetera, monto grande (en el diseño: `$14,250.00`), ícono de ojo y pastilla verde de variación (`+4.8%`).
    - Recuadro azul claro "Insight Inteligente de Hoy" con el texto (en el diseño: "Mantuviste tus gastos un 12% por debajo del presupuesto semanal proyectado.").
-   - Pie de la tarjeta: "Cifrado AES-256 Activo" y "Conexión Segura" (punto verde).
+   - (Se quitaron "Cifrado AES-256 Activo" y "Conexión Segura" del pie de la tarjeta, por decisión del equipo.)
 5. Botón principal con degradado: "Continuar al Dashboard →"
-6. Pie: "PROTECCIÓN DE GRADO BANCARIO INTERNACIONAL" y debajo "Finanzia Mobile App v3.4.1 (Build 2049)".
+6. Pie: "Finanzia Mobile App v3.4.1 (Build 2049)". (Se quitó "PROTECCIÓN DE GRADO BANCARIO INTERNACIONAL", por decisión del equipo.)
 
 ## Comportamiento
 
