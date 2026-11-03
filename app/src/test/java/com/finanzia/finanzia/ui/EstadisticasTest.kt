@@ -26,6 +26,7 @@ import com.finanzia.finanzia.datos.SinConexionException
 import com.finanzia.finanzia.datos.TipoMovimiento
 import com.finanzia.finanzia.navegacion.FinanziaApp
 import com.finanzia.finanzia.navegacion.Rutas
+import com.finanzia.finanzia.ui.asistente.EtiquetasAsistente
 import com.finanzia.finanzia.ui.estadisticas.EstadisticasScreen
 import com.finanzia.finanzia.ui.estadisticas.EstadisticasViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
@@ -276,11 +277,15 @@ class NavegacionEstadisticasTest {
     }
 
     @Test
-    fun billeteraYAsistenteNoHacenNada() {
+    fun billeteraNoHaceNadaYAsistenteAbreElAsistente() {
         abrirDashboard()
         pestana("Gráficos")
         pestana("Billetera")
+        compose.onNodeWithTag(Etiquetas.PANTALLA_ESTADISTICAS).assertIsDisplayed()
         pestana("Asistente")
+        compose.onNodeWithTag(EtiquetasAsistente.PANTALLA).assertIsDisplayed()
+        // Desde el Asistente, Gráficos vuelve a Estadísticas.
+        pestana("Gráficos")
         compose.onNodeWithTag(Etiquetas.PANTALLA_ESTADISTICAS).assertIsDisplayed()
     }
 }

@@ -5,6 +5,7 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.MemoryCodeVerifierCache
 import io.github.jan.supabase.auth.MemorySessionManager
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 
 /**
@@ -40,4 +41,6 @@ fun crearClienteSupabase(guardarSesionEnElTelefono: Boolean): SupabaseClient =
             }
         }
         install(Postgrest)
+        // Edge Functions: el asistente Finanzia IA (spec 11). La clave de la IA vive solo en Supabase.
+        install(Functions)
     }

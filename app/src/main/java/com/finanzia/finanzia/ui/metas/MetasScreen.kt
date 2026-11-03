@@ -112,6 +112,8 @@ fun MetasScreen(
     onDetalle: (Long) -> Unit = {},
     /** Pestaña Gráficos: abre Estadísticas (spec 11). */
     onGraficos: () -> Unit = {},
+    /** Pestaña Asistente (spec 11). */
+    onAsistente: () -> Unit = {},
 ) {
     PantallaBase(fondo = Modifier.background(FondoPantalla).testTag(Etiquetas.PANTALLA_METAS)) {
         Column(Modifier.fillMaxSize()) {
@@ -133,7 +135,7 @@ fun MetasScreen(
                 }
             }
             // "Inicio" vuelve al Dashboard (igual que la flecha).
-            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras, onGraficos = onGraficos)
+            BarraNavegacion(seleccionada = PestanaApp.METAS, onInicio = onAtras, onGraficos = onGraficos, onAsistente = onAsistente)
         }
     }
 }

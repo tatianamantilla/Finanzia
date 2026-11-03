@@ -19,6 +19,7 @@ class MainActivity : ComponentActivity() {
                 notificaciones = Repositorios.notificaciones,
                 metas = Repositorios.metas,
                 movimientos = Repositorios.movimientos,
+                asistente = Repositorios.asistente,
             )
         }
     }

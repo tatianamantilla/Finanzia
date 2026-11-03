@@ -152,6 +152,8 @@ fun EstadisticasScreen(
     onInicio: () -> Unit = {},
     /** Pestaña Metas (spec 07). */
     onMetas: () -> Unit = {},
+    /** Pestaña Asistente (Asistente Finanzia IA). */
+    onAsistente: () -> Unit = {},
     /** Campana: igual que en el Dashboard, abre Notificaciones (spec 05). */
     onNotificaciones: () -> Unit = {},
     onSesionCerrada: () -> Unit,
@@ -199,7 +201,7 @@ fun EstadisticasScreen(
                 }
             }
             // Excepción aprobada (spec 11): aquí la pestaña resaltada es Gráficos.
-            BarraNavegacion(seleccionada = PestanaApp.GRAFICOS, onInicio = onInicio, onMetas = onMetas)
+            BarraNavegacion(seleccionada = PestanaApp.GRAFICOS, onInicio = onInicio, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
     if (selectorRangoAbierto) {

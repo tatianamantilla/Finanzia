@@ -26,6 +26,10 @@ import com.finanzia.finanzia.datos.MovimientosRepository
 import com.finanzia.finanzia.datos.MovimientosSimulados
 import com.finanzia.finanzia.datos.MetasRepository
 import com.finanzia.finanzia.datos.MetasSimuladas
+import com.finanzia.finanzia.datos.AsistenteRepository
+import com.finanzia.finanzia.datos.AsistenteSimulado
+import com.finanzia.finanzia.ui.asistente.AsistenteScreen
+import com.finanzia.finanzia.ui.asistente.AsistenteViewModel
 import com.finanzia.finanzia.datos.NotificacionesRepository
 import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
@@ -96,6 +100,9 @@ object Rutas {
 
     // Spec 10 · Lista de movimientos y edición.
     const val MOVIMIENTOS = "movimientos"
+
+    // Spec 11 · Asistente Finanzia IA.
+    const val ASISTENTE = "asistente"
     const val ARG_ID_MOVIMIENTO = "idMovimiento"
     const val EDITAR_INGRESO = "editar_ingreso/{$ARG_ID_MOVIMIENTO}"
     const val EDITAR_GASTO = "editar_gasto/{$ARG_ID_MOVIMIENTO}"
@@ -118,6 +125,8 @@ fun FinanziaApp(
     movimientos: MovimientosRepository = remember(onboarding) {
         (onboarding as? FakeOnboardingRepository)?.let(::MovimientosSimulados) ?: SinEdicionDeMovimientos
     },
+    // La app real pasa Repositorios.asistente (Supabase + Edge Function); los tests usan el simulado.
+    asistente: AsistenteRepository = remember { AsistenteSimulado() },
     navController: NavHostController = rememberNavController(),
 ) {
     // Tocar un movimiento abre "Editar ingreso" o "Editar gasto" según su tipo (spec 10).
@@ -142,6 +151,10 @@ fun FinanziaApp(
     val irAMetas: () -> Unit = { irAPestana(Rutas.METAS) }
     // Spec 11: la pestaña Gráficos abre Estadísticas.
     val irAEstadisticas: () -> Unit = { irAPestana(Rutas.ESTADISTICAS) }
+    // Asistente Finanzia IA (spec 11): pestaña, botón "Conversar con Finanzia IA" y chevron.
+    val irAAsistente: () -> Unit = {
+        navController.navigate(Rutas.ASISTENTE) { launchSingleTop = true }
+    }
     // Flecha atrás o "Inicio" desde Notificaciones y Metas: vuelve al Dashboard que ya estaba abierto.
     val volverAlDashboard: () -> Unit = {
         if (!navController.popBackStack(Rutas.DASHBOARD, inclusive = false)) irAlDashboard()
@@ -271,6 +284,7 @@ fun FinanziaApp(
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     onGraficos = irAEstadisticas,
                     onMetas = irAMetas,
+                    onAsistente = irAAsistente,
                     onVerTodos = { navController.navigate(Rutas.MOVIMIENTOS) },
                     onEditarMovimiento = editarMovimiento,
                     onSesionCerrada = {
@@ -288,6 +302,7 @@ fun FinanziaApp(
                     onAtras = volverAlDashboard,
                     onMetas = irAMetas,
                     onGraficos = irAEstadisticas,
+                    onAsistente = irAAsistente,
                 )
             }
             // Spec 11 · Estadísticas: pestaña Gráficos. "Inicio" vuelve al Dashboard.
@@ -296,6 +311,7 @@ fun FinanziaApp(
                     viewModel = viewModel { EstadisticasViewModel(dashboard, auth) },
                     onInicio = volverAlDashboard,
                     onMetas = irAMetas,
+                    onAsistente = irAAsistente,
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
                     onSesionCerrada = {
                         navController.navigate(Rutas.INICIAR_SESION) {
@@ -305,6 +321,16 @@ fun FinanziaApp(
                 )
             }
             // Spec 07 · Metas: pestaña Metas de la barra inferior.
+            // Spec 11 · Asistente Finanzia IA.
+            composable(Rutas.ASISTENTE) {
+                AsistenteScreen(
+                    viewModel = viewModel { AsistenteViewModel(asistente, auth.usuarioActual?.nombre.orEmpty()) },
+                    onAtras = { if (!navController.popBackStack()) irAlDashboard() },
+                    onInicio = volverAlDashboard,
+                    onMetas = irAMetas,
+                    onGraficos = irAEstadisticas,
+                )
+            }
             composable(Rutas.METAS) {
                 val metasViewModel = viewModel { MetasViewModel(metas) }
                 // Al volver del detalle (donde se pueden editar aportes) se leen de nuevo los totales.
@@ -315,6 +341,7 @@ fun FinanziaApp(
                     onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
                     onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
                     onGraficos = irAEstadisticas,
+                    onAsistente = irAAsistente,
                 )
             }
             // Spec 09 · Detalle de meta: botón "Detalle de meta" de cada tarjeta.

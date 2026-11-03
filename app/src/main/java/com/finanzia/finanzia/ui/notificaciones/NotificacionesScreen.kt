@@ -103,6 +103,8 @@ fun NotificacionesScreen(
     onMetas: () -> Unit = {},
     /** Pestaña Gráficos: abre Estadísticas (spec 11). */
     onGraficos: () -> Unit = {},
+    /** Pestaña Asistente (spec 11). */
+    onAsistente: () -> Unit = {},
     ahora: () -> Instant = Instant::now,
     zona: ZoneId = ZoneId.systemDefault(),
 ) {
@@ -132,7 +134,7 @@ fun NotificacionesScreen(
                 }
             }
             // A esta pantalla se llega desde Inicio: "Inicio" queda seleccionada y vuelve al Dashboard.
-            BarraNavegacion(onInicio = onAtras, onGraficos = onGraficos, onMetas = onMetas)
+            BarraNavegacion(onInicio = onAtras, onGraficos = onGraficos, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
 }

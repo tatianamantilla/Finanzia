@@ -173,6 +173,8 @@ fun DashboardScreen(
     onGraficos: () -> Unit = {},
     /** Pestaña Metas de la barra inferior (spec 07). */
     onMetas: () -> Unit = {},
+    /** Pestaña Asistente, "Conversar con Finanzia IA" y el chevron de la tarjeta Finanzia IA (spec 11). */
+    onAsistente: () -> Unit = {},
     /** "Ver todos": lista completa de movimientos (spec 10). */
     onVerTodos: () -> Unit = {},
     /** Tocar una fila de "Movimientos recientes": abre su edición (spec 10). */
@@ -206,6 +208,7 @@ fun DashboardScreen(
                             onOjo = viewModel::alternarBalance,
                             onVerTodos = onVerTodos,
                             onEditarMovimiento = onEditarMovimiento,
+                            onAsistente = onAsistente,
                         )
                     }
                     // Espacio para que el botón "+" flotante no tape lo último.
@@ -238,7 +241,7 @@ fun DashboardScreen(
                 )
             }
             // Ya estamos en Inicio: tocar "Inicio" no hace nada.
-            BarraNavegacion(onGraficos = onGraficos, onMetas = onMetas)
+            BarraNavegacion(onGraficos = onGraficos, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
 }
@@ -365,19 +368,20 @@ private fun ColumnScope.Contenido(
     onOjo: () -> Unit,
     onVerTodos: () -> Unit,
     onEditarMovimiento: (FilaMovimiento) -> Unit,
+    onAsistente: () -> Unit,
 ) {
     Spacer(Modifier.height(16.dp))
     Saludo(resumen)
     Spacer(Modifier.height(20.dp))
     TarjetaBalance(resumen, balanceVisible, onOjo)
     Spacer(Modifier.height(22.dp))
-    TarjetaFinanziaIA(resumen)
+    TarjetaFinanziaIA(resumen, onAsistente)
     Spacer(Modifier.height(18.dp))
     TarjetaMeta(resumen.meta)
     Spacer(Modifier.height(24.dp))
     MovimientosRecientes(resumen.recientes, onVerTodos, onEditarMovimiento)
     Spacer(Modifier.height(20.dp))
-    BotonConversar()
+    BotonConversar(onAsistente)
 }
 
 @Composable
@@ -536,7 +540,7 @@ private fun RowScope.RecuadroMonto(titulo: String, monto: String, icono: ImageVe
 }
 
 @Composable
-private fun TarjetaFinanziaIA(resumen: ResumenDashboard) {
+private fun TarjetaFinanziaIA(resumen: ResumenDashboard, onAsistente: () -> Unit) {
     val forma = RoundedCornerShape(24.dp)
     Column(
         Modifier
@@ -584,8 +588,16 @@ private fun TarjetaFinanziaIA(resumen: ResumenDashboard) {
                 }
                 Text("Análisis predictivo en tiempo real", style = estilo(13, FontWeight.SemiBold, VerdeTexto, altoLinea = 18))
             }
-            // Chevron sin acción por ahora (spec 04).
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null, tint = MoradoChevron, modifier = Modifier.size(30.dp))
+            // Chevron: abre el asistente Finanzia IA (spec 11).
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Abrir Finanzia IA",
+                tint = MoradoChevron,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onAsistente)
+                    .size(30.dp),
+            )
         }
         Spacer(Modifier.height(16.dp))
         Text(
@@ -812,9 +824,9 @@ private fun colorDeCategoria(valor: String?): Color? {
 }
 
 @Composable
-private fun BotonConversar() {
+private fun BotonConversar(onAsistente: () -> Unit) {
     val forma = RoundedCornerShape(20.dp)
-    // Sin acción por ahora (spec 04).
+    // Abre el asistente Finanzia IA (spec 11).
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -822,6 +834,7 @@ private fun BotonConversar() {
             .shadow(8.dp, forma, ambientColor = Color(0x400B6B4F), spotColor = Color(0x400B6B4F))
             .clip(forma)
             .background(DegradadoConversar)
+            .clickable(role = Role.Button, onClick = onAsistente)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
