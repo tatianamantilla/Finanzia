@@ -40,10 +40,14 @@ import com.finanzia.finanzia.ui.registro.CuentaCreadaScreen
 import com.finanzia.finanzia.ui.sesion.AccesoAutorizadoScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionScreen
 import com.finanzia.finanzia.ui.sesion.IniciarSesionViewModel
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasScreen
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasViewModel
 import com.finanzia.finanzia.ui.theme.FinanziaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import com.finanzia.finanzia.datos.DashboardFijo
+import androidx.compose.ui.test.assertIsDisplayed
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -139,6 +143,23 @@ abstract class PantallasAdaptablesBase(private val escalaLetra: Float) {
     }
 
     /** Control: la comprobación sí detecta una palabra partida (para que no apruebe por error). */
+    @Test
+    fun estadisticas_seLlegaAlFinalSinTextosCortados() {
+        val viewModel = EstadisticasViewModel(
+            DashboardFijo(Result.success(datosEstadisticas)),
+            FakeAuthRepository(),
+            ahora = { java.time.Instant.parse("2026-11-03T17:00:00Z") },
+            zona = java.time.ZoneId.of("America/Bogota"),
+        )
+        mostrar { EstadisticasScreen(viewModel, onSesionCerrada = {}) }
+        alcanzar(etiqueta(Etiquetas.OPCION_PERIODO + "RANGO"))
+        alcanzar(etiqueta(Etiquetas.MONTO_FLUJO_NETO))
+        alcanzar(etiqueta(Etiquetas.GRUPO_GRAFICA + 3))
+        alcanzar(etiqueta(Etiquetas.BOTON_APLICAR_SUGERENCIA))
+        etiqueta(Etiquetas.BARRA_INFERIOR).assertIsDisplayed()
+        sinTextosCortados()
+    }
+
     @Test
     fun laComprobacionDetectaPalabrasPartidas() {
         mostrar {
