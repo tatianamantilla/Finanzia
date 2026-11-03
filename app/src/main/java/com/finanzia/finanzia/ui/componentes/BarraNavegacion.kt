@@ -22,7 +22,8 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Adjust
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,8 +33,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.finanzia.finanzia.ui.Etiquetas
 import com.finanzia.finanzia.ui.theme.Blanco
 import com.finanzia.finanzia.ui.theme.BordeTarjeta
@@ -102,11 +103,12 @@ private fun RowScope.Pestana(
             Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
         }
         Spacer(Modifier.height(2.dp))
-        Text(
+        // Con letra muy grande, el nombre de la pestaña se reduce lo justo en vez de cortarse.
+        BasicText(
             texto,
             style = estilo(12, if (seleccionada) FontWeight.SemiBold else FontWeight.Normal, color),
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            autoSize = TextAutoSize.StepBased(minFontSize = 5.sp, maxFontSize = 12.sp, stepSize = 0.5.sp),
         )
     }
 }

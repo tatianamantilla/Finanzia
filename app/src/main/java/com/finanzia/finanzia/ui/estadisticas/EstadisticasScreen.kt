@@ -90,6 +90,7 @@ import com.finanzia.finanzia.ui.componentes.ContenidoDesplazable
 import com.finanzia.finanzia.ui.componentes.MensajeError
 import com.finanzia.finanzia.ui.componentes.PantallaBase
 import com.finanzia.finanzia.ui.componentes.PestanaApp
+import com.finanzia.finanzia.ui.componentes.esCompacto
 import com.finanzia.finanzia.ui.componentes.estilo
 import com.finanzia.finanzia.ui.dashboard.Cargando
 import com.finanzia.finanzia.ui.dashboard.EncabezadoInicio
@@ -215,48 +216,85 @@ fun EstadisticasScreen(
 
 @Composable
 private fun Titulo() {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Estadísticas", style = estilo(30, FontWeight.ExtraBold, altoLinea = 38, espaciado = -0.5), modifier = Modifier.weight(1f, fill = false))
-                Spacer(Modifier.width(6.dp))
-                Icon(Icons.Outlined.AutoGraph, contentDescription = null, tint = MoradoDestellos, modifier = Modifier.size(26.dp))
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Pantalla angosta o letra grande: el selector de moneda pasa debajo del título.
+        // En un teléfono normal con letra normal queda a la derecha, como en el diseño.
+        if (esCompacto(maxWidth, minimo = 330.dp)) {
+            Column {
+                TextosTitulo()
+                Spacer(Modifier.height(12.dp))
+                SelectorMoneda()
             }
-            Text("Visión global de tus flujos de dinero", style = estilo(16, color = GrisTexto, altoLinea = 22))
-        }
-        Spacer(Modifier.width(12.dp))
-        // La app trabaja solo en pesos colombianos: se ve como en el diseño y no tiene acción (spec 11).
-        Row(
-            modifier = Modifier
-                .padding(top = 2.dp)
-                .clip(RoundedCornerShape(22.dp))
-                .background(FondoSelectorMoneda)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(VerdePunto))
-            Spacer(Modifier.width(8.dp))
-            Text("COP ($)", style = estilo(15, FontWeight.Medium))
-            Spacer(Modifier.width(8.dp))
-            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = AzulMarino, modifier = Modifier.size(22.dp))
+        } else {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                TextosTitulo(Modifier.weight(1f))
+                Spacer(Modifier.width(12.dp))
+                SelectorMoneda()
+            }
         }
     }
 }
 
 @Composable
-private fun SelectorPeriodo(seleccionado: TipoPeriodo, hoy: LocalDate, onElegir: (TipoPeriodo) -> Unit) {
+private fun TextosTitulo(modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Si el título no cabe en una línea, se reduce lo justo (pantallas muy angostas o letra grande).
+            BasicText(
+                "Estadísticas",
+                style = estilo(30, FontWeight.ExtraBold, altoLinea = 38, espaciado = -0.5),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 30.sp, stepSize = 0.5.sp),
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(Modifier.width(6.dp))
+            Icon(Icons.Outlined.AutoGraph, contentDescription = null, tint = MoradoDestellos, modifier = Modifier.size(26.dp))
+        }
+        Text("Visión global de tus flujos de dinero", style = estilo(16, color = GrisTexto, altoLinea = 22))
+    }
+}
+
+/** La app trabaja solo en pesos colombianos: se ve como en el diseño y no tiene acción (spec 11). */
+@Composable
+private fun SelectorMoneda() {
     Row(
+        modifier = Modifier
+            .padding(top = 2.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(FondoSelectorMoneda)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(VerdePunto))
+        Spacer(Modifier.width(8.dp))
+        Text("COP ($)", style = estilo(15, FontWeight.Medium))
+        Spacer(Modifier.width(8.dp))
+        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = AzulMarino, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun SelectorPeriodo(seleccionado: TipoPeriodo, hoy: LocalDate, onElegir: (TipoPeriodo) -> Unit) {
+    BoxWithConstraints(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
             .background(FondoPeriodos)
             .padding(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        OpcionPeriodo("Semana", TipoPeriodo.SEMANA, seleccionado, 1f, onElegir)
-        OpcionPeriodo(FormatosEstadisticas.opcionMes(hoy), TipoPeriodo.MES, seleccionado, 1.7f, onElegir)
-        OpcionPeriodo("Año", TipoPeriodo.ANIO, seleccionado, 0.8f, onElegir)
-        OpcionPeriodo("Rango", TipoPeriodo.RANGO, seleccionado, 1f, onElegir)
+        val semana: @Composable RowScope.() -> Unit = { OpcionPeriodo("Semana", TipoPeriodo.SEMANA, seleccionado, 1f, onElegir) }
+        val mes: @Composable RowScope.() -> Unit = { OpcionPeriodo(FormatosEstadisticas.opcionMes(hoy), TipoPeriodo.MES, seleccionado, 1.7f, onElegir) }
+        val anio: @Composable RowScope.() -> Unit = { OpcionPeriodo("Año", TipoPeriodo.ANIO, seleccionado, 0.8f, onElegir) }
+        val rango: @Composable RowScope.() -> Unit = { OpcionPeriodo("Rango", TipoPeriodo.RANGO, seleccionado, 1f, onElegir) }
+        // Con letra muy grande las cuatro opciones no caben en una fila: se reparten en dos.
+        if (esCompacto(maxWidth, minimo = 240.dp)) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) { semana(); mes() }
+                Row(verticalAlignment = Alignment.CenterVertically) { anio(); rango() }
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) { semana(); mes(); anio(); rango() }
+        }
     }
 }
 
@@ -312,27 +350,19 @@ private fun TarjetaFlujoNeto(resumen: ResumenEstadisticas) {
             .drawBehind { drawCircle(MentaHalo, radius = 72.dp.toPx(), center = Offset(size.width - 12.dp.toPx(), 18.dp.toPx())) }
             .padding(horizontal = 18.dp, vertical = 20.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Flujo Neto Acumulado", style = estilo(15, color = AzulMarino), modifier = Modifier.weight(1f))
-            resumen.variacionNeto?.let { variacion ->
-                val baja = variacion.signum() < 0
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (baja) RosaGastos else MentaPastilla)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .testTag(Etiquetas.PASTILLA_VARIACION_NETO),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val color = if (baja) RojoFlecha else VerdePastillaTexto
-                    Icon(
-                        if (baja) Icons.AutoMirrored.Filled.TrendingDown else Icons.AutoMirrored.Filled.TrendingUp,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(FormatosEstadisticas.variacion(variacion), style = estilo(14, FontWeight.SemiBold, color))
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val variacion = resumen.variacionNeto
+            // Con letra muy grande la pastilla pasa debajo del título para no partirlo.
+            if (variacion != null && esCompacto(maxWidth, minimo = 200.dp)) {
+                Column {
+                    Text("Flujo Neto Acumulado", style = estilo(15, color = AzulMarino))
+                    Spacer(Modifier.height(8.dp))
+                    PastillaVariacion(variacion)
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Flujo Neto Acumulado", style = estilo(15, color = AzulMarino), modifier = Modifier.weight(1f))
+                    variacion?.let { PastillaVariacion(it) }
                 }
             }
         }
@@ -366,8 +396,42 @@ private fun TarjetaFlujoNeto(resumen: ResumenEstadisticas) {
             }
         }
         Spacer(Modifier.height(18.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        RecuadrosIngresosGastos(resumen)
+    }
+}
+
+/** Pastilla verde (sube) o roja (baja) con la variación del flujo neto. */
+@Composable
+private fun PastillaVariacion(variacion: BigDecimal) {
+    val baja = variacion.signum() < 0
+    Row(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (baja) RosaGastos else MentaPastilla)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .testTag(Etiquetas.PASTILLA_VARIACION_NETO),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val color = if (baja) RojoFlecha else VerdePastillaTexto
+        Icon(
+            if (baja) Icons.AutoMirrored.Filled.TrendingDown else Icons.AutoMirrored.Filled.TrendingUp,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(FormatosEstadisticas.variacion(variacion), style = estilo(14, FontWeight.SemiBold, color))
+    }
+}
+
+/** Ingresos y Gastos lado a lado; en pantallas angostas o con letra grande, uno debajo del otro. */
+@Composable
+private fun RecuadrosIngresosGastos(resumen: ResumenEstadisticas) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val apilados = esCompacto(maxWidth, minimo = 280.dp)
+        val ingresos: @Composable (Modifier) -> Unit = { modificador ->
             RecuadroMonto(
+                modifier = modificador,
                 titulo = "Ingresos",
                 monto = FormatosEstadisticas.monto(resumen.ingresos),
                 icono = Icons.Filled.ArrowDownward,
@@ -379,7 +443,10 @@ private fun TarjetaFlujoNeto(resumen: ResumenEstadisticas) {
                         if (variacion.signum() < 0) RojoTexto else VerdeDinero
                 },
             )
+        }
+        val gastos: @Composable (Modifier) -> Unit = { modificador ->
             RecuadroMonto(
+                modifier = modificador,
                 titulo = "Gastos",
                 monto = FormatosEstadisticas.monto(resumen.gastos),
                 icono = Icons.Filled.ArrowUpward,
@@ -389,11 +456,23 @@ private fun TarjetaFlujoNeto(resumen: ResumenEstadisticas) {
                 pie = resumen.porcentajeDeIngreso?.let { "${FormatosEstadisticas.porcentaje(it)} de ingreso" to GrisTexto },
             )
         }
+        if (apilados) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ingresos(Modifier.fillMaxWidth())
+                gastos(Modifier.fillMaxWidth())
+            }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ingresos(Modifier.weight(1f))
+                gastos(Modifier.weight(1f))
+            }
+        }
     }
 }
 
 @Composable
-private fun RowScope.RecuadroMonto(
+private fun RecuadroMonto(
+    modifier: Modifier,
     titulo: String,
     monto: String,
     icono: ImageVector,
@@ -403,8 +482,7 @@ private fun RowScope.RecuadroMonto(
     pie: Pair<String, Color>?,
 ) {
     Column(
-        Modifier
-            .weight(1f)
+        modifier
             .clip(RoundedCornerShape(16.dp))
             .background(FondoRecuadro)
             .padding(horizontal = 14.dp, vertical = 14.dp),
@@ -448,33 +526,46 @@ private fun TarjetaEvolucion(resumen: ResumenEstadisticas, seleccionado: Int, on
             .border(1.dp, BordeTarjeta, forma)
             .padding(horizontal = 18.dp, vertical = 20.dp),
     ) {
-        Row(verticalAlignment = Alignment.Top) {
-            Column(Modifier.weight(1f)) {
-                Text(FormatosEstadisticas.tituloGrafica(resumen.agrupacion), style = estilo(22, FontWeight.SemiBold, altoLinea = 28))
-                Text(FormatosEstadisticas.subtituloGrafica(resumen.periodo), style = estilo(13, color = GrisTexto, altoLinea = 18))
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val titulo: @Composable (Modifier) -> Unit = { modificador ->
+                Column(modificador) {
+                    Text(FormatosEstadisticas.tituloGrafica(resumen.agrupacion), style = estilo(22, FontWeight.SemiBold, altoLinea = 28))
+                    Text(FormatosEstadisticas.subtituloGrafica(resumen.periodo), style = estilo(13, color = GrisTexto, altoLinea = 18))
+                }
             }
-            resumen.promedioDiario?.let { promedio ->
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    buildAnnotatedString {
-                        append("Prom. ")
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(FormatosEstadisticas.monto(promedio)) }
-                        append("/día")
-                    },
-                    style = estilo(13, color = AzulMarino),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(FondoPromedio)
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                        .testTag(Etiquetas.PASTILLA_PROMEDIO),
-                )
+            val promedio = resumen.promedioDiario
+            // Pantalla angosta o letra grande: la pastilla del promedio pasa debajo del título.
+            if (promedio != null && esCompacto(maxWidth, minimo = 320.dp)) {
+                Column {
+                    titulo(Modifier)
+                    Spacer(Modifier.height(8.dp))
+                    PastillaPromedio(promedio)
+                }
+            } else {
+                Row(verticalAlignment = Alignment.Top) {
+                    titulo(Modifier.weight(1f))
+                    promedio?.let {
+                        Spacer(Modifier.width(8.dp))
+                        PastillaPromedio(it)
+                    }
+                }
             }
         }
         Spacer(Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Leyenda("Ingresos", VerdeOscuro)
-            Spacer(Modifier.width(18.dp))
-            Leyenda("Gastos", AzulGastos)
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            // Con letra muy grande la leyenda pasa a dos líneas.
+            if (esCompacto(maxWidth, minimo = 200.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Leyenda("Ingresos", VerdeOscuro)
+                    Leyenda("Gastos", AzulGastos)
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Leyenda("Ingresos", VerdeOscuro)
+                    Spacer(Modifier.width(18.dp))
+                    Leyenda("Gastos", AzulGastos)
+                }
+            }
         }
         Spacer(Modifier.height(16.dp))
         if (!resumen.hayMovimientos) {
@@ -490,6 +581,24 @@ private fun TarjetaEvolucion(resumen: ResumenEstadisticas, seleccionado: Int, on
         }
         // Sin la nota "*Semana 4 incluye proyección estimada": no hay proyecciones (spec 11).
     }
+}
+
+/** Pastilla "Prom. $X/día". */
+@Composable
+private fun PastillaPromedio(promedio: BigDecimal) {
+    Text(
+        buildAnnotatedString {
+            append("Prom. ")
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(FormatosEstadisticas.monto(promedio)) }
+            append("/día")
+        },
+        style = estilo(13, color = AzulMarino),
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(FondoPromedio)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .testTag(Etiquetas.PASTILLA_PROMEDIO),
+    )
 }
 
 @Composable
@@ -667,7 +776,8 @@ private fun TarjetaDiagnostico(resumen: ResumenEstadisticas) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Diagnóstico de tu Copiloto IA", style = estilo(18, FontWeight.Bold, altoLinea = 24))
+                // Con letra muy grande, una palabra larga no cabe entera: el texto se reduce lo justo.
+                TextoAjustable("Diagnóstico de tu Copiloto IA", estilo(18, FontWeight.Bold, altoLinea = 24), maximo = 18)
                 Text("Análisis conductual activo", style = estilo(13, FontWeight.Medium, AzulActivo, altoLinea = 18))
             }
             // Sin la pastilla "IA 98%": no hay un valor real detrás (spec 11).
@@ -688,7 +798,14 @@ private fun TarjetaDiagnostico(resumen: ResumenEstadisticas) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.AutoFixHigh, contentDescription = null, tint = VerdeOscuro, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Recomendación sugerida:", style = estilo(15, FontWeight.Bold, VerdeOscuro))
+                    // Una sola línea, como en el diseño; si no cabe (pantalla angosta o letra grande), se reduce lo justo.
+                    BasicText(
+                        "Recomendación sugerida:",
+                        style = estilo(15, FontWeight.Bold, VerdeOscuro),
+                        maxLines = 1,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 5.sp, maxFontSize = 15.sp, stepSize = 0.5.sp),
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -709,6 +826,22 @@ private fun TarjetaDiagnostico(resumen: ResumenEstadisticas) {
             }
         }
     }
+}
+
+/**
+ * Texto que solo reduce su letra si una palabra no cabe entera (letra muy grande). Como mucho
+ * ocupa una línea por palabra: si una palabra se partiera, necesitaría una línea más y la letra baja.
+ */
+@Composable
+private fun TextoAjustable(texto: String, estilo: androidx.compose.ui.text.TextStyle, maximo: Int, modifier: Modifier = Modifier) {
+    BasicText(
+        texto,
+        style = estilo,
+        maxLines = texto.split(' ').size,
+        softWrap = true,
+        autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = maximo.sp, stepSize = 0.5.sp),
+        modifier = modifier,
+    )
 }
 
 /** Diagnóstico con datos reales, sin inteligencia artificial por ahora (spec 11). */
@@ -745,7 +878,14 @@ private fun BotonSugerencia() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        Text("Aplicar sugerencia IA", style = estilo(17, FontWeight.Bold, Blanco), modifier = Modifier.weight(1f, fill = false))
+        // Una sola línea, como en el diseño; si no cabe (pantalla angosta o letra grande), se reduce lo justo.
+        BasicText(
+            "Aplicar sugerencia IA",
+            style = estilo(17, FontWeight.Bold, Blanco),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 5.sp, maxFontSize = 17.sp, stepSize = 0.5.sp),
+            modifier = Modifier.weight(1f, fill = false),
+        )
         Spacer(Modifier.width(12.dp))
         Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Blanco, modifier = Modifier.size(22.dp))
     }
