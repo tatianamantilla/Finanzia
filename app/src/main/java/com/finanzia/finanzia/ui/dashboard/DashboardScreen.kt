@@ -169,7 +169,7 @@ fun DashboardScreen(
     onGasto: () -> Unit = {},
     /** Campana: abre Notificaciones (spec 05). */
     onNotificaciones: () -> Unit = {},
-    /** Pestaña Gráficos de la barra inferior: abre Estadísticas (spec 11). */
+    /** Pestaña Gráficos de la barra inferior: abre Estadísticas (spec 12). */
     onGraficos: () -> Unit = {},
     /** Pestaña Metas de la barra inferior (spec 07). */
     onMetas: () -> Unit = {},
@@ -246,7 +246,7 @@ fun DashboardScreen(
     }
 }
 
-/** Encabezado de Inicio (también lo usa Estadísticas, spec 11): logo, campana y menú de perfil. */
+/** Encabezado de Inicio (también lo usa Estadísticas, spec 12): logo, campana y menú de perfil. */
 @Composable
 internal fun EncabezadoInicio(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
     var menuAbierto by remember { mutableStateOf(false) }

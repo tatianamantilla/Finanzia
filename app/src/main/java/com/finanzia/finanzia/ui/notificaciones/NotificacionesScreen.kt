@@ -101,7 +101,7 @@ fun NotificacionesScreen(
     viewModel: NotificacionesViewModel,
     onAtras: () -> Unit,
     onMetas: () -> Unit = {},
-    /** Pestaña Gráficos: abre Estadísticas (spec 11). */
+    /** Pestaña Gráficos: abre Estadísticas (spec 12). */
     onGraficos: () -> Unit = {},
     /** Pestaña Asistente (spec 11). */
     onAsistente: () -> Unit = {},

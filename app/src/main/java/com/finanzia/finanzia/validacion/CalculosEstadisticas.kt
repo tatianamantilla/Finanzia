@@ -16,7 +16,7 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
-/** Opciones del selector de periodo de Estadísticas (spec 11). */
+/** Opciones del selector de periodo de Estadísticas (spec 12). */
 enum class TipoPeriodo { SEMANA, MES, ANIO, RANGO }
 
 /** Un periodo de fechas con ambos extremos incluidos. */
@@ -77,7 +77,7 @@ data class ResumenEstadisticas(
     val recomendacion: Recomendacion?,
 )
 
-/** Cálculos de Estadísticas (spec 11). Todo el dinero con BigDecimal; nada es de muestra. */
+/** Cálculos de Estadísticas (spec 12). Todo el dinero con BigDecimal; nada es de muestra. */
 object CalculosEstadisticas {
 
     private val CIEN = BigDecimal(100)
@@ -310,7 +310,7 @@ object CalculosEstadisticas {
 }
 
 /**
- * Formatos de Estadísticas (spec 11), distintos a los del Dashboard:
+ * Formatos de Estadísticas (spec 12), distintos a los del Dashboard:
  * `$4.200.000` (punto para miles, sin decimales), `+14.2%`, `44%`, "Nov", "Noviembre".
  */
 object FormatosEstadisticas {

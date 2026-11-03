@@ -43,7 +43,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Ejemplos de docs/design/estadisticas_1.jpeg: nunca deben aparecer en la pantalla (spec 11).
+ * Ejemplos de docs/design/estadisticas_1.jpeg: nunca deben aparecer en la pantalla (spec 12).
  * Es el único lugar del código donde están, para comprobar que no se muestran.
  */
 val DATOS_DE_EJEMPLO_ESTADISTICAS = listOf(
@@ -221,7 +221,7 @@ class EstadisticasTest {
     }
 }
 
-/** Pestañas Inicio ↔ Gráficos dentro de la app completa (spec 11). */
+/** Pestañas Inicio ↔ Gráficos dentro de la app completa (spec 12). */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp")
@@ -290,7 +290,7 @@ class NavegacionEstadisticasTest {
     }
 }
 
-/** Pantalla pequeña: se llega hasta el final (spec 11 · Adaptable). */
+/** Pantalla pequeña: se llega hasta el final (spec 12 · Adaptable). */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w320dp-h568dp")

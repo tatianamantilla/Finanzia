@@ -264,7 +264,7 @@ class DemoMateoMarinTest {
 
     private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertNotNullNode() = assertExists()
 
-    // --- Spec 11 · Estadísticas ---
+    // --- Spec 12 · Estadísticas ---
 
     /** Un movimiento de demostración con su fecha (se guarda a mediodía en Bogotá = 17:00 UTC). */
     private data class MovimientoDemo(val tipo: String, val monto: Long, val fecha: String, val categoria: String, val descripcion: String)

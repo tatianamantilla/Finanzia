@@ -23,7 +23,7 @@ sealed interface EstadoEstadisticas {
 }
 
 /**
- * Estadísticas (spec 11). Lee los mismos datos reales del Dashboard (movimientos activos y la meta
+ * Estadísticas (spec 12). Lee los mismos datos reales del Dashboard (movimientos activos y la meta
  * más reciente con sus aportes) y recalcula la pantalla para el periodo elegido.
  */
 class EstadisticasViewModel(
@@ -68,7 +68,7 @@ class EstadisticasViewModel(
 
     private var yaSeMostro = false
 
-    /** Cada vez que la pantalla vuelve a verse, lee otra vez los datos (spec 11 · Actualización). */
+    /** Cada vez que la pantalla vuelve a verse, lee otra vez los datos (spec 12 · Actualización). */
     fun alVolverALaPantalla() {
         if (!yaSeMostro) {
             yaSeMostro = true

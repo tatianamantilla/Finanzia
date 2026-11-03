@@ -144,7 +144,7 @@ private val DegradadoBarraIngresos = Brush.verticalGradient(listOf(Color(0xFF2FB
 private val DegradadoBarraGastos = Brush.verticalGradient(listOf(Color(0xFF2563EB), Color(0xFF5B86E5)))
 private val DegradadoSugerencia = Brush.horizontalGradient(listOf(Color(0xFF0B6B4F), Color(0xFF1D5FE0)))
 
-/** Spec 11 · Estadísticas (pestaña Gráficos, docs/design/estadisticas_1.jpeg). */
+/** Spec 12 · Estadísticas (pestaña Gráficos, docs/design/estadisticas_1.jpeg). */
 @Composable
 fun EstadisticasScreen(
     viewModel: EstadisticasViewModel,
@@ -200,7 +200,7 @@ fun EstadisticasScreen(
                     Spacer(Modifier.height(24.dp))
                 }
             }
-            // Excepción aprobada (spec 11): aquí la pestaña resaltada es Gráficos.
+            // Excepción aprobada (spec 12): aquí la pestaña resaltada es Gráficos.
             BarraNavegacion(seleccionada = PestanaApp.GRAFICOS, onInicio = onInicio, onMetas = onMetas, onAsistente = onAsistente)
         }
     }
@@ -256,7 +256,7 @@ private fun TextosTitulo(modifier: Modifier = Modifier) {
     }
 }
 
-/** La app trabaja solo en pesos colombianos: se ve como en el diseño y no tiene acción (spec 11). */
+/** La app trabaja solo en pesos colombianos: se ve como en el diseño y no tiene acción (spec 12). */
 @Composable
 private fun SelectorMoneda() {
     Row(
@@ -581,7 +581,7 @@ private fun TarjetaEvolucion(resumen: ResumenEstadisticas, seleccionado: Int, on
         } else {
             Grafica(resumen.grupos, seleccionado, onGrupo)
         }
-        // Sin la nota "*Semana 4 incluye proyección estimada": no hay proyecciones (spec 11).
+        // Sin la nota "*Semana 4 incluye proyección estimada": no hay proyecciones (spec 12).
     }
 }
 
@@ -782,7 +782,7 @@ private fun TarjetaDiagnostico(resumen: ResumenEstadisticas) {
                 TextoAjustable("Diagnóstico de tu Copiloto IA", estilo(18, FontWeight.Bold, altoLinea = 24), maximo = 18)
                 Text("Análisis conductual activo", style = estilo(13, FontWeight.Medium, AzulActivo, altoLinea = 18))
             }
-            // Sin la pastilla "IA 98%": no hay un valor real detrás (spec 11).
+            // Sin la pastilla "IA 98%": no hay un valor real detrás (spec 12).
         }
         Spacer(Modifier.height(16.dp))
         Text(textoDiagnostico(resumen), style = estilo(16, color = AzulMarino, altoLinea = 25))
@@ -846,7 +846,7 @@ private fun TextoAjustable(texto: String, estilo: androidx.compose.ui.text.TextS
     )
 }
 
-/** Diagnóstico con datos reales, sin inteligencia artificial por ahora (spec 11). */
+/** Diagnóstico con datos reales, sin inteligencia artificial por ahora (spec 12). */
 private fun textoDiagnostico(resumen: ResumenEstadisticas) = buildAnnotatedString {
     val mayor = resumen.mayorGasto
     if (mayor == null) {
@@ -867,7 +867,7 @@ private fun textoDiagnostico(resumen: ResumenEstadisticas) = buildAnnotatedStrin
 @Composable
 private fun BotonSugerencia() {
     val forma = RoundedCornerShape(14.dp)
-    // Se ve como en el diseño, pero no tiene acción por ahora (spec 11, decisión pendiente 2).
+    // Se ve como en el diseño, pero no tiene acción por ahora (spec 12, decisión pendiente 2).
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -893,7 +893,7 @@ private fun BotonSugerencia() {
     }
 }
 
-/** Excepción aprobada (spec 11): selector de rango de fechas de Material 3, con los colores de la app. */
+/** Excepción aprobada (spec 12): selector de rango de fechas de Material 3, con los colores de la app. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SelectorRango(

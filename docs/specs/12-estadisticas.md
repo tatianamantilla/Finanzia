@@ -1,4 +1,4 @@
-# Spec 11 · Estadísticas (pestaña Gráficos)
+# Spec 12 · Estadísticas (pestaña Gráficos)
 
 Lee antes `README.md`, `CLAUDE.md` y `docs/specs/04-dashboard-inicio.md`.
 

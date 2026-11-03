@@ -110,7 +110,7 @@ fun MetasScreen(
     onNuevaMeta: () -> Unit,
     hoy: () -> LocalDate = { LocalDate.now() },
     onDetalle: (Long) -> Unit = {},
-    /** Pestaña Gráficos: abre Estadísticas (spec 11). */
+    /** Pestaña Gráficos: abre Estadísticas (spec 12). */
     onGraficos: () -> Unit = {},
     /** Pestaña Asistente (spec 11). */
     onAsistente: () -> Unit = {},

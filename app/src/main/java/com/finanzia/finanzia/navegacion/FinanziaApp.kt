@@ -149,7 +149,7 @@ fun FinanziaApp(
         }
     }
     val irAMetas: () -> Unit = { irAPestana(Rutas.METAS) }
-    // Spec 11: la pestaña Gráficos abre Estadísticas.
+    // Spec 12: la pestaña Gráficos abre Estadísticas.
     val irAEstadisticas: () -> Unit = { irAPestana(Rutas.ESTADISTICAS) }
     // Asistente Finanzia IA (spec 11): pestaña, botón "Conversar con Finanzia IA" y chevron.
     val irAAsistente: () -> Unit = {
@@ -305,7 +305,7 @@ fun FinanziaApp(
                     onAsistente = irAAsistente,
                 )
             }
-            // Spec 11 · Estadísticas: pestaña Gráficos. "Inicio" vuelve al Dashboard.
+            // Spec 12 · Estadísticas: pestaña Gráficos. "Inicio" vuelve al Dashboard.
             composable(Rutas.ESTADISTICAS) {
                 EstadisticasScreen(
                     viewModel = viewModel { EstadisticasViewModel(dashboard, auth) },
