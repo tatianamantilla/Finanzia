@@ -76,9 +76,7 @@ class AsistenteViewModel(
     /** Las sugerencias de la tarjeta de bienvenida se envían como pregunta. */
     fun usarSugerencia(sugerencia: String) = enviarPregunta(sugerencia)
 
-    fun reintentar() {
-        preguntaFallida?.let(::enviarPregunta)
-    }
+    fun reintentar() = enviarPregunta(texto.ifBlank { preguntaFallida ?: "" })
 
     private fun enviarPregunta(entrada: String) {
         val pregunta = entrada.trim()
