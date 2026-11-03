@@ -169,6 +169,8 @@ fun DashboardScreen(
     onGasto: () -> Unit = {},
     /** Campana: abre Notificaciones (spec 05). */
     onNotificaciones: () -> Unit = {},
+    /** Pestaña Gráficos de la barra inferior: abre Estadísticas (spec 11). */
+    onGraficos: () -> Unit = {},
     /** Pestaña Metas de la barra inferior (spec 07). */
     onMetas: () -> Unit = {},
     /** "Ver todos": lista completa de movimientos (spec 10). */
@@ -189,7 +191,7 @@ fun DashboardScreen(
                     .consumeWindowInsets(WindowInsets.navigationBars),
             ) {
                 ContenidoDesplazable(margenHorizontal = 20.dp) {
-                    Encabezado(
+                    EncabezadoInicio(
                         cerrandoSesion = viewModel.cerrandoSesion,
                         onCerrarSesion = { viewModel.cerrarSesion(onSesionCerrada) },
                         onNotificaciones = onNotificaciones,
@@ -236,13 +238,14 @@ fun DashboardScreen(
                 )
             }
             // Ya estamos en Inicio: tocar "Inicio" no hace nada.
-            BarraNavegacion(onMetas = onMetas)
+            BarraNavegacion(onGraficos = onGraficos, onMetas = onMetas)
         }
     }
 }
 
+/** Encabezado de Inicio (también lo usa Estadísticas, spec 11): logo, campana y menú de perfil. */
 @Composable
-private fun Encabezado(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
+internal fun EncabezadoInicio(cerrandoSesion: Boolean, onCerrarSesion: () -> Unit, onNotificaciones: () -> Unit) {
     var menuAbierto by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier

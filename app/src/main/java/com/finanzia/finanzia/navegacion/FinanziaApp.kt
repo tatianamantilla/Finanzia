@@ -30,6 +30,8 @@ import com.finanzia.finanzia.datos.NotificacionesRepository
 import com.finanzia.finanzia.datos.NotificacionesSinDatos
 import com.finanzia.finanzia.datos.OnboardingRepository
 import com.finanzia.finanzia.ui.dashboard.DashboardScreen
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasScreen
+import com.finanzia.finanzia.ui.estadisticas.EstadisticasViewModel
 import com.finanzia.finanzia.ui.dashboard.FilaMovimiento
 import com.finanzia.finanzia.ui.dashboard.MovimientosScreen
 import com.finanzia.finanzia.ui.dashboard.MovimientosViewModel
@@ -76,6 +78,7 @@ object Rutas {
     const val NUEVO_GASTO = "nuevo_gasto"
     const val NOTIFICACIONES = "notificaciones"
     const val METAS = "metas"
+    const val ESTADISTICAS = "estadisticas"
     const val NUEVA_META = "nueva_meta"
     const val ARG_ID_META = "idMeta"
     const val DETALLE_META = "detalle_meta/{$ARG_ID_META}"
@@ -128,10 +131,17 @@ fun FinanziaApp(
         }
     }
 
-    // Pestaña Metas: desde Inicio o Notificaciones. Sin copias repetidas en el historial.
-    val irAMetas: () -> Unit = {
-        navController.navigate(Rutas.METAS) { launchSingleTop = true }
+    // Pestañas Metas y Gráficos: el historial queda en "Dashboard → pestaña", sin copias repetidas
+    // aunque se salte entre pestañas; "atrás" siempre vuelve al Dashboard.
+    val irAPestana: (String) -> Unit = { ruta ->
+        navController.navigate(ruta) {
+            popUpTo(Rutas.DASHBOARD)
+            launchSingleTop = true
+        }
     }
+    val irAMetas: () -> Unit = { irAPestana(Rutas.METAS) }
+    // Spec 11: la pestaña Gráficos abre Estadísticas.
+    val irAEstadisticas: () -> Unit = { irAPestana(Rutas.ESTADISTICAS) }
     // Flecha atrás o "Inicio" desde Notificaciones y Metas: vuelve al Dashboard que ya estaba abierto.
     val volverAlDashboard: () -> Unit = {
         if (!navController.popBackStack(Rutas.DASHBOARD, inclusive = false)) irAlDashboard()
@@ -259,6 +269,7 @@ fun FinanziaApp(
                     onIngreso = { navController.navigate(Rutas.NUEVO_INGRESO) },
                     onGasto = { navController.navigate(Rutas.NUEVO_GASTO) },
                     onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
+                    onGraficos = irAEstadisticas,
                     onMetas = irAMetas,
                     onVerTodos = { navController.navigate(Rutas.MOVIMIENTOS) },
                     onEditarMovimiento = editarMovimiento,
@@ -276,6 +287,21 @@ fun FinanziaApp(
                     viewModel = viewModel { NotificacionesViewModel(notificaciones) },
                     onAtras = volverAlDashboard,
                     onMetas = irAMetas,
+                    onGraficos = irAEstadisticas,
+                )
+            }
+            // Spec 11 · Estadísticas: pestaña Gráficos. "Inicio" vuelve al Dashboard.
+            composable(Rutas.ESTADISTICAS) {
+                EstadisticasScreen(
+                    viewModel = viewModel { EstadisticasViewModel(dashboard, auth) },
+                    onInicio = volverAlDashboard,
+                    onMetas = irAMetas,
+                    onNotificaciones = { navController.navigate(Rutas.NOTIFICACIONES) },
+                    onSesionCerrada = {
+                        navController.navigate(Rutas.INICIAR_SESION) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
                 )
             }
             // Spec 07 · Metas: pestaña Metas de la barra inferior.
@@ -288,6 +314,7 @@ fun FinanziaApp(
                     onAtras = volverAlDashboard,
                     onNuevaMeta = { navController.navigate(Rutas.NUEVA_META) },
                     onDetalle = { navController.navigate(Rutas.detalleMeta(it)) },
+                    onGraficos = irAEstadisticas,
                 )
             }
             // Spec 09 · Detalle de meta: botón "Detalle de meta" de cada tarjeta.
